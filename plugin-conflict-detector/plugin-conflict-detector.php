@@ -3,7 +3,7 @@
  * Plugin Name:       Plugin Conflict Detector
  * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
- * Version:           1.0.0
+ * Version:           2.0.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Tahhan
@@ -29,7 +29,7 @@ if ( defined( 'PCD_VERSION' ) ) {
 	return;
 }
 
-define( 'PCD_VERSION',     '1.0.0' );
+define( 'PCD_VERSION',     '2.0.0' );
 define( 'PCD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'PCD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'PCD_PLUGIN_FILE', __FILE__ );
@@ -61,6 +61,9 @@ require_once PCD_PLUGIN_DIR . 'includes/class-database.php';
 require_once PCD_PLUGIN_DIR . 'includes/class-change-history.php';
 require_once PCD_PLUGIN_DIR . 'includes/class-error-log.php';
 require_once PCD_PLUGIN_DIR . 'includes/class-health-scan.php';
+require_once PCD_PLUGIN_DIR . 'includes/class-conflict-scanner.php';
+require_once PCD_PLUGIN_DIR . 'includes/class-safe-mode.php';
+require_once PCD_PLUGIN_DIR . 'includes/class-wizard.php';
 require_once PCD_PLUGIN_DIR . 'includes/class-dashboard.php';
 
 /**
@@ -102,6 +105,12 @@ final class Plugin {
 	private function init(): void {
 		register_activation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'install' ) );
 		register_deactivation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'on_deactivate' ) );
+
+		// Run schema migration on every request (cheap: only runs when version differs).
+		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Database', 'maybe_upgrade' ), 1 );
+
+		// Safe Mode filter must be registered as early as possible.
+		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Safe_Mode',     'init' ), 1 );
 
 		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Change_History', 'init' ) );
 		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Dashboard',      'register_ajax' ) );

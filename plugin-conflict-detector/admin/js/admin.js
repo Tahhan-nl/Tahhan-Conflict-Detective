@@ -66,6 +66,61 @@
 			});
 		});
 
+		// ── Safe Mode — toggle on/off ─────────────────────────────────────────
+		$('#pcd-toggle-safe-mode').on('click', function () {
+			var $btn   = $(this);
+			var $panel = $btn.closest('.pcd-safe-mode-panel');
+			var $body  = $('#pcd-safe-mode-body');
+
+			$btn.prop('disabled', true);
+
+			$.post(
+				pcdData.ajaxUrl,
+				{ action: 'pcd_safe_mode_toggle', nonce: pcdData.nonce },
+				function (response) {
+					$btn.prop('disabled', false);
+					if ( ! response.success ) { return; }
+
+					var active = response.data.active;
+					$panel.toggleClass('pcd-safe-mode-panel--active', active);
+					$body[ active ? 'slideDown' : 'slideUp' ]( 200 );
+					$btn.text( active ? 'Stop Safe Mode' : 'Start Safe Mode' );
+					$btn.toggleClass('button-primary', !active).toggleClass('button-secondary', active);
+				}
+			);
+		});
+
+		// ── Safe Mode — toggle individual plugin ──────────────────────────────
+		$(document).on('change', '.pcd-plugin-toggle-input', function () {
+			var $input  = $(this);
+			var plugin  = $input.data('plugin');
+			var $item   = $input.closest('.pcd-plugin-toggle-item');
+			var $label  = $item.find('.pcd-toggle-label');
+
+			$input.prop('disabled', true);
+
+			$.post(
+				pcdData.ajaxUrl,
+				{ action: 'pcd_safe_mode_toggle_plugin', nonce: pcdData.nonce, plugin: plugin },
+				function (response) {
+					$input.prop('disabled', false);
+					if ( ! response.success ) {
+						$input.prop('checked', !$input.prop('checked'));
+						return;
+					}
+					var disabled = response.data.disabled;
+					$item.toggleClass('pcd-plugin-toggle-item--off', disabled);
+					$label.html( disabled
+						? '<span class="pcd-badge pcd-badge--warning">OFF (test)</span>'
+						: '<span class="pcd-badge pcd-badge--ok">ON</span>'
+					);
+				}
+			).fail(function () {
+				$input.prop('disabled', false);
+				$input.prop('checked', !$input.prop('checked'));
+			});
+		});
+
 		// ── Clear debug.log ──────────────────────────────────────────────────
 		$('#pcd-clear-log').on('click', function () {
 			if ( ! window.confirm('Are you sure you want to clear debug.log? This cannot be undone.') ) {
