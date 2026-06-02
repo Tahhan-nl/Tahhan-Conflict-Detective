@@ -1,0 +1,151 @@
+<?php
+/**
+ * Database installation and schema management.
+ *
+ * @package PluginConflictDetector
+ * @since   1.0.0
+ */
+
+declare( strict_types=1 );
+
+namespace PluginConflictDetector;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Handles creation, migration, and removal of custom database tables.
+ *
+ * Table prefix:  {$wpdb->prefix}cd_
+ *
+ *   cd_plugin_changes  — audit log of every plugin lifecycle event
+ *   cd_errors          — parsed PHP / WordPress error log entries
+ *   cd_scans           — serialised health-scan results
+ *
+ * @since 1.0.0
+ */
+final class Database {
+
+	/**
+	 * The database schema version stored in wp_options.
+	 * Bump this when a schema migration is needed.
+	 */
+	const SCHEMA_VERSION = 1;
+
+	/** @var string Option key that tracks the installed schema version. */
+	const OPTION_KEY = 'pcd_db_version';
+
+	// -------------------------------------------------------------------------
+	// Lifecycle
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Called on plugin activation.
+	 * Creates tables and stores the schema version.
+	 *
+	 * @return void
+	 */
+	public static function install(): void {
+		global $wpdb;
+
+		$collate = $wpdb->get_charset_collate();
+
+		$tables = array(
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cd_plugin_changes (
+				id               BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
+				plugin_slug      VARCHAR(255) NOT NULL,
+				plugin_name      VARCHAR(255) NOT NULL,
+				action           VARCHAR(50)  NOT NULL,
+				plugin_version   VARCHAR(50)           DEFAULT '',
+				previous_version VARCHAR(50)           DEFAULT '',
+				changed_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY  (id),
+				KEY idx_changed_at  (changed_at),
+				KEY idx_plugin_slug (plugin_slug(100))
+			) $collate;",
+
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cd_errors (
+				id           BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
+				error_type   VARCHAR(50)  NOT NULL,
+				message      TEXT         NOT NULL,
+				file         VARCHAR(500)          DEFAULT '',
+				line         INT(11)      UNSIGNED DEFAULT 0,
+				plugin_slug  VARCHAR(255)          DEFAULT '',
+				plugin_name  VARCHAR(255)          DEFAULT '',
+				occurred_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				KEY idx_occurred_at (occurred_at),
+				KEY idx_plugin_slug (plugin_slug(100))
+			) $collate;",
+
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cd_scans (
+				id           BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
+				scan_type    VARCHAR(50) NOT NULL,
+				result       LONGTEXT    NOT NULL,
+				issues_found INT(11)     UNSIGNED DEFAULT 0,
+				scanned_at   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				KEY idx_scanned_at (scanned_at)
+			) $collate;",
+		);
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		foreach ( $tables as $sql ) {
+			dbDelta( $sql );
+		}
+
+		update_option( self::OPTION_KEY, self::SCHEMA_VERSION );
+	}
+
+	/**
+	 * Called on plugin deactivation.
+	 * Intentionally a no-op — we keep data so the admin can reactivate without
+	 * losing history.  Actual cleanup happens in uninstall.php.
+	 *
+	 * @return void
+	 */
+	public static function on_deactivate(): void {}
+
+	/**
+	 * Drops all plugin tables and removes associated options.
+	 * Called from uninstall.php.
+	 *
+	 * @return void
+	 */
+	public static function drop_tables(): void {
+		global $wpdb;
+
+		$tables = array(
+			$wpdb->prefix . 'cd_plugin_changes',
+			$wpdb->prefix . 'cd_errors',
+			$wpdb->prefix . 'cd_scans',
+		);
+
+		foreach ( $tables as $table ) {
+			// Table name is built from a controlled prefix, not user input.
+			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		}
+
+		delete_option( self::OPTION_KEY );
+
+		// Remove transient version keys written by Change_History.
+		$wpdb->query(
+			"DELETE FROM `{$wpdb->options}` WHERE `option_name` LIKE 'pcd\\_prev\\_version\\_%'"  // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+	}
+
+	// -------------------------------------------------------------------------
+	// Helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Returns true when the database schema is up to date.
+	 *
+	 * @return bool
+	 */
+	public static function is_installed(): bool {
+		return (int) get_option( self::OPTION_KEY, 0 ) >= self::SCHEMA_VERSION;
+	}
+}
