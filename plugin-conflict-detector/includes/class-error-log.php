@@ -181,9 +181,9 @@ final class Error_Log {
 		// Re-classify from message text when the type header is ambiguous.
 		if ( $entry['type'] === 'notice' ) {
 			$lc = strtolower( $entry['message'] );
-			if ( str_contains( $lc, 'fatal' ) || str_contains( $lc, 'parse error' ) ) {
+			if ( strpos( $lc, 'fatal' ) !== false || strpos( $lc, 'parse error' ) !== false ) {
 				$entry['type'] = 'fatal';
-			} elseif ( str_contains( $lc, 'warning' ) ) {
+			} elseif ( strpos( $lc, 'warning' ) !== false ) {
 				$entry['type'] = 'warning';
 			}
 		}
@@ -228,7 +228,7 @@ final class Error_Log {
 		$plugins_dir = wp_normalize_path( WP_PLUGIN_DIR );
 		$file        = wp_normalize_path( $file );
 
-		if ( ! str_starts_with( $file, $plugins_dir . '/' ) ) {
+		if ( strpos( $file, $plugins_dir . '/' ) !== 0 ) {
 			return array( 'slug' => '', 'name' => '' );
 		}
 
@@ -240,7 +240,7 @@ final class Error_Log {
 		}
 
 		foreach ( get_plugins() as $plugin_file => $plugin_data ) {
-			if ( str_starts_with( $plugin_file, $slug . '/' ) ) {
+			if ( strpos( $plugin_file, $slug . '/' ) === 0 ) {
 				return array( 'slug' => $slug, 'name' => $plugin_data['Name'] );
 			}
 		}
