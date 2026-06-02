@@ -131,6 +131,56 @@ final class Health_Scan {
 		return $result;
 	}
 
+	/**
+	 * Simple timeline correlation: finds the most recently changed plugin
+	 * whose slug appears in recent error log entries.
+	 *
+	 * Used by the dashboard "Likely Culprit" widget.
+	 * Returns null when there is not enough data to make a suggestion.
+	 *
+	 * @return array{plugin_name: string, plugin_slug: string, action: string,
+	 *               changed_at: string, error_count: int}|null
+	 */
+	public static function get_likely_culprit(): ?array {
+		global $wpdb;
+
+		// Last 10 plugin changes.
+		$changes = $wpdb->get_results(
+			"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes` ORDER BY changed_at DESC LIMIT 10" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		);
+
+		if ( empty( $changes ) ) {
+			return null;
+		}
+
+		$recent_errors = Error_Log::get_entries( 200 );
+		if ( empty( $recent_errors ) ) {
+			return null;
+		}
+
+		// Count how many errors mention each changed plugin's slug.
+		foreach ( $changes as $change ) {
+			$slug  = explode( '/', $change->plugin_slug )[0];
+			$count = 0;
+			foreach ( $recent_errors as $error ) {
+				if ( $error['plugin_slug'] === $slug ) {
+					$count++;
+				}
+			}
+			if ( $count > 0 ) {
+				return array(
+					'plugin_name' => $change->plugin_name,
+					'plugin_slug' => $slug,
+					'action'      => $change->action,
+					'changed_at'  => $change->changed_at,
+					'error_count' => $count,
+				);
+			}
+		}
+
+		return null;
+	}
+
 	// -------------------------------------------------------------------------
 	// Scan sections
 	// -------------------------------------------------------------------------
@@ -181,7 +231,9 @@ final class Health_Scan {
 		foreach ( self::KNOWN_CONFLICTS as $conflict ) {
 			$found = array_filter(
 				$conflict['slugs'],
-				static fn( $slug ) => isset( $active_by_slug[ $slug ] )
+				static function ( $slug ) use ( $active_by_slug ) {
+					return isset( $active_by_slug[ $slug ] );
+				}
 			);
 			if ( count( $found ) === count( $conflict['slugs'] ) ) {
 				$issues[] = array(
