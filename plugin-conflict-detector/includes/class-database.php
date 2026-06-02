@@ -31,7 +31,7 @@ final class Database {
 	 * The database schema version stored in wp_options.
 	 * Bump this when a schema migration is needed.
 	 */
-	const SCHEMA_VERSION = 1;
+	const SCHEMA_VERSION = 2;
 
 	/** @var string Option key that tracks the installed schema version. */
 	const OPTION_KEY = 'pcd_db_version';
@@ -88,6 +88,23 @@ final class Database {
 				PRIMARY KEY (id),
 				KEY idx_scanned_at (scanned_at)
 			) $collate;",
+
+			// Phase 2: stored conflict detections.
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cd_conflicts (
+				id            BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
+				plugin_slug   VARCHAR(255) NOT NULL,
+				plugin_name   VARCHAR(255) NOT NULL,
+				action        VARCHAR(50)  NOT NULL,
+				changed_at    DATETIME     NOT NULL,
+				error_count   INT(11)      UNSIGNED DEFAULT 0,
+				confidence    TINYINT(3)   UNSIGNED DEFAULT 0,
+				reason        TEXT                  DEFAULT '',
+				resolved      TINYINT(1)   NOT NULL DEFAULT 0,
+				detected_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				KEY idx_detected_at (detected_at),
+				KEY idx_plugin_slug (plugin_slug(100))
+			) $collate;",
 		);
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -121,6 +138,7 @@ final class Database {
 			$wpdb->prefix . 'cd_plugin_changes',
 			$wpdb->prefix . 'cd_errors',
 			$wpdb->prefix . 'cd_scans',
+			$wpdb->prefix . 'cd_conflicts',
 		);
 
 		foreach ( $tables as $table ) {
@@ -147,5 +165,18 @@ final class Database {
 	 */
 	public static function is_installed(): bool {
 		return (int) get_option( self::OPTION_KEY, 0 ) >= self::SCHEMA_VERSION;
+	}
+
+	/**
+	 * Runs the installer when the stored schema version is behind SCHEMA_VERSION.
+	 * Called on every request via plugins_loaded priority 1 — dbDelta is idempotent
+	 * so existing tables are never dropped or truncated.
+	 *
+	 * @return void
+	 */
+	public static function maybe_upgrade(): void {
+		if ( (int) get_option( self::OPTION_KEY, 0 ) < self::SCHEMA_VERSION ) {
+			self::install();
+		}
 	}
 }

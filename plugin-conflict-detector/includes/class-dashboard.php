@@ -56,6 +56,24 @@ final class Dashboard {
 
 		add_submenu_page(
 			self::PAGE_SLUG,
+			__( 'Conflict Scanner', 'plugin-conflict-detector' ),
+			__( '🔎 Conflict Scanner', 'plugin-conflict-detector' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=scanner',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Conflict Wizard', 'plugin-conflict-detector' ),
+			__( '🧙 Conflict Wizard', 'plugin-conflict-detector' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=wizard',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
 			__( 'Error Log', 'plugin-conflict-detector' ),
 			__( 'Error Log', 'plugin-conflict-detector' ),
 			'manage_options',
@@ -173,10 +191,12 @@ final class Dashboard {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'dashboard';
 
 		$tabs = array(
-			'dashboard' => __( 'Dashboard',      'plugin-conflict-detector' ),
-			'errors'    => __( 'Error Log',       'plugin-conflict-detector' ),
-			'history'   => __( 'Change History',  'plugin-conflict-detector' ),
-			'scan'      => __( 'Health Scan',     'plugin-conflict-detector' ),
+			'dashboard' => __( 'Dashboard',       'plugin-conflict-detector' ),
+			'scanner'   => __( '🔎 Conflict Scan', 'plugin-conflict-detector' ),
+			'wizard'    => __( '🧙 Wizard',        'plugin-conflict-detector' ),
+			'errors'    => __( 'Error Log',        'plugin-conflict-detector' ),
+			'history'   => __( 'Change History',   'plugin-conflict-detector' ),
+			'scan'      => __( 'Health Scan',      'plugin-conflict-detector' ),
 		);
 
 		if ( ! array_key_exists( $tab, $tabs ) ) {
@@ -204,6 +224,8 @@ final class Dashboard {
 
 		echo '<div class="pcd-content">';
 		switch ( $tab ) {
+			case 'scanner': self::render_scanner(); break;
+			case 'wizard':  Wizard::render();       break;
 			case 'errors':  self::render_errors();  break;
 			case 'history': self::render_history(); break;
 			case 'scan':    self::render_scan();    break;
@@ -500,6 +522,83 @@ final class Dashboard {
 
 		self::render_pagination( $page, $pages, 'errors' );
 		echo '</div>';
+	}
+
+	// -------------------------------------------------------------------------
+	// Change History tab
+	// -------------------------------------------------------------------------
+
+	// -------------------------------------------------------------------------
+	// Conflict Scanner tab
+	// -------------------------------------------------------------------------
+
+	private static function render_scanner(): void {
+		$suspects = Conflict_Scanner::analyse( 10 );
+
+		echo '<div class="pcd-card pcd-card--full">';
+		echo '<div class="pcd-card__header">';
+		echo '<h2 class="pcd-card__title">' . esc_html__( 'Conflict Scanner', 'plugin-conflict-detector' ) . '</h2>';
+		printf(
+			'<a href="%s" class="button button-primary">%s</a>',
+			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'wizard' ), admin_url( 'admin.php' ) ) ),
+			esc_html__( 'Open Wizard →', 'plugin-conflict-detector' )
+		);
+		echo '</div>';
+
+		echo '<p class="pcd-scanner-intro">' . esc_html__( 'The scanner analyses your plugin change history against the error log and ranks each plugin by how likely it is to be causing the current problem.', 'plugin-conflict-detector' ) . '</p>';
+
+		if ( empty( $suspects ) ) {
+			echo '<div class="pcd-notice pcd-notice--info">';
+			esc_html_e( 'No suspects found. This usually means there are no errors in the log, no plugin changes have been recorded yet, or the errors cannot be attributed to a specific plugin.', 'plugin-conflict-detector' );
+			echo '</div>';
+			echo '</div>';
+			return;
+		}
+
+		echo '<div class="pcd-suspect-list">';
+		foreach ( $suspects as $i => $suspect ) {
+			$bar    = min( 100, $suspect['confidence'] );
+			$bclass = $suspect['confidence'] >= 70 ? 'danger' : ( $suspect['confidence'] >= 40 ? 'warning' : 'ok' );
+
+			printf(
+				'<div class="pcd-suspect-card%s">
+					<div class="pcd-suspect-header">
+						<div>
+							<strong class="pcd-suspect-name">%s</strong>
+							%s
+						</div>
+						<div class="pcd-confidence-badge pcd-confidence--%s">%d%%</div>
+					</div>
+					<div class="pcd-confidence-bar-track">
+						<div class="pcd-confidence-bar pcd-confidence-bar--%s" style="width:%d%%"></div>
+					</div>
+					<p class="pcd-suspect-reason">%s</p>
+					<div class="pcd-suspect-meta">
+						<span>%s: %s</span>
+						<span>%s</span>
+						%s
+					</div>
+				</div>',
+				$i === 0 ? ' pcd-suspect-card--top' : '',
+				esc_html( $suspect['plugin_name'] ),
+				$i === 0 ? '<span class="pcd-badge pcd-badge--error">' . esc_html__( 'Top suspect', 'plugin-conflict-detector' ) . '</span>' : '',
+				esc_attr( $bclass ),
+				$suspect['confidence'],
+				esc_attr( $bclass ),
+				$bar,
+				esc_html( $suspect['reason'] ),
+				esc_html__( 'Action', 'plugin-conflict-detector' ),
+				esc_html( self::action_label( $suspect['action'] ) ),
+				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $suspect['changed_at'] ) ) ),
+				$suspect['error_count'] > 0
+					? '<span>' . esc_html( sprintf(
+						_n( '%d error', '%d errors', $suspect['error_count'], 'plugin-conflict-detector' ),
+						$suspect['error_count']
+					) ) . '</span>'
+					: ''
+			);
+		}
+		echo '</div></div>';
 	}
 
 	// -------------------------------------------------------------------------
