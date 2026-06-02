@@ -104,6 +104,7 @@ final class Plugin {
 		register_deactivation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'on_deactivate' ) );
 
 		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Change_History', 'init' ) );
+		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Dashboard',      'register_ajax' ) );
 		add_action( 'admin_menu',     array( 'PluginConflictDetector\Dashboard',      'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( 'PluginConflictDetector\Dashboard', 'enqueue_assets' ) );
 	}

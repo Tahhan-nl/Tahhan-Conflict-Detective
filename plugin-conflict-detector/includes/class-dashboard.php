@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin dashboard — menus, pages, and AJAX glue.
+ * Admin dashboard — menus, pages, and AJAX handlers.
  *
  * @package PluginConflictDetector
  * @since   1.0.0
@@ -15,30 +15,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registers the admin menu item under Tools and renders all four tabs:
+ * Registers the admin menu and renders all four tabs:
  *
- *   Dashboard        — system snapshot + recent activity at a glance
- *   Error Log        — parsed PHP / WP error log with plugin attribution
- *   Change History   — full audit trail of plugin lifecycle events
- *   Health Scan      — on-demand multi-section site health analysis
- *
- * All output is routed through WordPress escaping helpers. No raw HTML
- * is ever interpolated from user-supplied or database-sourced data.
+ *   Dashboard       — system snapshot, stats, "likely culprit" widget
+ *   Error Log       — parsed PHP / WP error log with plugin attribution + filter
+ *   Change History  — full audit trail of plugin lifecycle events
+ *   Health Scan     — on-demand multi-section site health analysis (AJAX)
  *
  * @since 1.0.0
  */
 final class Dashboard {
 
-	/** The page slug registered with add_submenu_page(). */
 	const PAGE_SLUG = 'plugin-conflict-detector';
 
 	// -------------------------------------------------------------------------
 	// Boot
 	// -------------------------------------------------------------------------
 
-	/**
-	 * @return void
-	 */
 	public static function register_menu(): void {
 		add_submenu_page(
 			'tools.php',
@@ -50,12 +43,6 @@ final class Dashboard {
 		);
 	}
 
-	/**
-	 * Enqueues CSS and JS only on our own admin page.
-	 *
-	 * @param string $hook Current admin page hook.
-	 * @return void
-	 */
 	public static function enqueue_assets( string $hook ): void {
 		if ( strpos( $hook, self::PAGE_SLUG ) === false ) {
 			return;
@@ -76,30 +63,68 @@ final class Dashboard {
 			true
 		);
 
-		wp_localize_script(
-			'pcd-admin',
-			'pcdData',
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'pcd_nonce' ),
-				'i18n'    => array(
-					'scanning' => __( 'Scanning…', 'plugin-conflict-detector' ),
-					'done'     => __( 'Scan complete!', 'plugin-conflict-detector' ),
-				),
-			)
-		);
+		wp_localize_script( 'pcd-admin', 'pcdData', array(
+			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'pcd_nonce' ),
+			'scanning' => __( 'Scanning…', 'plugin-conflict-detector' ),
+			'done'     => __( 'Scan complete!', 'plugin-conflict-detector' ),
+			'clearing' => __( 'Clearing…', 'plugin-conflict-detector' ),
+			'cleared'  => __( 'Log cleared.', 'plugin-conflict-detector' ),
+		) );
+	}
+
+	/**
+	 * Registers AJAX handlers — must be called on init/plugins_loaded.
+	 */
+	public static function register_ajax(): void {
+		add_action( 'wp_ajax_pcd_run_scan',   array( __CLASS__, 'ajax_run_scan' ) );
+		add_action( 'wp_ajax_pcd_clear_log',  array( __CLASS__, 'ajax_clear_log' ) );
+	}
+
+	// -------------------------------------------------------------------------
+	// AJAX handlers
+	// -------------------------------------------------------------------------
+
+	public static function ajax_run_scan(): void {
+		check_ajax_referer( 'pcd_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+		}
+
+		$results = Health_Scan::run();
+		wp_send_json_success( array(
+			'issues'     => $results['issues_found'],
+			'scanned_at' => date_i18n( 'd-m-Y H:i', strtotime( $results['scanned_at'] ) ),
+			'html'       => self::build_scan_results_html( $results ),
+		) );
+	}
+
+	public static function ajax_clear_log(): void {
+		check_ajax_referer( 'pcd_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+		}
+
+		$log_file = WP_CONTENT_DIR . '/debug.log';
+
+		if ( ! file_exists( $log_file ) ) {
+			wp_send_json_error( array( 'message' => __( 'Log file not found.', 'plugin-conflict-detector' ) ) );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
+		if ( file_put_contents( $log_file, '' ) === false ) {
+			wp_send_json_error( array( 'message' => __( 'Could not clear log file (permission denied).', 'plugin-conflict-detector' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Log cleared.', 'plugin-conflict-detector' ) ) );
 	}
 
 	// -------------------------------------------------------------------------
 	// Page router
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Master render callback — validates the tab and dispatches to the
-	 * correct renderer.
-	 *
-	 * @return void
-	 */
 	public static function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'plugin-conflict-detector' ) );
@@ -109,10 +134,10 @@ final class Dashboard {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'dashboard';
 
 		$tabs = array(
-			'dashboard' => __( 'Dashboard',        'plugin-conflict-detector' ),
-			'errors'    => __( 'Error Log',         'plugin-conflict-detector' ),
-			'history'   => __( 'Change History',    'plugin-conflict-detector' ),
-			'scan'      => __( 'Health Scan',       'plugin-conflict-detector' ),
+			'dashboard' => __( 'Dashboard',      'plugin-conflict-detector' ),
+			'errors'    => __( 'Error Log',       'plugin-conflict-detector' ),
+			'history'   => __( 'Change History',  'plugin-conflict-detector' ),
+			'scan'      => __( 'Health Scan',     'plugin-conflict-detector' ),
 		);
 
 		if ( ! array_key_exists( $tab, $tabs ) ) {
@@ -120,21 +145,17 @@ final class Dashboard {
 		}
 
 		echo '<div class="wrap pcd-wrap">';
-
 		printf(
-			'<h1 class="pcd-title">%s %s</h1>',
-			'<span aria-hidden="true">&#128269;</span>',
+			'<h1 class="pcd-title"><span aria-hidden="true">&#128269;</span> %s</h1>',
 			esc_html__( 'Plugin Conflict Detector', 'plugin-conflict-detector' )
 		);
 
-		// Tab bar.
-		echo '<nav class="pcd-tabs" aria-label="' . esc_attr__( 'Plugin Conflict Detector tabs', 'plugin-conflict-detector' ) . '">';
+		echo '<nav class="pcd-tabs" aria-label="' . esc_attr__( 'Sections', 'plugin-conflict-detector' ) . '">';
 		foreach ( $tabs as $key => $label ) {
-			$url    = add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => $key ), admin_url( 'tools.php' ) );
 			$active = $key === $tab;
 			printf(
 				'<a href="%s" class="pcd-tab%s"%s>%s</a>',
-				esc_url( $url ),
+				esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => $key ), admin_url( 'tools.php' ) ) ),
 				$active ? ' pcd-tab--active' : '',
 				$active ? ' aria-current="page"' : '',
 				esc_html( $label )
@@ -144,27 +165,18 @@ final class Dashboard {
 
 		echo '<div class="pcd-content">';
 		switch ( $tab ) {
-			case 'errors':
-				self::render_errors();
-				break;
-			case 'history':
-				self::render_history();
-				break;
-			case 'scan':
-				self::render_scan();
-				break;
-			default:
-				self::render_dashboard();
+			case 'errors':  self::render_errors();  break;
+			case 'history': self::render_history(); break;
+			case 'scan':    self::render_scan();    break;
+			default:        self::render_dashboard();
 		}
-		echo '</div>'; // .pcd-content
-		echo '</div>'; // .pcd-wrap
+		echo '</div></div>';
 	}
 
 	// -------------------------------------------------------------------------
-	// Tab renderers
+	// Dashboard tab
 	// -------------------------------------------------------------------------
 
-	/** @return void */
 	private static function render_dashboard(): void {
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -172,19 +184,76 @@ final class Dashboard {
 
 		global $wp_version;
 
-		$all_plugins    = get_plugins();
-		$active_plugins = (array) get_option( 'active_plugins', array() );
-		$theme          = wp_get_theme();
-		$recent_changes = Change_History::get_recent( 5 );
-		$error_entries  = Error_Log::get_entries( 5 );
+		$all_plugins     = get_plugins();
+		$active_plugins  = (array) get_option( 'active_plugins', array() );
+		$theme           = wp_get_theme();
+		$recent_changes  = Change_History::get_recent( 5 );
+		$error_entries   = Error_Log::get_entries( 5 );
+		$culprit         = Health_Scan::get_likely_culprit();
+		$last_scan       = Health_Scan::get_last_scan();
+
+		// --- Stats bar -------------------------------------------------------
+		$total_errors   = count( Error_Log::get_entries( 500 ) );
+		$total_changes  = count( Change_History::get_recent( 500 ) );
+		$total_issues   = $last_scan ? (int) $last_scan['issues_found'] : 0;
+
+		echo '<div class="pcd-stats-bar">';
+		self::stat_card(
+			(string) count( $active_plugins ),
+			__( 'Active Plugins', 'plugin-conflict-detector' ),
+			'plugin',
+			'neutral'
+		);
+		self::stat_card(
+			(string) $total_changes,
+			__( 'Changes Logged', 'plugin-conflict-detector' ),
+			'history',
+			'neutral'
+		);
+		self::stat_card(
+			(string) $total_errors,
+			__( 'Log Entries', 'plugin-conflict-detector' ),
+			'error',
+			$total_errors > 0 ? 'warning' : 'ok'
+		);
+		self::stat_card(
+			(string) $total_issues,
+			__( 'Health Issues', 'plugin-conflict-detector' ),
+			'scan',
+			$total_issues > 0 ? 'danger' : 'ok'
+		);
+		echo '</div>';
+
+		// --- Likely culprit banner -------------------------------------------
+		if ( $culprit ) {
+			printf(
+				'<div class="pcd-culprit-banner">
+					<span class="pcd-culprit-icon">&#128270;</span>
+					<div class="pcd-culprit-body">
+						<strong>%s</strong> — %s
+						<span class="pcd-culprit-meta">%s %s &middot; %s %s &middot; %s</span>
+					</div>
+				</div>',
+				esc_html( $culprit['plugin_name'] ),
+				esc_html( sprintf(
+					/* translators: number of errors */
+					_n( '%d error attributed to this plugin', '%d errors attributed to this plugin', $culprit['error_count'], 'plugin-conflict-detector' ),
+					$culprit['error_count']
+				) ),
+				esc_html__( 'Last action:', 'plugin-conflict-detector' ),
+				esc_html( self::action_label( $culprit['action'] ) ),
+				esc_html__( 'at', 'plugin-conflict-detector' ),
+				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $culprit['changed_at'] ) ) ),
+				esc_html__( 'Most likely cause of recent errors.', 'plugin-conflict-detector' )
+			);
+		}
 
 		echo '<div class="pcd-grid">';
 
-		// --- System info card -------------------------------------------------
+		// --- System info -----------------------------------------------------
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'System Overview', 'plugin-conflict-detector' ) . '</h2>';
 		echo '<table class="pcd-table">';
-
 		$rows = array(
 			__( 'WordPress',    'plugin-conflict-detector' ) => esc_html( $wp_version ),
 			__( 'PHP',          'plugin-conflict-detector' ) => esc_html( PHP_VERSION ),
@@ -194,14 +263,12 @@ final class Dashboard {
 				? '<span class="pcd-badge pcd-badge--warning">ON</span>'
 				: '<span class="pcd-badge pcd-badge--ok">OFF</span>',
 		);
-
 		foreach ( $rows as $label => $value ) {
 			printf( '<tr><th>%s</th><td>%s</td></tr>', esc_html( $label ), wp_kses_post( $value ) );
 		}
-
 		echo '</table></div>';
 
-		// --- Active plugins card ----------------------------------------------
+		// --- Active plugins --------------------------------------------------
 		echo '<div class="pcd-card">';
 		printf(
 			'<h2 class="pcd-card__title">%s <span class="pcd-count">%d</span></h2>',
@@ -219,12 +286,11 @@ final class Dashboard {
 		}
 		echo '</ul></div>';
 
-		// --- Recent changes card ----------------------------------------------
+		// --- Recent changes --------------------------------------------------
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Recent Changes', 'plugin-conflict-detector' ) . '</h2>';
-
 		if ( empty( $recent_changes ) ) {
-			echo '<p class="pcd-empty">' . esc_html__( 'No changes logged yet.', 'plugin-conflict-detector' ) . '</p>';
+			echo '<p class="pcd-empty">' . esc_html__( 'No changes logged yet. Changes are tracked from the moment this plugin was activated.', 'plugin-conflict-detector' ) . '</p>';
 		} else {
 			echo '<ul class="pcd-change-list">';
 			foreach ( $recent_changes as $change ) {
@@ -244,7 +310,6 @@ final class Dashboard {
 			}
 			echo '</ul>';
 		}
-
 		printf(
 			'<a href="%s" class="pcd-link">%s</a>',
 			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'history' ), admin_url( 'tools.php' ) ) ),
@@ -252,10 +317,9 @@ final class Dashboard {
 		);
 		echo '</div>';
 
-		// --- Recent errors card -----------------------------------------------
+		// --- Recent errors ---------------------------------------------------
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Recent Errors', 'plugin-conflict-detector' ) . '</h2>';
-
 		if ( empty( $error_entries ) ) {
 			echo '<p class="pcd-empty">' . esc_html__( 'No errors found in log files.', 'plugin-conflict-detector' ) . '</p>';
 		} else {
@@ -270,14 +334,11 @@ final class Dashboard {
 					esc_attr( $entry['type'] ),
 					esc_html( strtoupper( $entry['type'] ) ),
 					esc_html( wp_trim_words( $entry['message'], 15 ) ),
-					$entry['plugin_name']
-						? '<div class="pcd-error__plugin">Plugin: ' . esc_html( $entry['plugin_name'] ) . '</div>'
-						: ''
+					$entry['plugin_name'] ? '<div class="pcd-error__plugin">Plugin: ' . esc_html( $entry['plugin_name'] ) . '</div>' : ''
 				);
 			}
 			echo '</ul>';
 		}
-
 		printf(
 			'<a href="%s" class="pcd-link">%s</a>',
 			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'errors' ), admin_url( 'tools.php' ) ) ),
@@ -288,13 +349,32 @@ final class Dashboard {
 		echo '</div>'; // .pcd-grid
 	}
 
-	/** @return void */
+	// -------------------------------------------------------------------------
+	// Error Log tab
+	// -------------------------------------------------------------------------
+
 	private static function render_errors(): void {
-		$entries  = Error_Log::get_entries( 200 );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page    = isset( $_GET['pcd_page'] ) ? max( 1, (int) $_GET['pcd_page'] ) : 1;
+		$per_page = 50;
+		$all     = Error_Log::get_entries( 500 );
+		$total   = count( $all );
+		$entries = array_slice( $all, ( $page - 1 ) * $per_page, $per_page );
+		$pages   = (int) ceil( $total / $per_page );
 		$log_info = Error_Log::get_log_file_info();
 
 		echo '<div class="pcd-card pcd-card--full">';
+		echo '<div class="pcd-card__header">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Error Log', 'plugin-conflict-detector' ) . '</h2>';
+
+		// Clear log button.
+		if ( $log_info['exists'] && $log_info['writable'] ) {
+			printf(
+				'<button id="pcd-clear-log" class="button pcd-btn-danger" type="button">%s</button>',
+				esc_html__( 'Clear debug.log', 'plugin-conflict-detector' )
+			);
+		}
+		echo '</div>';
 
 		// Log file status banner.
 		echo '<div class="pcd-log-info">';
@@ -309,41 +389,50 @@ final class Dashboard {
 		} else {
 			echo '<span class="pcd-badge pcd-badge--info">' . esc_html__( 'No debug.log found', 'plugin-conflict-detector' ) . '</span>';
 			if ( ! $log_info['debug_enabled'] ) {
-				echo '<p class="pcd-tip">' . esc_html__( 'To enable logging, add to wp-config.php:', 'plugin-conflict-detector' ) . '<br>';
+				echo '<p class="pcd-tip">' . esc_html__( 'Add to wp-config.php to enable logging:', 'plugin-conflict-detector' ) . '<br>';
 				echo '<code>define(\'WP_DEBUG\', true);<br>define(\'WP_DEBUG_LOG\', true);</code></p>';
 			}
 		}
 		echo '</div>';
 
-		if ( empty( $entries ) ) {
+		if ( empty( $all ) ) {
 			echo '<p class="pcd-empty">' . esc_html__( 'No error entries found.', 'plugin-conflict-detector' ) . '</p>';
 			echo '</div>';
 			return;
 		}
 
 		// Filter bar.
-		echo '<div class="pcd-filter-bar" role="toolbar" aria-label="' . esc_attr__( 'Filter errors by type', 'plugin-conflict-detector' ) . '">';
-		$filter_labels = array(
-			'all'        => __( 'All',        'plugin-conflict-detector' ),
-			'fatal'      => __( 'Fatal',      'plugin-conflict-detector' ),
-			'warning'    => __( 'Warning',    'plugin-conflict-detector' ),
-			'notice'     => __( 'Notice',     'plugin-conflict-detector' ),
+		$type_counts = array_count_values( array_column( $all, 'type' ) );
+		echo '<div class="pcd-filter-bar" role="toolbar">';
+		$filters = array(
+			'all'        => __( 'All', 'plugin-conflict-detector' ),
+			'fatal'      => __( 'Fatal', 'plugin-conflict-detector' ),
+			'warning'    => __( 'Warning', 'plugin-conflict-detector' ),
+			'notice'     => __( 'Notice', 'plugin-conflict-detector' ),
 			'deprecated' => __( 'Deprecated', 'plugin-conflict-detector' ),
 		);
-		foreach ( $filter_labels as $key => $label ) {
+		foreach ( $filters as $key => $label ) {
+			$count = $key === 'all' ? $total : ( $type_counts[ $key ] ?? 0 );
 			printf(
-				'<button class="pcd-filter-btn%s" data-filter="%s" type="button">%s</button>',
+				'<button class="pcd-filter-btn%s" data-filter="%s" type="button">%s <span class="pcd-filter-count">%d</span></button>',
 				$key === 'all' ? ' pcd-filter-btn--active' : '',
 				esc_attr( $key ),
-				esc_html( $label )
+				esc_html( $label ),
+				$count
 			);
 		}
 		echo '</div>';
 
 		echo '<table class="pcd-errors-table">';
 		echo '<thead><tr>';
-		foreach ( array( 'Type', 'Time', 'Plugin', 'Message', 'File' ) as $heading ) {
-			echo '<th>' . esc_html__( $heading, 'plugin-conflict-detector' ) . '</th>'; // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+		foreach ( array(
+			__( 'Type',    'plugin-conflict-detector' ),
+			__( 'Time',    'plugin-conflict-detector' ),
+			__( 'Plugin',  'plugin-conflict-detector' ),
+			__( 'Message', 'plugin-conflict-detector' ),
+			__( 'File',    'plugin-conflict-detector' ),
+		) as $heading ) {
+			echo '<th>' . esc_html( $heading ) . '</th>';
 		}
 		echo '</tr></thead><tbody>';
 
@@ -368,27 +457,43 @@ final class Dashboard {
 				$entry['line'] ? ':' . esc_html( $entry['line'] ) : ''
 			);
 		}
+		echo '</tbody></table>';
 
-		echo '</tbody></table></div>';
+		self::render_pagination( $page, $pages, 'errors' );
+		echo '</div>';
 	}
 
-	/** @return void */
+	// -------------------------------------------------------------------------
+	// Change History tab
+	// -------------------------------------------------------------------------
+
 	private static function render_history(): void {
-		$changes = Change_History::get_recent( 200 );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page     = isset( $_GET['pcd_page'] ) ? max( 1, (int) $_GET['pcd_page'] ) : 1;
+		$per_page = 50;
+		$all      = Change_History::get_recent( 500 );
+		$total    = count( $all );
+		$changes  = array_slice( $all, ( $page - 1 ) * $per_page, $per_page );
+		$pages    = (int) ceil( $total / $per_page );
 
 		echo '<div class="pcd-card pcd-card--full">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Plugin Change History', 'plugin-conflict-detector' ) . '</h2>';
 
-		if ( empty( $changes ) ) {
-			echo '<p class="pcd-empty">' . esc_html__( 'No changes logged yet. Changes will be tracked from the moment this plugin was activated.', 'plugin-conflict-detector' ) . '</p>';
+		if ( empty( $all ) ) {
+			echo '<p class="pcd-empty">' . esc_html__( 'No changes logged yet. Changes are tracked from activation.', 'plugin-conflict-detector' ) . '</p>';
 			echo '</div>';
 			return;
 		}
 
 		echo '<table class="pcd-history-table">';
 		echo '<thead><tr>';
-		foreach ( array( 'Date & Time', 'Plugin', 'Action', 'Version' ) as $heading ) {
-			echo '<th>' . esc_html__( $heading, 'plugin-conflict-detector' ) . '</th>'; // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+		foreach ( array(
+			__( 'Date & Time', 'plugin-conflict-detector' ),
+			__( 'Plugin',      'plugin-conflict-detector' ),
+			__( 'Action',      'plugin-conflict-detector' ),
+			__( 'Version',     'plugin-conflict-detector' ),
+		) as $heading ) {
+			echo '<th>' . esc_html( $heading ) . '</th>';
 		}
 		echo '</tr></thead><tbody>';
 
@@ -411,133 +516,170 @@ final class Dashboard {
 				wp_kses_post( $version_cell )
 			);
 		}
+		echo '</tbody></table>';
 
-		echo '</tbody></table></div>';
+		self::render_pagination( $page, $pages, 'history' );
+		echo '</div>';
 	}
 
-	/** @return void */
+	// -------------------------------------------------------------------------
+	// Health Scan tab
+	// -------------------------------------------------------------------------
+
 	private static function render_scan(): void {
-		// Handle form submission.
-		$scan_result = null;
-		$notice      = '';
-
-		if ( isset( $_POST['pcd_run_scan'] ) ) {
-			if ( ! check_admin_referer( 'pcd_run_scan', 'pcd_scan_nonce' ) ) {
-				wp_die( esc_html__( 'Security check failed.', 'plugin-conflict-detector' ) );
-			}
-			$scan_result = Health_Scan::run();
-			$notice      = 'success';
-		}
-
-		$last_scan = $scan_result ?? Health_Scan::get_last_scan();
+		$last_scan = Health_Scan::get_last_scan();
 
 		echo '<div class="pcd-card pcd-card--full">';
+		echo '<div class="pcd-card__header">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Health Scan', 'plugin-conflict-detector' ) . '</h2>';
-
-		// Trigger form.
-		echo '<form method="post" action="">';
-		wp_nonce_field( 'pcd_run_scan', 'pcd_scan_nonce' );
 		printf(
-			'<button type="submit" name="pcd_run_scan" class="button button-primary pcd-scan-btn">%s</button>',
+			'<button id="pcd-run-scan" class="button button-primary" type="button">%s</button>',
 			esc_html__( 'Run Scan Now', 'plugin-conflict-detector' )
 		);
-		echo '</form>';
+		echo '</div>';
 
-		if ( $notice === 'success' ) {
-			echo '<div class="pcd-notice pcd-notice--success">' . esc_html__( 'Scan completed successfully.', 'plugin-conflict-detector' ) . '</div>';
+		echo '<div id="pcd-scan-status"></div>';
+
+		if ( $last_scan ) {
+			printf(
+				'<p class="pcd-scan-meta" id="pcd-scan-meta">%s %s &nbsp;|&nbsp; <strong>%s</strong> %s</p>',
+				esc_html__( 'Last scan:', 'plugin-conflict-detector' ),
+				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $last_scan['scanned_at'] ) ) ),
+				esc_html( (string) $last_scan['issues_found'] ),
+				esc_html( _n( 'issue found', 'issues found', $last_scan['issues_found'], 'plugin-conflict-detector' ) )
+			);
 		}
 
-		if ( ! $last_scan ) {
-			echo '<p class="pcd-empty">' . esc_html__( 'No scan has been run yet. Click "Run Scan Now" to start.', 'plugin-conflict-detector' ) . '</p>';
-			echo '</div>';
-			return;
+		echo '<div id="pcd-scan-results">';
+		if ( $last_scan ) {
+			echo self::build_scan_results_html( $last_scan ); // phpcs:ignore WordPress.Security.EscapeOutput — builder escapes internally
+		} else {
+			echo '<p class="pcd-empty">' . esc_html__( 'No scan run yet. Click "Run Scan Now" to start.', 'plugin-conflict-detector' ) . '</p>';
 		}
-
-		printf(
-			'<p class="pcd-scan-meta">%s %s &nbsp;|&nbsp; %s %s</p>',
-			esc_html__( 'Last scan:', 'plugin-conflict-detector' ),
-			esc_html( date_i18n( 'd-m-Y H:i', strtotime( $last_scan['scanned_at'] ) ) ),
-			esc_html( $last_scan['issues_found'] ),
-			esc_html( _n( 'issue found', 'issues found', $last_scan['issues_found'], 'plugin-conflict-detector' ) )
-		);
-
-		// Render each section.
-		self::render_scan_section(
-			__( 'Plugins', 'plugin-conflict-detector' ),
-			$last_scan['plugins'] ?? array()
-		);
-		self::render_scan_section(
-			__( 'Theme', 'plugin-conflict-detector' ),
-			$last_scan['theme'] ?? array(),
-			$last_scan['theme']['info'] ?? array()
-		);
-		self::render_scan_section(
-			__( 'Server', 'plugin-conflict-detector' ),
-			$last_scan['server'] ?? array(),
-			$last_scan['server']['info'] ?? array()
-		);
+		echo '</div>';
 
 		echo '</div>';
 	}
 
+	// -------------------------------------------------------------------------
+	// Scan results HTML builder (used by both render_scan and AJAX)
+	// -------------------------------------------------------------------------
+
 	/**
-	 * Renders a single scan section (plugins / theme / server).
+	 * Builds the inner HTML for scan results.
+	 * All output is escaped — safe to pass directly to the page or AJAX response.
 	 *
-	 * @param string               $title   Section heading.
-	 * @param array<string, mixed> $section Section data (must have 'issues' key).
-	 * @param array<string, mixed> $info    Optional key/value info table.
-	 * @return void
+	 * @param  array<string, mixed> $data Scan result array from Health_Scan::run() or get_last_scan().
+	 * @return string
 	 */
-	private static function render_scan_section( string $title, array $section, array $info = array() ): void {
-		echo '<h3>' . esc_html( $title ) . '</h3>';
+	public static function build_scan_results_html( array $data ): string {
+		ob_start();
 
-		if ( ! empty( $info ) ) {
-			echo '<table class="pcd-table" style="margin-bottom:12px">';
-			foreach ( $info as $key => $value ) {
-				if ( is_bool( $value ) ) {
-					$cell = $value
-						? '<span class="pcd-badge pcd-badge--warning">ON</span>'
-						: '<span class="pcd-badge pcd-badge--ok">OFF</span>';
-				} else {
-					$cell = esc_html( (string) $value );
+		$sections = array(
+			__( 'Plugins', 'plugin-conflict-detector' ) => $data['plugins'] ?? array(),
+			__( 'Theme',   'plugin-conflict-detector' ) => $data['theme']   ?? array(),
+			__( 'Server',  'plugin-conflict-detector' ) => $data['server']  ?? array(),
+		);
+
+		foreach ( $sections as $title => $section ) {
+			echo '<h3>' . esc_html( $title ) . '</h3>';
+
+			// For theme and server, render the info key→value table.
+			$info = $section['info'] ?? array();
+			if ( ! empty( $info ) && ! isset( $info[0] ) ) { // skip indexed arrays (plugins list)
+				echo '<table class="pcd-table pcd-table--scan">';
+				foreach ( $info as $key => $value ) {
+					if ( is_array( $value ) ) {
+						continue;
+					}
+					if ( is_bool( $value ) ) {
+						$cell = $value
+							? '<span class="pcd-badge pcd-badge--warning">ON</span>'
+							: '<span class="pcd-badge pcd-badge--ok">OFF</span>';
+					} else {
+						$cell = esc_html( (string) $value );
+					}
+					printf(
+						'<tr><th>%s</th><td>%s</td></tr>',
+						esc_html( ucwords( str_replace( '_', ' ', $key ) ) ),
+						wp_kses_post( $cell )
+					);
 				}
-				printf(
-					'<tr><th>%s</th><td>%s</td></tr>',
-					esc_html( ucfirst( str_replace( '_', ' ', $key ) ) ),
-					wp_kses_post( $cell )
-				);
+				echo '</table>';
 			}
-			echo '</table>';
+
+			$issues = $section['issues'] ?? array();
+			if ( empty( $issues ) ) {
+				printf(
+					'<div class="pcd-notice pcd-notice--success">%s</div>',
+					esc_html( sprintf(
+						/* translators: section name */
+						__( 'No issues found in %s.', 'plugin-conflict-detector' ),
+						strtolower( $title )
+					) )
+				);
+			} else {
+				echo '<ul class="pcd-issue-list">';
+				foreach ( $issues as $issue ) {
+					printf(
+						'<li class="pcd-issue pcd-issue--%s"><span class="pcd-issue-icon" aria-hidden="true">%s</span>%s</li>',
+						esc_attr( $issue['type'] ),
+						esc_html( self::issue_icon( $issue['type'] ) ),
+						esc_html( $issue['message'] )
+					);
+				}
+				echo '</ul>';
+			}
 		}
 
-		$issues = $section['issues'] ?? array();
-
-		if ( empty( $issues ) ) {
-			echo '<div class="pcd-notice pcd-notice--success">';
-			printf(
-				/* translators: section title */
-				esc_html__( 'No issues found in %s.', 'plugin-conflict-detector' ),
-				esc_html( strtolower( $title ) )
-			);
-			echo '</div>';
-			return;
-		}
-
-		echo '<ul class="pcd-issue-list">';
-		foreach ( $issues as $issue ) {
-			printf(
-				'<li class="pcd-issue pcd-issue--%s"><span class="pcd-issue-icon" aria-hidden="true">%s</span>%s</li>',
-				esc_attr( $issue['type'] ),
-				esc_html( self::issue_icon( $issue['type'] ) ),
-				esc_html( $issue['message'] )
-			);
-		}
-		echo '</ul>';
+		return (string) ob_get_clean();
 	}
 
 	// -------------------------------------------------------------------------
-	// Presentational helpers
+	// Shared helpers
 	// -------------------------------------------------------------------------
+
+	private static function stat_card( string $value, string $label, string $icon_key, string $status ): void {
+		$icons = array(
+			'plugin'  => '🔌',
+			'history' => '🕐',
+			'error'   => '⚠️',
+			'scan'    => '🩺',
+		);
+		printf(
+			'<div class="pcd-stat pcd-stat--%s">
+				<span class="pcd-stat__icon" aria-hidden="true">%s</span>
+				<span class="pcd-stat__value">%s</span>
+				<span class="pcd-stat__label">%s</span>
+			</div>',
+			esc_attr( $status ),
+			$icons[ $icon_key ] ?? '',
+			esc_html( $value ),
+			esc_html( $label )
+		);
+	}
+
+	private static function render_pagination( int $current, int $total_pages, string $tab ): void {
+		if ( $total_pages <= 1 ) {
+			return;
+		}
+
+		echo '<div class="pcd-pagination">';
+		for ( $i = 1; $i <= $total_pages; $i++ ) {
+			$url = add_query_arg( array(
+				'page'     => self::PAGE_SLUG,
+				'tab'      => $tab,
+				'pcd_page' => $i,
+			), admin_url( 'tools.php' ) );
+			printf(
+				'<a href="%s" class="pcd-page-btn%s">%d</a>',
+				esc_url( $url ),
+				$i === $current ? ' pcd-page-btn--active' : '',
+				$i
+			);
+		}
+		echo '</div>';
+	}
 
 	private static function action_icon( string $action ): string {
 		return array(
@@ -567,14 +709,10 @@ final class Dashboard {
 	}
 
 	private static function issue_icon( string $type ): string {
-		$errors   = array( 'incompatible', 'missing-parent', 'missing-file', 'php-version', 'memory-low' );
-		$updates  = array( 'update-available', 'wp-update', 'outdated' );
-		if ( in_array( $type, $errors, true ) ) {
-			return '❌';
-		}
-		if ( in_array( $type, $updates, true ) ) {
-			return '🔄';
-		}
+		$errors  = array( 'incompatible', 'missing-parent', 'missing-file', 'php-version', 'memory-low' );
+		$updates = array( 'update-available', 'wp-update', 'outdated' );
+		if ( in_array( $type, $errors, true ) )  return '❌';
+		if ( in_array( $type, $updates, true ) ) return '🔄';
 		return '⚠️';
 	}
 }

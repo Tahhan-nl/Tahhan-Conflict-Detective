@@ -1,4 +1,8 @@
-/* Plugin Conflict Detector – Admin Styles */
+/* Plugin Conflict Detector – Admin Styles v1.1 */
+
+/* ============================================================
+   Base
+   ============================================================ */
 
 .pcd-wrap {
 	max-width: 1400px;
@@ -12,11 +16,10 @@
 	margin-bottom: 16px !important;
 }
 
-.pcd-logo {
-	font-size: 28px;
-}
+/* ============================================================
+   Tabs
+   ============================================================ */
 
-/* Tabs */
 .pcd-tabs {
 	display: flex;
 	gap: 2px;
@@ -50,14 +53,81 @@
 	border-bottom-color: #fff;
 }
 
-/* Grid */
+/* ============================================================
+   Stats bar
+   ============================================================ */
+
+.pcd-stats-bar {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 14px;
+	margin-bottom: 20px;
+}
+
+.pcd-stat {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	padding: 16px 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.05);
+	border-left: 4px solid #c3c4c7;
+}
+
+.pcd-stat--ok      { border-left-color: #00a32a; }
+.pcd-stat--warning { border-left-color: #dba617; }
+.pcd-stat--danger  { border-left-color: #d63638; }
+.pcd-stat--neutral { border-left-color: #2271b1; }
+
+.pcd-stat__icon  { font-size: 22px; }
+.pcd-stat__value { font-size: 28px; font-weight: 700; line-height: 1; color: #1d2327; }
+.pcd-stat__label { font-size: 12px; color: #646970; text-transform: uppercase; letter-spacing: .04em; }
+
+/* ============================================================
+   Likely Culprit banner
+   ============================================================ */
+
+.pcd-culprit-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+	background: #fff8e5;
+	border: 1px solid #f0c040;
+	border-left: 4px solid #dba617;
+	border-radius: 6px;
+	padding: 14px 18px;
+	margin-bottom: 20px;
+}
+
+.pcd-culprit-icon { font-size: 28px; flex-shrink: 0; }
+
+.pcd-culprit-body strong {
+	display: block;
+	font-size: 15px;
+	color: #1d2327;
+	margin-bottom: 4px;
+}
+
+.pcd-culprit-meta {
+	display: block;
+	font-size: 12px;
+	color: #646970;
+	margin-top: 4px;
+}
+
+/* ============================================================
+   Grid + Cards
+   ============================================================ */
+
 .pcd-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
 	gap: 20px;
 }
 
-/* Cards */
 .pcd-card {
 	background: #fff;
 	border: 1px solid #c3c4c7;
@@ -66,8 +136,21 @@
 	box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
 
-.pcd-card--full {
-	grid-column: 1 / -1;
+.pcd-card--full { grid-column: 1 / -1; }
+
+.pcd-card__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.pcd-card__header .pcd-card__title {
+	margin: 0 !important;
+	padding: 0 !important;
+	border-bottom: none !important;
 }
 
 .pcd-card__title {
@@ -90,7 +173,10 @@
 	font-weight: 600;
 }
 
-/* Tables */
+/* ============================================================
+   Tables
+   ============================================================ */
+
 .pcd-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -105,10 +191,10 @@
 	font-weight: 500;
 }
 
-.pcd-table td {
-	padding: 6px 0;
-	color: #1d2327;
-}
+.pcd-table td { padding: 6px 0; color: #1d2327; }
+
+.pcd-table--scan th { width: 35%; padding: 5px 8px 5px 0; }
+.pcd-table--scan td { padding: 5px 0; }
 
 .pcd-errors-table,
 .pcd-history-table {
@@ -135,24 +221,15 @@
 }
 
 .pcd-errors-table tr:hover td,
-.pcd-history-table tr:hover td {
-	background: #f6f7f7;
-}
+.pcd-history-table tr:hover td { background: #f6f7f7; }
 
-.pcd-errors-table .pcd-error-msg {
-	max-width: 400px;
-	word-break: break-word;
-}
+.pcd-error-msg  { max-width: 400px; word-break: break-word; }
+.pcd-error-file { font-family: monospace; font-size: 11px; color: #646970; max-width: 300px; word-break: break-all; }
 
-.pcd-errors-table .pcd-error-file {
-	font-family: monospace;
-	font-size: 11px;
-	color: #646970;
-	max-width: 300px;
-	word-break: break-all;
-}
+/* ============================================================
+   Badges
+   ============================================================ */
 
-/* Badges */
 .pcd-badge {
 	display: inline-block;
 	padding: 2px 8px;
@@ -160,7 +237,8 @@
 	font-size: 11px;
 	font-weight: 600;
 	text-transform: uppercase;
-	letter-spacing: 0.03em;
+	letter-spacing: .03em;
+	white-space: nowrap;
 }
 
 .pcd-badge--ok      { background: #d1e7dd; color: #0a3622; }
@@ -173,7 +251,10 @@
 .pcd-badge--action-updated     { background: #cff4fc; color: #055160; }
 .pcd-badge--action-deleted     { background: #f8d7da; color: #58151c; }
 
-/* Plugin list */
+/* ============================================================
+   Plugin list
+   ============================================================ */
+
 .pcd-plugin-list {
 	margin: 0;
 	padding: 0;
@@ -188,17 +269,13 @@
 	font-size: 13px;
 }
 
-.pcd-version {
-	color: #646970;
-	font-size: 12px;
-}
+.pcd-version { color: #646970; font-size: 12px; }
 
-/* Change list */
-.pcd-change-list {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
+/* ============================================================
+   Change list (dashboard widget)
+   ============================================================ */
+
+.pcd-change-list { margin: 0; padding: 0; list-style: none; }
 
 .pcd-change-list li {
 	display: flex;
@@ -209,124 +286,36 @@
 	font-size: 13px;
 }
 
-.pcd-action-icon {
-	font-size: 16px;
-	width: 24px;
-	text-align: center;
-}
+.pcd-action-icon { font-size: 16px; width: 24px; text-align: center; }
+.pcd-change-name { flex: 1; font-weight: 500; }
+.pcd-change-time { color: #646970; font-size: 12px; white-space: nowrap; }
 
-.pcd-change-name {
-	flex: 1;
-	font-weight: 500;
-}
+/* ============================================================
+   Error list (dashboard widget)
+   ============================================================ */
 
-.pcd-change-time {
-	color: #646970;
-	font-size: 12px;
-	white-space: nowrap;
-}
-
-/* Error list (dashboard) */
-.pcd-error-list {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
+.pcd-error-list { margin: 0; padding: 0; list-style: none; }
 
 .pcd-error {
-	padding: 8px;
+	padding: 8px 10px;
 	border-radius: 4px;
 	margin-bottom: 6px;
 	font-size: 13px;
 }
 
-.pcd-error--fatal    { background: #fdf2f2; border-left: 3px solid #dc3545; }
-.pcd-error--warning  { background: #fffbf0; border-left: 3px solid #ffc107; }
-.pcd-error--notice   { background: #f0f8ff; border-left: 3px solid #0dcaf0; }
-.pcd-error--parse.error { background: #fdf2f2; border-left: 3px solid #dc3545; }
+.pcd-error--fatal       { background: #fdf2f2; border-left: 3px solid #dc3545; }
+.pcd-error--warning     { background: #fffbf0; border-left: 3px solid #ffc107; }
+.pcd-error--notice      { background: #f0f8ff; border-left: 3px solid #0dcaf0; }
+.pcd-error--deprecated  { background: #f9f3ff; border-left: 3px solid #9b59b6; }
 
-.pcd-error__type {
-	font-size: 10px;
-	font-weight: 700;
-	text-transform: uppercase;
-	color: #646970;
-	margin-bottom: 3px;
-}
+.pcd-error__type    { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #646970; margin-bottom: 2px; }
+.pcd-error__message { color: #1d2327; }
+.pcd-error__plugin  { font-size: 12px; color: #646970; margin-top: 3px; }
 
-.pcd-error__message {
-	color: #1d2327;
-}
+/* ============================================================
+   Filter bar
+   ============================================================ */
 
-.pcd-error__plugin {
-	font-size: 12px;
-	color: #646970;
-	margin-top: 3px;
-}
-
-/* Health scan */
-.pcd-scan-btn {
-	margin-bottom: 20px !important;
-}
-
-.pcd-scan-meta {
-	color: #646970;
-	font-size: 13px;
-	margin-bottom: 20px;
-}
-
-.pcd-issue-list {
-	margin: 8px 0 16px;
-	padding: 0;
-	list-style: none;
-}
-
-.pcd-issue {
-	display: flex;
-	align-items: flex-start;
-	gap: 8px;
-	padding: 10px 12px;
-	border-radius: 4px;
-	margin-bottom: 6px;
-	font-size: 13px;
-	background: #fffbf0;
-	border: 1px solid #ffc107;
-}
-
-.pcd-issue--incompatible,
-.pcd-issue--missing-parent,
-.pcd-issue--missing-file,
-.pcd-issue--php-version,
-.pcd-issue--memory-low {
-	background: #fdf2f2;
-	border-color: #dc3545;
-}
-
-.pcd-issue-icon {
-	font-size: 16px;
-	flex-shrink: 0;
-}
-
-/* Notices */
-.pcd-notice {
-	padding: 10px 14px;
-	border-radius: 4px;
-	margin: 10px 0;
-	font-size: 13px;
-}
-
-.pcd-notice--success {
-	background: #d1e7dd;
-	color: #0a3622;
-	border: 1px solid #a3cfbb;
-}
-
-.pcd-notice--error {
-	background: #f8d7da;
-	color: #58151c;
-	border: 1px solid #f1aeb5;
-}
-
-/* Filter bar */
 .pcd-filter-bar {
 	display: flex;
 	gap: 6px;
@@ -351,7 +340,99 @@
 	border-color: #2271b1;
 }
 
-/* Misc */
+.pcd-filter-count {
+	display: inline-block;
+	background: rgba(0,0,0,.12);
+	border-radius: 10px;
+	padding: 0 5px;
+	font-size: 10px;
+	font-weight: 700;
+	min-width: 16px;
+	text-align: center;
+}
+
+.pcd-filter-btn--active .pcd-filter-count { background: rgba(255,255,255,.25); }
+
+/* ============================================================
+   Health Scan
+   ============================================================ */
+
+.pcd-scan-meta {
+	color: #646970;
+	font-size: 13px;
+	margin: 12px 0 20px;
+}
+
+.pcd-issue-list { margin: 8px 0 20px; padding: 0; list-style: none; }
+
+.pcd-issue {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 10px 14px;
+	border-radius: 4px;
+	margin-bottom: 6px;
+	font-size: 13px;
+	background: #fffbf0;
+	border: 1px solid #f0c040;
+}
+
+.pcd-issue--incompatible,
+.pcd-issue--missing-parent,
+.pcd-issue--missing-file,
+.pcd-issue--php-version,
+.pcd-issue--memory-low {
+	background: #fdf2f2;
+	border-color: #f1aeb5;
+}
+
+.pcd-issue-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* ============================================================
+   Notices
+   ============================================================ */
+
+.pcd-notice {
+	padding: 10px 14px;
+	border-radius: 4px;
+	margin: 8px 0;
+	font-size: 13px;
+}
+
+.pcd-notice--success { background: #d1e7dd; color: #0a3622; border: 1px solid #a3cfbb; }
+.pcd-notice--error   { background: #f8d7da; color: #58151c; border: 1px solid #f1aeb5; }
+.pcd-notice--info    { background: #cff4fc; color: #055160; border: 1px solid #9eeaf9; }
+
+/* ============================================================
+   Pagination
+   ============================================================ */
+
+.pcd-pagination {
+	display: flex;
+	gap: 4px;
+	margin-top: 16px;
+	flex-wrap: wrap;
+}
+
+.pcd-page-btn {
+	display: inline-block;
+	padding: 5px 11px;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	background: #f6f7f7;
+	text-decoration: none;
+	color: #1d2327;
+	font-size: 13px;
+	transition: background 0.15s;
+}
+
+.pcd-page-btn:hover      { background: #e0e0e0; color: #1d2327; }
+.pcd-page-btn--active    { background: #2271b1; color: #fff !important; border-color: #2271b1; }
+
+/* ============================================================
+   Misc
+   ============================================================ */
+
 .pcd-empty {
 	color: #646970;
 	font-size: 13px;
@@ -370,15 +451,8 @@
 	font-size: 12px;
 }
 
-.pcd-log-info {
-	margin-bottom: 16px;
-}
-
-.pcd-log-meta {
-	color: #646970;
-	font-size: 12px;
-	margin-left: 8px;
-}
+.pcd-log-info { margin-bottom: 16px; }
+.pcd-log-meta { color: #646970; font-size: 12px; margin-left: 8px; }
 
 .pcd-tip {
 	font-family: monospace;
@@ -390,7 +464,20 @@
 	color: #646970;
 }
 
-/* Hidden rows for filter */
-.pcd-error-row--hidden {
-	display: none;
+.pcd-btn-danger {
+	border-color: #d63638 !important;
+	color: #d63638 !important;
+}
+
+.pcd-btn-danger:hover {
+	background: #d63638 !important;
+	color: #fff !important;
+}
+
+#pcd-scan-status:empty { display: none; }
+
+/* Responsive: collapse stats to 2 columns on smaller screens */
+@media screen and (max-width: 960px) {
+	.pcd-stats-bar { grid-template-columns: repeat(2, 1fr); }
+	.pcd-grid      { grid-template-columns: 1fr; }
 }
