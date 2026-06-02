@@ -33,12 +33,51 @@ final class Dashboard {
 	// -------------------------------------------------------------------------
 
 	public static function register_menu(): void {
-		add_submenu_page(
-			'tools.php',
+		// Top-level menu item — position 65 sits between "Plugins" (65) and "Users" (70).
+		add_menu_page(
 			__( 'Plugin Conflict Detector', 'plugin-conflict-detector' ),
 			__( 'Conflict Detector', 'plugin-conflict-detector' ),
 			'manage_options',
 			self::PAGE_SLUG,
+			array( __CLASS__, 'render_page' ),
+			'dashicons-search',
+			65
+		);
+
+		// Add sub-pages so the tab links appear in the sidebar as well.
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Dashboard', 'plugin-conflict-detector' ),
+			__( 'Dashboard', 'plugin-conflict-detector' ),
+			'manage_options',
+			self::PAGE_SLUG,
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Error Log', 'plugin-conflict-detector' ),
+			__( 'Error Log', 'plugin-conflict-detector' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=errors',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Change History', 'plugin-conflict-detector' ),
+			__( 'Change History', 'plugin-conflict-detector' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=history',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Health Scan', 'plugin-conflict-detector' ),
+			__( 'Health Scan', 'plugin-conflict-detector' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=scan',
 			array( __CLASS__, 'render_page' )
 		);
 	}
@@ -155,7 +194,7 @@ final class Dashboard {
 			$active = $key === $tab;
 			printf(
 				'<a href="%s" class="pcd-tab%s"%s>%s</a>',
-				esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => $key ), admin_url( 'tools.php' ) ) ),
+				esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => $key ), admin_url( 'admin.php' ) ) ),
 				$active ? ' pcd-tab--active' : '',
 				$active ? ' aria-current="page"' : '',
 				esc_html( $label )
@@ -312,7 +351,7 @@ final class Dashboard {
 		}
 		printf(
 			'<a href="%s" class="pcd-link">%s</a>',
-			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'history' ), admin_url( 'tools.php' ) ) ),
+			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'history' ), admin_url( 'admin.php' ) ) ),
 			esc_html__( 'View all changes →', 'plugin-conflict-detector' )
 		);
 		echo '</div>';
@@ -341,7 +380,7 @@ final class Dashboard {
 		}
 		printf(
 			'<a href="%s" class="pcd-link">%s</a>',
-			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'errors' ), admin_url( 'tools.php' ) ) ),
+			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'errors' ), admin_url( 'admin.php' ) ) ),
 			esc_html__( 'View all errors →', 'plugin-conflict-detector' )
 		);
 		echo '</div>';
@@ -670,7 +709,7 @@ final class Dashboard {
 				'page'     => self::PAGE_SLUG,
 				'tab'      => $tab,
 				'pcd_page' => $i,
-			), admin_url( 'tools.php' ) );
+			), admin_url( 'admin.php' ) );
 			printf(
 				'<a href="%s" class="pcd-page-btn%s">%d</a>',
 				esc_url( $url ),
