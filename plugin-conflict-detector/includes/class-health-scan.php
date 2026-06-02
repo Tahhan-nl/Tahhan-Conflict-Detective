@@ -124,7 +124,11 @@ final class Health_Scan {
 			return null;
 		}
 
-		$result = json_decode( $row->result, true ) ?? array();
+		$result = json_decode( $row->result, true );
+		if ( ! is_array( $result ) ) {
+			// Corrupted or empty JSON — treat as no scan.
+			return null;
+		}
 		$result['scanned_at']   = $row->scanned_at;
 		$result['issues_found'] = (int) $row->issues_found;
 
