@@ -149,10 +149,11 @@ final class Dashboard {
 			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
 		}
 
-		$results = Health_Scan::run();
+		$results    = Health_Scan::run();
+		$scanned_ts = strtotime( $results['scanned_at'] );
 		wp_send_json_success( array(
 			'issues'     => $results['issues_found'],
-			'scanned_at' => date_i18n( 'd-m-Y H:i', strtotime( $results['scanned_at'] ) ),
+			'scanned_at' => $scanned_ts ? date_i18n( 'd-m-Y H:i', $scanned_ts ) : '',
 			'html'       => self::build_scan_results_html( $results ),
 		) );
 	}
