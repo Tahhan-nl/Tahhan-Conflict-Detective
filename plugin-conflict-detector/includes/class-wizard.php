@@ -112,7 +112,7 @@ final class Wizard {
 				</a>',
 				esc_url( $url ),
 				$icons[ $slug ] ?? '❓',
-				esc_html__( $label, 'plugin-conflict-detector' ) // phpcs:ignore WordPress.WP.I18n
+				esc_html( $label )
 			);
 		}
 		echo '</div></div>';
@@ -160,8 +160,10 @@ final class Wizard {
 
 			$timeline = array();
 			foreach ( $changes as $c ) {
+				$ts = strtotime( $c->changed_at );
+				if ( ! $ts ) continue;
 				$timeline[] = array(
-					'ts'    => strtotime( $c->changed_at ),
+					'ts'    => $ts,
 					'type'  => 'change',
 					'label' => sprintf( '%s — %s', $c->plugin_name, self::action_label( $c->action ) ),
 					'time'  => $c->changed_at,
@@ -169,8 +171,10 @@ final class Wizard {
 			}
 			foreach ( $errors as $e ) {
 				if ( empty( $e['time'] ) ) continue;
+				$ts = strtotime( $e['time'] );
+				if ( ! $ts ) continue;
 				$timeline[] = array(
-					'ts'    => strtotime( $e['time'] ),
+					'ts'    => $ts,
 					'type'  => 'error',
 					'label' => sprintf( '[%s] %s', strtoupper( $e['type'] ), wp_trim_words( $e['message'], 10 ) ),
 					'time'  => $e['time'],
