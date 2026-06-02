@@ -42,15 +42,17 @@
 						);
 						$results.html(response.data.html);
 						if ($meta.length) {
-							$meta.html(
-								response.data.scanned_at + ' &nbsp;|&nbsp; <strong>' +
-								response.data.issues + '</strong> issues found'
-							);
+							// Use text nodes to avoid XSS — only wrap static markup around them.
+							$meta.empty()
+								.append( document.createTextNode( response.data.scanned_at + '  |  ' ) )
+								.append( $('<strong>').text( response.data.issues ) )
+								.append( document.createTextNode( ' issues found' ) );
 						}
 					} else {
+						var errMsg = (response.data && response.data.message) ? response.data.message : 'Unknown error';
 						$status.html(
 							'<div class="pcd-notice pcd-notice--error">Error: ' +
-							(response.data && response.data.message ? response.data.message : 'Unknown error') +
+							$('<div>').text( errMsg ).html() +
 							'</div>'
 						);
 					}
