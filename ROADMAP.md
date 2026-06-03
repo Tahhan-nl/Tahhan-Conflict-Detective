@@ -1,4 +1,4 @@
-# Roadmap — WordPress Conflict Detector
+# Roadmap — WordPress Conflict Detective
 
 > **Mission:** Answer "which plugin broke my site?" automatically — without the user ever having to disable plugins by hand.
 
@@ -8,7 +8,7 @@
 
 ## Phase 1 — MVP ✅ Complete
 
-### Dashboard (`Tools → Conflict Detector`)
+### Dashboard (`Tools → Conflict Detective`)
 - Active plugins with versions
 - Recently activated plugins
 - Latest updates

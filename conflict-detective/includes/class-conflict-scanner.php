@@ -208,7 +208,7 @@ final class Conflict_Scanner {
 
 		$parts[] = sprintf(
 			/* translators: 1: action, 2: plugin name, 3: formatted date */
-			__( '%1$s "%2$s" on %3$s.', 'conflict-detector' ),
+			__( '%1$s "%2$s" on %3$s.', 'conflict-detective' ),
 			ucfirst( $change->action ),
 			$change->plugin_name,
 			date_i18n( 'd-m-Y H:i', strtotime( $change->changed_at ) )
@@ -219,7 +219,7 @@ final class Conflict_Scanner {
 				'%d error attributed to this plugin after the change.',
 				'%d errors attributed to this plugin after the change.',
 				$error_count,
-				'conflict-detector'
+				'conflict-detective'
 			),
 			$error_count
 		);
@@ -227,7 +227,7 @@ final class Conflict_Scanner {
 		if ( $within_window && $first_error_ts !== PHP_INT_MAX ) {
 			$parts[] = sprintf(
 				/* translators: formatted time */
-				__( 'First error appeared at %s — within the timeline window.', 'conflict-detector' ),
+				__( 'First error appeared at %s — within the timeline window.', 'conflict-detective' ),
 				date_i18n( 'H:i', $first_error_ts )
 			);
 		}
