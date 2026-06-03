@@ -1,4 +1,4 @@
-# Roadmap — WordPress Plugin Conflict Detector
+# Roadmap — WordPress Conflict Detector
 
 > **Mission:** Answer "which plugin broke my site?" automatically — without the user ever having to disable plugins by hand.
 
