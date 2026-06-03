@@ -312,9 +312,10 @@ final class Dashboard {
 			);
 		}
 
-		echo '<div class="pcd-grid">';
+		// ── Row 1: System overview (narrow) + Active plugins (wide) ──────────
+		echo '<div class="pcd-grid pcd-grid--top">';
 
-		// --- System info -----------------------------------------------------
+		// System info
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'System Overview', 'plugin-conflict-detector' ) . '</h2>';
 		echo '<table class="pcd-table">';
@@ -332,7 +333,7 @@ final class Dashboard {
 		}
 		echo '</table></div>';
 
-		// --- Active plugins --------------------------------------------------
+		// Active plugins
 		echo '<div class="pcd-card">';
 		printf(
 			'<h2 class="pcd-card__title">%s <span class="pcd-count">%d</span></h2>',
@@ -350,11 +351,16 @@ final class Dashboard {
 		}
 		echo '</ul></div>';
 
-		// --- Recent changes --------------------------------------------------
+		echo '</div>'; // .pcd-grid--top
+
+		// ── Row 2: Recent changes + Recent errors (50/50) ─────────────────────
+		echo '<div class="pcd-grid pcd-grid--bottom">';
+
+		// Recent changes
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Recent Changes', 'plugin-conflict-detector' ) . '</h2>';
 		if ( empty( $recent_changes ) ) {
-			echo '<p class="pcd-empty">' . esc_html__( 'No changes logged yet. Changes are tracked from the moment this plugin was activated.', 'plugin-conflict-detector' ) . '</p>';
+			echo '<p class="pcd-empty">' . esc_html__( 'No changes logged yet. Plugin changes are tracked automatically from the moment this plugin is activated.', 'plugin-conflict-detector' ) . '</p>';
 		} else {
 			echo '<ul class="pcd-change-list">';
 			foreach ( $recent_changes as $change ) {
@@ -381,11 +387,11 @@ final class Dashboard {
 		);
 		echo '</div>';
 
-		// --- Recent errors ---------------------------------------------------
+		// Recent errors
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Recent Errors', 'plugin-conflict-detector' ) . '</h2>';
 		if ( empty( $error_entries ) ) {
-			echo '<p class="pcd-empty">' . esc_html__( 'No errors found in log files.', 'plugin-conflict-detector' ) . '</p>';
+			echo '<p class="pcd-empty">' . esc_html__( 'No errors found in the log file.', 'plugin-conflict-detector' ) . '</p>';
 		} else {
 			echo '<ul class="pcd-error-list">';
 			foreach ( $error_entries as $entry ) {
@@ -410,7 +416,7 @@ final class Dashboard {
 		);
 		echo '</div>';
 
-		echo '</div>'; // .pcd-grid
+		echo '</div>'; // .pcd-grid--bottom
 	}
 
 	// -------------------------------------------------------------------------
