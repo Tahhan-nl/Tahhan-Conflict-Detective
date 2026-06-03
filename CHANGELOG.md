@@ -11,6 +11,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.1.2] — 2026-06-03
+
+### Fixed
+- Translators comments added to all `__()` and `_n()` calls with placeholders (WordPress.WP.I18n)
+- Ordered placeholders `%s` → `%1$s, %2$s, %3$s` in class-health-scan.php
+- Unescaped integers wrapped with `absint()` in class-dashboard.php and class-wizard.php
+- Constants renamed `PCD_` → `CD_` to match plugin slug prefix (WordPress.NamingConventions)
+- phpcs:ignore sniff names corrected for WP_Filesystem bypass in class-error-log.php
+- PluginCheck.CodeAnalysis.WriteFile phpcs:ignore added for debug.log clear handler
+- Direct `$wpdb` query phpcs:ignore comments added with justification throughout
+
+---
+
 ## [2.1.1] — 2026-06-03
 
 ### Added
@@ -83,7 +96,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v1.0.0...v2.0.0
