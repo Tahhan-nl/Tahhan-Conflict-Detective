@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Conflict Detective
- * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector
+ * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Conflict-Detective
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
  * Version:           2.1.1
  * Requires at least: 5.8

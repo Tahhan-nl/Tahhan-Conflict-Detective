@@ -119,8 +119,8 @@ See [ROADMAP.md](ROADMAP.md) for the full specification.
 
 ### From Source (development)
 ```bash
-git clone git@github.com:Tahhan-nl/WordPress-Plugin-Conflict-Detector.git
-cd WordPress-Plugin-Conflict-Detector
+git clone git@github.com:Tahhan-nl/WordPress-Conflict-Detective.git
+cd WordPress-Conflict-Detective
 
 # Copy the plugin folder into your local WordPress install
 cp -r conflict-detective /path/to/wordpress/wp-content/plugins/
