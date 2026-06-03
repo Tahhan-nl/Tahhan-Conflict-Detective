@@ -206,7 +206,7 @@ final class Dashboard {
 
 		echo '<div class="wrap pcd-wrap">';
 		printf(
-			'<h1 class="pcd-title"><span aria-hidden="true">&#128269;</span> %s</h1>',
+			'<h1 class="pcd-title"><span class="pcd-title-icon" aria-hidden="true">&#128269;</span> %s</h1>',
 			esc_html__( 'Plugin Conflict Detector', 'plugin-conflict-detector' )
 		);
 
@@ -373,9 +373,9 @@ final class Dashboard {
 			echo '</ul>';
 		}
 		printf(
-			'<a href="%s" class="pcd-link">%s</a>',
+			'<a href="%s" class="pcd-link">%s &#8594;</a>',
 			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'history' ), admin_url( 'admin.php' ) ) ),
-			esc_html__( 'View all changes →', 'plugin-conflict-detector' )
+			esc_html__( 'View all changes', 'plugin-conflict-detector' )
 		);
 		echo '</div>';
 
@@ -402,9 +402,9 @@ final class Dashboard {
 			echo '</ul>';
 		}
 		printf(
-			'<a href="%s" class="pcd-link">%s</a>',
+			'<a href="%s" class="pcd-link">%s &#8594;</a>',
 			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'errors' ), admin_url( 'admin.php' ) ) ),
-			esc_html__( 'View all errors →', 'plugin-conflict-detector' )
+			esc_html__( 'View all errors', 'plugin-conflict-detector' )
 		);
 		echo '</div>';
 
