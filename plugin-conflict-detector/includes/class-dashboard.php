@@ -109,14 +109,14 @@ final class Dashboard {
 			'pcd-admin',
 			PCD_PLUGIN_URL . 'admin/css/admin.css',
 			array(),
-			PCD_VERSION
+			(string) filemtime( PCD_PLUGIN_DIR . 'admin/css/admin.css' )
 		);
 
 		wp_enqueue_script(
 			'pcd-admin',
 			PCD_PLUGIN_URL . 'admin/js/admin.js',
 			array( 'jquery' ),
-			PCD_VERSION,
+			(string) filemtime( PCD_PLUGIN_DIR . 'admin/js/admin.js' ),
 			true
 		);
 
@@ -321,8 +321,8 @@ final class Dashboard {
 			);
 		}
 
-		// ── Row 1: System overview (narrow) + Active plugins (wide) ──────────
-		echo '<div class="pcd-dash-row-1">';
+		// ── Dashboard grid: 4 cards in a 2×2 layout ─────────────────────────
+		echo '<div class="pcd-dash-grid">';
 
 		// System info
 		echo '<div class="pcd-card">';
@@ -360,10 +360,7 @@ final class Dashboard {
 		}
 		echo '</ul></div>';
 
-		echo '</div>'; // .pcd-dash-row-1
-
-		// ── Row 2: Recent changes + Recent errors (50/50) ─────────────────────
-		echo '<div class="pcd-dash-row-2">';
+		// (grid continues — no wrapper change needed)
 
 		// Recent changes
 		echo '<div class="pcd-card">';
@@ -425,7 +422,7 @@ final class Dashboard {
 		);
 		echo '</div>';
 
-		echo '</div>'; // .pcd-dash-row-2
+		echo '</div>'; // .pcd-dash-grid
 	}
 
 	// -------------------------------------------------------------------------
