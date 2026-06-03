@@ -175,7 +175,19 @@ final class Database {
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
+		// Run install when the stored version is outdated.
 		if ( (int) get_option( self::OPTION_KEY, 0 ) < self::SCHEMA_VERSION ) {
+			self::install();
+			return;
+		}
+
+		// Also run install when the main table is missing — this covers the case
+		// where the plugin was uploaded via FTP and the activation hook never fired,
+		// or when a restore wiped the tables but left the option intact.
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'cd_plugin_changes';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( null === $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) ) {
 			self::install();
 		}
 	}

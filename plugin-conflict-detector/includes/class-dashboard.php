@@ -207,7 +207,7 @@ final class Dashboard {
 
 		echo '<div class="wrap pcd-wrap">';
 		printf(
-			'<h1 class="pcd-title"><span class="pcd-title-icon" aria-hidden="true"><span class="dashicons dashicons-search"></span></span> %s</h1>',
+			'<h1 class="pcd-title"><span class="dashicons dashicons-search" aria-hidden="true"></span> %s</h1>',
 			esc_html__( 'Plugin Conflict Detector', 'plugin-conflict-detector' )
 		);
 
