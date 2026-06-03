@@ -196,10 +196,10 @@ final class Safe_Mode {
 
 		if ( self::is_active() ) {
 			self::disable();
-			wp_send_json_success( array( 'active' => false, 'message' => __( 'Safe Mode disabled. All plugins are active again.', 'conflict-detector' ) ) );
+			wp_send_json_success( array( 'active' => false, 'message' => __( 'Safe Mode disabled. All plugins are active again.', 'conflict-detective' ) ) );
 		} else {
 			self::enable();
-			wp_send_json_success( array( 'active' => true, 'message' => __( 'Safe Mode enabled. You can now disable plugins for testing.', 'conflict-detector' ) ) );
+			wp_send_json_success( array( 'active' => true, 'message' => __( 'Safe Mode enabled. You can now disable plugins for testing.', 'conflict-detective' ) ) );
 		}
 	}
 
@@ -211,7 +211,7 @@ final class Safe_Mode {
 		}
 
 		if ( ! self::is_active() ) {
-			wp_send_json_error( array( 'message' => __( 'Safe Mode is not active.', 'conflict-detector' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Safe Mode is not active.', 'conflict-detective' ) ) );
 		}
 
 		$plugin_file = isset( $_POST['plugin'] ) ? sanitize_text_field( wp_unslash( $_POST['plugin'] ) ) : '';
@@ -232,8 +232,8 @@ final class Safe_Mode {
 		wp_send_json_success( array(
 			'disabled' => $now_disabled,
 			'message'  => $now_disabled
-				? sprintf( __( '"%s" disabled for your session.', 'conflict-detector' ), $plugin_file )
-				: sprintf( __( '"%s" re-enabled.', 'conflict-detector' ), $plugin_file ),
+				? sprintf( __( '"%s" disabled for your session.', 'conflict-detective' ), $plugin_file )
+				: sprintf( __( '"%s" re-enabled.', 'conflict-detective' ), $plugin_file ),
 		) );
 	}
 
