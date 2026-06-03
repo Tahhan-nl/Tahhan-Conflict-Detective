@@ -11,6 +11,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.1.1] — 2026-06-03
+
+### Fixed
+- **Safe Mode AJAX**: `plugin_file` from `$_POST` now validated against `get_plugins()` before being stored in user meta — prevents arbitrary strings from being persisted by an authenticated admin
+- **JavaScript strings**: all 7 UI strings in `admin.js` now come from `pcdData` (via `wp_localize_script`) — fully translatable, no hardcoded English
+- **Wizard emoji**: last remaining `⚠` emoji replaced with `dashicons-warning` — consistent with the v2.1.0 "no emoji" policy
+- **Menu position**: changed from `65` to `65.1` to avoid silent collision with WordPress core Plugins menu
+- **`languages/` directory**: created to match the `Domain Path: /languages` declaration in the plugin header
+- **Inline justification**: added comments for the intentional WP_Filesystem bypass in the tail reader and log-clear handler
+- **LICENSE**: replaced truncated GPL-2.0-only text with full GPL-2.0-or-later text including "either version 2 … or any later version" clause
+- **Docs**: corrected navigation instructions — plugin registers as a top-level admin menu item, not under Tools
+- **Plugin version**: bumped to `2.1.1` to match the git tag
+
+---
+
 ## [2.1.0] — 2026-06-03
 
 ### Added
@@ -92,7 +107,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/releases/tag/v1.0.0
