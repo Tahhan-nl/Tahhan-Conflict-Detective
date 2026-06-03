@@ -257,6 +257,10 @@ final class Error_Log {
 	 * @return string[]      Lines in file order (not reversed).
 	 */
 	private static function tail( string $path, int $lines ): array {
+		// WP_Filesystem is not used here intentionally: the API does not expose
+		// fseek/ftell which are required for the memory-efficient reverse-scan
+		// algorithm below. The path is validated by the caller (file_exists +
+		// is_readable checks) and this method is never called with user input.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen
 		$fp = fopen( $path, 'rb' );
 		if ( ! $fp ) {

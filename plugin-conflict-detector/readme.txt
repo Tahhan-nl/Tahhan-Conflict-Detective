@@ -50,7 +50,7 @@ Step-by-step guided diagnosis. Choose your symptom (white screen, login problem,
 
 1. Upload the `plugin-conflict-detector` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the **Plugins** menu in WordPress.
-3. Navigate to **Tools → Conflict Detector**.
+3. Navigate to **Conflict Detector** in the WordPress admin sidebar.
 
 No configuration is required. All scanning is done on demand inside the admin area — zero front-end overhead.
 
