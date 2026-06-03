@@ -24,7 +24,7 @@ No more manually deactivating plugins one by one. No more guessing.
 ### Phase 1 — Dashboard & Monitoring
 
 **Dashboard**  
-A single-screen overview under **Tools → Conflict Detector**:
+A single-screen overview under **Conflict Detector** in the WordPress admin menu:
 
 - Active plugins with versions
 - WordPress & PHP version, active theme, memory limit, debug mode
@@ -125,7 +125,7 @@ cd WordPress-Plugin-Conflict-Detector
 # Copy the plugin folder into your local WordPress install
 cp -r plugin-conflict-detector /path/to/wordpress/wp-content/plugins/
 ```
-Then activate via **Plugins → Installed Plugins**.
+Then activate via **Plugins → Installed Plugins**. Navigate to **Conflict Detector** in the admin sidebar.
 
 ---
 
