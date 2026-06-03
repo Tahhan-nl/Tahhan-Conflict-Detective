@@ -51,12 +51,12 @@
 }
 
 /* ----------------------------------------------------------------
-   Wrapper
+   Wrapper — fills the full WP admin content area
    ---------------------------------------------------------------- */
 
 .pcd-wrap {
-	max-width: 1400px;
-	margin-right: 20px;
+	/* No max-width: let WP admin control the content area width */
+	margin-right: 0;
 }
 
 /* ----------------------------------------------------------------
@@ -250,22 +250,21 @@
 	gap: 18px;
 }
 
-/* Dashboard row 1: system overview (narrow) + active plugins (wide) */
-.pcd-dash-row-1 {
+/*
+ * Dashboard 2×2 grid
+ * ─────────────────────────────────────────────────────
+ * Slot 1 (col 1): System Overview
+ * Slot 2 (col 2): Active Plugins
+ * Slot 3 (col 1): Recent Changes
+ * Slot 4 (col 2): Recent Errors
+ * ─────────────────────────────────────────────────────
+ */
+.pcd-dash-grid {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+	grid-template-columns: 1fr 1fr;
 	gap: 18px;
 	margin-bottom: 18px;
-	width: 100%;
-	box-sizing: border-box;
-}
-
-/* Dashboard row 2: recent changes + recent errors, equal split */
-.pcd-dash-row-2 {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-	gap: 18px;
-	margin-bottom: 18px;
+	/* force the grid to fill the full wrap width */
 	width: 100%;
 	box-sizing: border-box;
 }
@@ -686,19 +685,19 @@
    Responsive
    ---------------------------------------------------------------- */
 
-@media screen and (max-width: 1100px) {
+@media screen and (max-width: 900px) {
 	.pcd-stats-bar { grid-template-columns: repeat(2, 1fr); }
-	.pcd-dash-row-1 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 700px) {
 	.pcd-grid,
-	.pcd-dash-row-1,
-	.pcd-dash-row-2 { grid-template-columns: 1fr; }
-	.pcd-tabs { flex-wrap: wrap; }
+	.pcd-dash-grid { grid-template-columns: 1fr; }
+	.pcd-tabs      { flex-wrap: wrap; }
 }
 
-@media screen and (max-width: 480px) { .pcd-stats-bar { grid-template-columns: 1fr; } }
+@media screen and (max-width: 480px) {
+	.pcd-stats-bar { grid-template-columns: 1fr; }
+}
 
 /* ================================================================
    Conflict Scanner
