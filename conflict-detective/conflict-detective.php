@@ -25,22 +25,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Guard against double-loading (e.g. mu-plugins + plugins).
-if ( defined( 'PCD_VERSION' ) ) {
+if ( defined( 'CD_VERSION' ) ) {
 	return;
 }
 
-define( 'PCD_VERSION',     '2.1.1' );
-define( 'PCD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
-define( 'PCD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
-define( 'PCD_PLUGIN_FILE', __FILE__ );
-define( 'PCD_MIN_PHP',     '7.4' );
-define( 'PCD_MIN_WP',      '5.8' );
+define( 'CD_VERSION',     '2.1.1' );
+define( 'CD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
+define( 'CD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
+define( 'CD_PLUGIN_FILE', __FILE__ );
+define( 'CD_MIN_PHP',     '7.4' );
+define( 'CD_MIN_WP',      '5.8' );
 
 /**
  * Abort early if the environment does not meet our requirements.
  * Showing an admin notice is friendlier than a white screen.
  */
-if ( version_compare( PHP_VERSION, PCD_MIN_PHP, '<' ) ) {
+if ( version_compare( PHP_VERSION, CD_MIN_PHP, '<' ) ) {
 	add_action( 'admin_notices', static function () {
 		printf(
 			'<div class="notice notice-error"><p>%s</p></div>',
@@ -48,7 +48,7 @@ if ( version_compare( PHP_VERSION, PCD_MIN_PHP, '<' ) ) {
 				sprintf(
 					/* translators: 1: required PHP version, 2: current PHP version */
 					__( 'Conflict Detective requires PHP %1$s or higher. Your server is running PHP %2$s.', 'conflict-detective' ),
-					PCD_MIN_PHP,
+					CD_MIN_PHP,
 					PHP_VERSION
 				)
 			)
@@ -57,14 +57,14 @@ if ( version_compare( PHP_VERSION, PCD_MIN_PHP, '<' ) ) {
 	return;
 }
 
-require_once PCD_PLUGIN_DIR . 'includes/class-database.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-change-history.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-error-log.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-health-scan.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-conflict-scanner.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-safe-mode.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-wizard.php';
-require_once PCD_PLUGIN_DIR . 'includes/class-dashboard.php';
+require_once CD_PLUGIN_DIR . 'includes/class-database.php';
+require_once CD_PLUGIN_DIR . 'includes/class-change-history.php';
+require_once CD_PLUGIN_DIR . 'includes/class-error-log.php';
+require_once CD_PLUGIN_DIR . 'includes/class-health-scan.php';
+require_once CD_PLUGIN_DIR . 'includes/class-conflict-scanner.php';
+require_once CD_PLUGIN_DIR . 'includes/class-safe-mode.php';
+require_once CD_PLUGIN_DIR . 'includes/class-wizard.php';
+require_once CD_PLUGIN_DIR . 'includes/class-dashboard.php';
 
 /**
  * Main plugin bootstrap — singleton, never instantiate directly.
@@ -103,8 +103,8 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init(): void {
-		register_activation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'install' ) );
-		register_deactivation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'on_deactivate' ) );
+		register_activation_hook( CD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'install' ) );
+		register_deactivation_hook( CD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'on_deactivate' ) );
 
 		// Run schema migration as early as possible (priority 0) so tables always
 		// exist before any dashboard query or AJAX handler runs.
