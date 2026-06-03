@@ -9,17 +9,64 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Planned (Phase 2)
-- Conflict Scanner with confidence percentage
-- Safe Testing Mode (disable plugins for admin only, visitors unaffected)
-- Conflict Wizard — step-by-step guided diagnosis
+---
+
+## [2.1.0] — 2026-06-03
+
+### Added
+- **WordPress Dashicons** throughout the entire admin UI — no emoji, no custom icon fonts, zero extra HTTP requests
+- `Database::tables_exist()` helper method for lightweight DB guard before any dashboard query
+- Self-repair guard in `render_dashboard()`: if tables are missing (e.g. after a database restore), they are recreated automatically and an inline admin notice prompts the user to reload
+- Automatic CSS & JS cache-busting via `filemtime()` — every file change produces a new query-string version without manually bumping `PCD_VERSION`
+
+### Changed
+- **Full-width layout**: `.pcd-wrap` no longer imposes a `max-width`; the plugin fills the entire `#wpcontent` area exactly like native WordPress admin pages
+- **Dashboard grid**: replaced separate `.pcd-grid--top` / `.pcd-grid--bottom` row wrappers with a single `.pcd-dash-grid` container (`grid-template-columns: 1fr 1fr`) — eliminates the "half-empty page" visual bug
+- **Stat card icons**: each severity state (OK / Paused / Warning / Error) now has its own dashicon with the correct brand colour (`--pcd-green`, `--pcd-amber`, `--pcd-red`, `--pcd-purple`); no coloured background box
+- **Page title**: dashicon rendered inline in the `<h1>` — removed the separate icon-box wrapper that appeared as a purple rectangle
+- **Tab navigation**: underline style (`border-bottom: 2px solid`) instead of pill/button container; each tab carries a contextual dashicon
+- **Conflict Wizard symptom cards**: dashicons replace the previous emoji symptom indicators
+- **Timeline dots**: replaced inline emoji (🔴/🔵) with pure CSS `::before` dots
+- **Advice list**: `<ol>` replaced with `<ul>` + `dashicons-arrow-right-alt2` per item
+- **Submenu labels**: all emoji stripped from the admin menu registration
+- `plugins_loaded` priority for `Database::maybe_upgrade()` lowered from `1` → `0` so tables always exist before any hook at the default priority runs
+
+### Fixed
+- `SHOW TABLES LIKE` query now uses `$wpdb->prepare()` combined with `$wpdb->esc_like()` — prevents the SQL `_` wildcard from matching unintended table names
+- Database tables no longer silently fail on FTP/manual deployments where the activation hook never fires; `maybe_upgrade()` detects the missing tables and runs `install()` automatically
+
+---
+
+## [2.0.0] — 2026-06-02
+
+### Added
+- **Conflict Scanner** tab with confidence percentage
+  - Correlates plugin change timestamps against error log spikes
+  - Confidence score (0–100 %) based on temporal proximity and error-count delta
+  - One-click "Mark resolved" action per detected conflict
+  - Results stored in `{prefix}cd_conflicts` for persistence across page loads
+- **Safe Testing Mode**
+  - Admin-only plugin toggle: disable plugins for the current session without affecting visitors
+  - Cookie-based isolation — visitors see the live site; admin sees the test environment
+  - Persistent toggle list with one-click enable/disable per plugin
+- **Conflict Wizard**
+  - 7 symptom categories: white screen, login issue, WooCommerce, slow site, broken admin, front-end error, other
+  - Automatic analysis step: correlates the chosen symptom with recent changes and errors
+  - Timeline view of relevant events
+  - Actionable advice list tailored to the symptom
+- New database table `{prefix}cd_conflicts` for storing scanner results (Phase 2 schema, `SCHEMA_VERSION = 2`)
+- `Database::SCHEMA_VERSION` bumped to `2`; `maybe_upgrade()` runs schema migrations automatically
+
+### Changed
+- Plugin version header updated to `2.0.0`
+- Namespace-safe singleton bootstrap (`add_action( 'plugins_loaded', ... , 5 )`)
 
 ---
 
 ## [1.0.0] — 2026-06-02
 
 ### Added
-- **Dashboard** tab under Tools → Conflict Detector
+- **Dashboard** tab under **Tools → Conflict Detector**
   - System overview: WordPress version, PHP version, active theme, memory limit, debug mode
   - Active plugins list with version numbers
   - Recent plugin changes widget (last 5 entries)
@@ -27,7 +74,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Error Log** tab
   - Automatic reading of `wp-content/debug.log` and server `error_log`
   - Memory-efficient tail reader — handles files of any size without memory exhaustion
-  - Each error attributed to the owning plugin via file path analysis
+  - Each error attributed to the owning plugin via file-path analysis
   - Filter bar: All / Fatal / Warning / Notice / Deprecated
 - **Change History** tab
   - Logs every plugin activation, deactivation, update, and deletion with timestamp
@@ -36,13 +83,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Health Scan** tab
   - Plugin section: duplicate functional categories (SEO, Caching, Security, Backup, etc.), known plugin incompatibilities, outdated plugins (> 2 years without update)
   - Theme section: missing core files, missing parent theme, pending updates
-  - Server section: PHP version check, memory limit check, `max_execution_time` check, WordPress core update check
+  - Server section: PHP version, memory limit, `max_execution_time`, WordPress core update check
   - Scan results persisted to database; last result shown without re-running
-- Database schema: `cd_plugin_changes`, `cd_errors`, `cd_scans`
+- Database schema: `{prefix}cd_plugin_changes`, `{prefix}cd_errors`, `{prefix}cd_scans`
 - Clean uninstall via `uninstall.php` (tables dropped, options removed)
-- Environment guard: friendly admin notice when PHP < 7.4 instead of fatal error
-- Full PHPDoc on all classes and public methods
-- `declare(strict_types=1)` throughout
+- Environment guard: friendly admin notice when PHP < 7.4 instead of a fatal error
+- `declare(strict_types=1)` throughout; full PHPDoc on all classes and public methods
 
-[Unreleased]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v1.0.0...HEAD
+---
+
+[Unreleased]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector/releases/tag/v1.0.0
