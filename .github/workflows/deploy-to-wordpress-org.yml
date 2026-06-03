@@ -18,7 +18,7 @@ jobs:
         env:
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          SLUG: plugin-conflict-detector
+          SLUG: conflict-detector
           VERSION: ${{ github.event.release.tag_name }}
-          BUILD_DIR: plugin-conflict-detector
+          BUILD_DIR: conflict-detector
           ASSETS_DIR: .wordpress-org

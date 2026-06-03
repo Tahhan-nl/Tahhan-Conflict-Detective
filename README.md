@@ -1,4 +1,4 @@
-# WordPress Plugin Conflict Detector
+# WordPress Conflict Detector
 
 > **"Which plugin broke my site?"** — answered automatically.
 
@@ -123,7 +123,7 @@ git clone git@github.com:Tahhan-nl/WordPress-Plugin-Conflict-Detector.git
 cd WordPress-Plugin-Conflict-Detector
 
 # Copy the plugin folder into your local WordPress install
-cp -r plugin-conflict-detector /path/to/wordpress/wp-content/plugins/
+cp -r conflict-detector /path/to/wordpress/wp-content/plugins/
 ```
 Then activate via **Plugins → Installed Plugins**. Navigate to **Conflict Detector** in the admin sidebar.
 

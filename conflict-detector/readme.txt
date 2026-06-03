@@ -1,4 +1,4 @@
-=== Plugin Conflict Detector ===
+=== Conflict Detector ===
 Contributors: tahhan
 Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
@@ -14,7 +14,7 @@ Automatically detects which plugin, theme, or update broke your WordPress site �
 
 **"Which plugin just broke my site?"** — answered automatically.
 
-Existing tools show you *that* an error occurred. Plugin Conflict Detector tells you *which plugin caused it* by correlating the plugin change timeline with the error log — and gives you a confidence score.
+Existing tools show you *that* an error occurred. Conflict Detector tells you *which plugin caused it* by correlating the plugin change timeline with the error log — and gives you a confidence score.
 
 = Features =
 
@@ -48,7 +48,7 @@ Step-by-step guided diagnosis. Choose your symptom (white screen, login problem,
 
 == Installation ==
 
-1. Upload the `plugin-conflict-detector` folder to the `/wp-content/plugins/` directory.
+1. Upload the `conflict-detector` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the **Plugins** menu in WordPress.
 3. Navigate to **Conflict Detector** in the WordPress admin sidebar.
 
