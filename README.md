@@ -5,7 +5,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-0073aa?logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-8892be?logo=php)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.1.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-2.1.1-green)](CHANGELOG.md)
 
 ---
 
@@ -164,6 +164,21 @@ Tables are **removed on uninstall** (Plugin → Delete).
 - Every form and AJAX action uses a WordPress nonce.
 - All admin pages are guarded by `current_user_can( 'manage_options' )`.
 - Safe Testing Mode is cookie-isolated — only the admin session is affected, never visitors.
+
+---
+
+## WordPress.org Deployment
+
+Releases are automatically deployed to the WordPress.org plugin directory via GitHub Actions when a new release is published.
+
+**Setup (one time):**
+1. Add your WordPress.org credentials as GitHub repository secrets:
+   - `SVN_USERNAME` — your WordPress.org username
+   - `SVN_PASSWORD` — your WordPress.org password
+2. Add plugin assets (banner, icon, screenshots) to the `.wordpress-org/` directory.
+3. Publish a GitHub release — the workflow pushes to SVN automatically.
+
+See `.github/workflows/deploy-to-wordpress-org.yml`.
 
 ---
 
