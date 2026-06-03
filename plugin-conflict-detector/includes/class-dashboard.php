@@ -57,7 +57,7 @@ final class Dashboard {
 		add_submenu_page(
 			self::PAGE_SLUG,
 			__( 'Conflict Scanner', 'plugin-conflict-detector' ),
-			__( '🔎 Conflict Scanner', 'plugin-conflict-detector' ),
+			__( 'Conflict Scanner', 'plugin-conflict-detector' ),
 			'manage_options',
 			self::PAGE_SLUG . '&tab=scanner',
 			array( __CLASS__, 'render_page' )
@@ -66,7 +66,7 @@ final class Dashboard {
 		add_submenu_page(
 			self::PAGE_SLUG,
 			__( 'Conflict Wizard', 'plugin-conflict-detector' ),
-			__( '🧙 Conflict Wizard', 'plugin-conflict-detector' ),
+			__( 'Conflict Wizard', 'plugin-conflict-detector' ),
 			'manage_options',
 			self::PAGE_SLUG . '&tab=wizard',
 			array( __CLASS__, 'render_page' )
@@ -191,13 +191,14 @@ final class Dashboard {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'dashboard';
 
+		// Tab definitions: label + dashicon class.
 		$tabs = array(
-			'dashboard' => __( 'Dashboard',       'plugin-conflict-detector' ),
-			'scanner'   => __( '🔎 Conflict Scan', 'plugin-conflict-detector' ),
-			'wizard'    => __( '🧙 Wizard',        'plugin-conflict-detector' ),
-			'errors'    => __( 'Error Log',        'plugin-conflict-detector' ),
-			'history'   => __( 'Change History',   'plugin-conflict-detector' ),
-			'scan'      => __( 'Health Scan',      'plugin-conflict-detector' ),
+			'dashboard' => array( 'label' => __( 'Dashboard',       'plugin-conflict-detector' ), 'icon' => 'dashicons-dashboard' ),
+			'scanner'   => array( 'label' => __( 'Conflict Scanner','plugin-conflict-detector' ), 'icon' => 'dashicons-search' ),
+			'wizard'    => array( 'label' => __( 'Conflict Wizard', 'plugin-conflict-detector' ), 'icon' => 'dashicons-editor-help' ),
+			'errors'    => array( 'label' => __( 'Error Log',       'plugin-conflict-detector' ), 'icon' => 'dashicons-warning' ),
+			'history'   => array( 'label' => __( 'Change History',  'plugin-conflict-detector' ), 'icon' => 'dashicons-backup' ),
+			'scan'      => array( 'label' => __( 'Health Scan',     'plugin-conflict-detector' ), 'icon' => 'dashicons-shield' ),
 		);
 
 		if ( ! array_key_exists( $tab, $tabs ) ) {
@@ -206,19 +207,20 @@ final class Dashboard {
 
 		echo '<div class="wrap pcd-wrap">';
 		printf(
-			'<h1 class="pcd-title"><span class="pcd-title-icon" aria-hidden="true">&#128269;</span> %s</h1>',
+			'<h1 class="pcd-title"><span class="pcd-title-icon" aria-hidden="true"><span class="dashicons dashicons-search"></span></span> %s</h1>',
 			esc_html__( 'Plugin Conflict Detector', 'plugin-conflict-detector' )
 		);
 
 		echo '<nav class="pcd-tabs" aria-label="' . esc_attr__( 'Sections', 'plugin-conflict-detector' ) . '">';
-		foreach ( $tabs as $key => $label ) {
+		foreach ( $tabs as $key => $def ) {
 			$active = $key === $tab;
 			printf(
-				'<a href="%s" class="pcd-tab%s"%s>%s</a>',
+				'<a href="%s" class="pcd-tab%s"%s><span class="dashicons %s" aria-hidden="true"></span>%s</a>',
 				esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => $key ), admin_url( 'admin.php' ) ) ),
 				$active ? ' pcd-tab--active' : '',
 				$active ? ' aria-current="page"' : '',
-				esc_html( $label )
+				esc_attr( $def['icon'] ),
+				esc_html( $def['label'] )
 			);
 		}
 		echo '</nav>';
@@ -290,7 +292,7 @@ final class Dashboard {
 		if ( $culprit ) {
 			printf(
 				'<div class="pcd-culprit-banner">
-					<span class="pcd-culprit-icon">&#128270;</span>
+					<span class="pcd-culprit-icon" aria-hidden="true"><span class="dashicons dashicons-info"></span></span>
 					<div class="pcd-culprit-body">
 						<strong>%s</strong> — %s
 						<span class="pcd-culprit-meta">%s %s &middot; %s %s &middot; %s</span>
@@ -358,12 +360,12 @@ final class Dashboard {
 			foreach ( $recent_changes as $change ) {
 				printf(
 					'<li>
-						<span class="pcd-action-icon" aria-hidden="true">%s</span>
+						<span class="pcd-action-icon">%s</span>
 						<span class="pcd-change-name">%s</span>
 						<span class="pcd-badge pcd-badge--action-%s">%s</span>
 						<span class="pcd-change-time">%s</span>
 					</li>',
-					esc_html( self::action_icon( $change->action ) ),
+					wp_kses_post( self::action_icon( $change->action ) ),
 					esc_html( $change->plugin_name ),
 					esc_attr( $change->action ),
 					esc_html( self::action_label( $change->action ) ),
@@ -761,9 +763,9 @@ final class Dashboard {
 				echo '<ul class="pcd-issue-list">';
 				foreach ( $issues as $issue ) {
 					printf(
-						'<li class="pcd-issue pcd-issue--%s"><span class="pcd-issue-icon" aria-hidden="true">%s</span>%s</li>',
+						'<li class="pcd-issue pcd-issue--%s"><span class="pcd-issue-icon">%s</span>%s</li>',
 						esc_attr( $issue['type'] ),
-						esc_html( self::issue_icon( $issue['type'] ) ),
+						wp_kses_post( self::issue_icon( $issue['type'] ) ),
 						esc_html( $issue['message'] )
 					);
 				}
@@ -780,19 +782,20 @@ final class Dashboard {
 
 	private static function stat_card( string $value, string $label, string $icon_key, string $status ): void {
 		$icons = array(
-			'plugin'  => '🔌',
-			'history' => '🕐',
-			'error'   => '⚠️',
-			'scan'    => '🩺',
+			'plugin'  => 'dashicons-admin-plugins',
+			'history' => 'dashicons-backup',
+			'error'   => 'dashicons-warning',
+			'scan'    => 'dashicons-shield',
 		);
+		$icon_class = $icons[ $icon_key ] ?? 'dashicons-marker';
 		printf(
 			'<div class="pcd-stat pcd-stat--%s">
-				<span class="pcd-stat__icon" aria-hidden="true">%s</span>
+				<span class="pcd-stat__icon" aria-hidden="true"><span class="dashicons %s"></span></span>
 				<span class="pcd-stat__value">%s</span>
 				<span class="pcd-stat__label">%s</span>
 			</div>',
 			esc_attr( $status ),
-			$icons[ $icon_key ] ?? '',
+			esc_attr( $icon_class ),
 			esc_html( $value ),
 			esc_html( $label )
 		);
@@ -820,13 +823,19 @@ final class Dashboard {
 		echo '</div>';
 	}
 
+	/**
+	 * Returns a dashicons <span> for a plugin action.
+	 * Output is HTML — use wp_kses_post() at the call site.
+	 */
 	private static function action_icon( string $action ): string {
-		return array(
-			'activated'   => '✅',
-			'deactivated' => '⏸',
-			'updated'     => '🔄',
-			'deleted'     => '🗑',
-		)[ $action ] ?? '•';
+		$map = array(
+			'activated'   => 'dashicons-yes-alt',
+			'deactivated' => 'dashicons-controls-pause',
+			'updated'     => 'dashicons-update',
+			'deleted'     => 'dashicons-trash',
+		);
+		$class = $map[ $action ] ?? 'dashicons-marker';
+		return '<span class="dashicons ' . esc_attr( $class ) . '" aria-hidden="true"></span>';
 	}
 
 	private static function action_label( string $action ): string {
@@ -847,11 +856,19 @@ final class Dashboard {
 		)[ $type ] ?? 'info';
 	}
 
+	/**
+	 * Returns a dashicons <span> for a scan issue type.
+	 * Output is HTML — use wp_kses_post() at the call site.
+	 */
 	private static function issue_icon( string $type ): string {
 		$errors  = array( 'incompatible', 'missing-parent', 'missing-file', 'php-version', 'memory-low' );
 		$updates = array( 'update-available', 'wp-update', 'outdated' );
-		if ( in_array( $type, $errors, true ) )  return '❌';
-		if ( in_array( $type, $updates, true ) ) return '🔄';
-		return '⚠️';
+		if ( in_array( $type, $errors, true ) ) {
+			return '<span class="dashicons dashicons-dismiss" aria-hidden="true"></span>';
+		}
+		if ( in_array( $type, $updates, true ) ) {
+			return '<span class="dashicons dashicons-update" aria-hidden="true"></span>';
+		}
+		return '<span class="dashicons dashicons-warning" aria-hidden="true"></span>';
 	}
 }
