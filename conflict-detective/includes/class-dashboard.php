@@ -100,6 +100,15 @@ final class Dashboard {
 			self::PAGE_SLUG . '&tab=scan',
 			array( __CLASS__, 'render_page' )
 		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Safe Mode', 'conflict-detective' ),
+			__( 'Safe Mode', 'conflict-detective' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=safe-mode',
+			array( __CLASS__, 'render_page' )
+		);
 	}
 
 	public static function enqueue_assets( string $hook ): void {
@@ -214,6 +223,7 @@ final class Dashboard {
 			'errors'    => array( 'label' => __( 'Error Log',       'conflict-detective' ), 'icon' => 'dashicons-warning' ),
 			'history'   => array( 'label' => __( 'Change History',  'conflict-detective' ), 'icon' => 'dashicons-backup' ),
 			'scan'      => array( 'label' => __( 'Health Scan',     'conflict-detective' ), 'icon' => 'dashicons-shield' ),
+			'safe-mode' => array( 'label' => __( 'Safe Mode',       'conflict-detective' ), 'icon' => 'dashicons-shield-alt' ),
 		);
 
 		if ( ! array_key_exists( $tab, $tabs ) ) {
@@ -242,12 +252,13 @@ final class Dashboard {
 
 		echo '<div class="pcd-content">';
 		switch ( $tab ) {
-			case 'scanner': self::render_scanner(); break;
-			case 'wizard':  Wizard::render();       break;
-			case 'errors':  self::render_errors();  break;
-			case 'history': self::render_history(); break;
-			case 'scan':    self::render_scan();    break;
-			default:        self::render_dashboard();
+			case 'scanner':   self::render_scanner();   break;
+			case 'wizard':    Wizard::render();         break;
+			case 'errors':    self::render_errors();    break;
+			case 'history':   self::render_history();   break;
+			case 'scan':      self::render_scan();      break;
+			case 'safe-mode': self::render_safe_mode(); break;
+			default:          self::render_dashboard();
 		}
 		echo '</div></div>';
 	}
@@ -630,6 +641,98 @@ final class Dashboard {
 			);
 		}
 		echo '</div></div>';
+	}
+
+	// -------------------------------------------------------------------------
+	// Safe Mode tab
+	// -------------------------------------------------------------------------
+
+	private static function render_safe_mode(): void {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$is_active      = Safe_Mode::is_active();
+		$disabled       = Safe_Mode::get_disabled_plugins();
+		$all_plugins    = get_plugins();
+		$active_plugins = (array) get_option( 'active_plugins', array() );
+
+		$panel_class = $is_active ? ' pcd-safe-mode-panel--active' : '';
+		$btn_text    = $is_active
+			? __( 'Stop Safe Mode', 'conflict-detective' )
+			: __( 'Start Safe Mode', 'conflict-detective' );
+		$btn_class   = $is_active ? 'button button-secondary' : 'button button-primary';
+
+		printf(
+			'<div class="pcd-safe-mode-panel%s">',
+			esc_attr( $panel_class )
+		);
+
+		echo '<div class="pcd-safe-mode-header">';
+		echo '<h2>' . esc_html__( 'Safe Testing Mode', 'conflict-detective' ) . '</h2>';
+		printf(
+			'<button id="pcd-toggle-safe-mode" class="%s" type="button">%s</button>',
+			esc_attr( $btn_class ),
+			esc_html( $btn_text )
+		);
+		echo '</div>';
+
+		echo '<p class="pcd-safe-mode-tip">'
+			. esc_html__( 'Safe Mode lets you disable plugins for your admin session only — visitors see the site completely normally. Enable Safe Mode, then use the toggles below to deactivate plugins one by one and check if your problem disappears.', 'conflict-detective' )
+			. '</p>';
+
+		if ( $is_active ) {
+			echo '<div id="pcd-safe-mode-body">';
+		} else {
+			echo '<div id="pcd-safe-mode-body" style="display:none">';
+		}
+
+		echo '<p class="pcd-safe-mode-section-label">'
+			. esc_html__( 'Active plugins — toggle OFF to disable for your session only', 'conflict-detective' )
+			. '</p>';
+
+		$testable = array_filter( $active_plugins, static function ( $file ) {
+			return strpos( $file, 'conflict-detective/conflict-detective.php' ) === false;
+		} );
+
+		if ( empty( $testable ) ) {
+			echo '<p class="pcd-empty">' . esc_html__( 'No other active plugins found.', 'conflict-detective' ) . '</p>';
+		} else {
+			echo '<ul class="pcd-plugin-toggle-list">';
+			foreach ( $testable as $plugin_file ) {
+				$data        = $all_plugins[ $plugin_file ] ?? array( 'Name' => $plugin_file, 'Version' => '' );
+				$is_disabled = in_array( $plugin_file, $disabled, true );
+
+				$badge = $is_disabled
+					? '<span class="pcd-badge pcd-badge--warning">OFF (test)</span>'
+					: '<span class="pcd-badge pcd-badge--ok">ON</span>';
+
+				printf(
+					'<li class="pcd-plugin-toggle-item%s">
+						<label class="pcd-toggle-switch" aria-label="%s">
+							<input type="checkbox" class="pcd-plugin-toggle-input" data-plugin="%s"%s>
+							<span class="pcd-toggle-slider"></span>
+						</label>
+						<span class="pcd-plugin-toggle-info">
+							<strong>%s</strong>
+							<span class="pcd-version">v%s</span>
+						</span>
+						<span class="pcd-toggle-label">%s</span>
+					</li>',
+					esc_attr( $is_disabled ? ' pcd-plugin-toggle-item--off' : '' ),
+					esc_attr( $data['Name'] ),
+					esc_attr( $plugin_file ),
+					$is_disabled ? '' : ' checked',
+					esc_html( $data['Name'] ),
+					esc_html( $data['Version'] ),
+					wp_kses_post( $badge )
+				);
+			}
+			echo '</ul>';
+		}
+
+		echo '</div>'; // #pcd-safe-mode-body
+		echo '</div>'; // .pcd-safe-mode-panel
 	}
 
 	// -------------------------------------------------------------------------
