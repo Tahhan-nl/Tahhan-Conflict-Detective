@@ -175,20 +175,39 @@ final class Database {
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
-		// Run install when the stored version is outdated.
+		global $wpdb;
+
+		// Run install when the stored schema version is behind.
 		if ( (int) get_option( self::OPTION_KEY, 0 ) < self::SCHEMA_VERSION ) {
 			self::install();
 			return;
 		}
 
-		// Also run install when the main table is missing — this covers the case
-		// where the plugin was uploaded via FTP and the activation hook never fired,
-		// or when a restore wiped the tables but left the option intact.
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'cd_plugin_changes';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( null === $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) ) {
+		// Also install when the main table is physically missing.
+		// This handles FTP deployments where the activation hook never fires,
+		// or database restores that wiped the tables but kept wp_options intact.
+		// Uses esc_like() + prepare() to safely escape the table name in the LIKE clause.
+		$table  = $wpdb->prefix . 'cd_plugin_changes';
+		$exists = $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
+		);
+
+		if ( null === $exists ) {
 			self::install();
 		}
+	}
+
+	/**
+	 * Returns true when all required tables exist in the database.
+	 * Use this as a lightweight guard before running queries.
+	 *
+	 * @return bool
+	 */
+	public static function tables_exist(): bool {
+		global $wpdb;
+		$table  = $wpdb->prefix . 'cd_plugin_changes';
+		return null !== $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
+		);
 	}
 }
