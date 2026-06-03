@@ -11,6 +11,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.1.3] — 2026-06-03
+
+### Fixed
+- Translators comment moved inside `sprintf()` call to sit directly above `_n()` in class-conflict-scanner.php (WordPress.WP.I18n.MissingTranslatorsComment)
+- phpcs:ignore for `EscapeOutput.OutputNotEscaped` corrected to full sniff name with double-dash separator in class-dashboard.php
+- All phpcs:ignore annotations for `$wpdb->query()` DROP TABLE consolidated onto the same line in class-database.php
+- phpcs:ignore for `NonPrefixedConstantFound` added inline to all six `CD_` constant definitions in conflict-detective.php
+
+---
+
 ## [2.1.2] — 2026-06-03
 
 ### Fixed
@@ -96,7 +106,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.0.0...v2.1.0

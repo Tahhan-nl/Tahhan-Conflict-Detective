@@ -722,7 +722,7 @@ final class Dashboard {
 
 		echo '<div id="pcd-scan-results">';
 		if ( $last_scan ) {
-			echo self::build_scan_results_html( $last_scan ); // phpcs:ignore WordPress.Security.EscapeOutput — builder escapes internally
+			echo self::build_scan_results_html( $last_scan ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- build_scan_results_html() escapes all output internally
 		} else {
 			echo '<p class="pcd-empty">' . esc_html__( 'No scan run yet. Click "Run Scan Now" to start.', 'conflict-detective' ) . '</p>';
 		}

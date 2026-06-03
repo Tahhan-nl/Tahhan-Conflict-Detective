@@ -214,8 +214,8 @@ final class Conflict_Scanner {
 			date_i18n( 'd-m-Y H:i', strtotime( $change->changed_at ) )
 		);
 
-		/* translators: %d: number of errors attributed to this plugin */
 		$parts[] = sprintf(
+			/* translators: %d: number of errors attributed to this plugin */
 			_n(
 				'%d error attributed to this plugin after the change.',
 				'%d errors attributed to this plugin after the change.',
