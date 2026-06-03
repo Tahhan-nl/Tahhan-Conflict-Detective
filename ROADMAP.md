@@ -60,7 +60,7 @@ Example:
 
 ---
 
-## Phase 2 — Smart Detection 🔲 Planned
+## Phase 2 — Smart Detection ✅ Complete
 
 ### Conflict Scanner
 User reports: *"My site stopped working."*
@@ -176,7 +176,7 @@ Auto-generated report containing:
 | `{prefix}cd_plugin_changes` | Plugin lifecycle audit log |
 | `{prefix}cd_errors` | Parsed error log entries |
 | `{prefix}cd_scans` | Health scan results |
-| `{prefix}cd_conflicts` | *(Phase 2)* Detected conflict records |
+| `{prefix}cd_conflicts` | Detected conflict records with confidence scores |
 
 ### WordPress hooks used
 
@@ -186,8 +186,8 @@ Auto-generated report containing:
 | `deactivated_plugin` | Log deactivation |
 | `upgrader_process_complete` | Log updates |
 | `delete_plugin` | Log deletions |
-| `shutdown` | *(Phase 2)* Capture fatal errors |
-| `wp_die_handler` | *(Phase 2)* Capture white-screen events |
+| `shutdown` | Capture fatal errors |
+| `wp_die_handler` | Capture white-screen events |
 
 ### File scanning targets
 - `wp-content/debug.log`
