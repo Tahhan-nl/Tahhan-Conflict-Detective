@@ -179,7 +179,7 @@ final class Change_History {
 				'action'           => $action,
 				'plugin_version'   => $version,
 				'previous_version' => $previous_version,
-				'changed_at'       => current_time( 'mysql' ),
+				'changed_at'       => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
