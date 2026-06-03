@@ -106,8 +106,9 @@ final class Plugin {
 		register_activation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'install' ) );
 		register_deactivation_hook( PCD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'on_deactivate' ) );
 
-		// Run schema migration on every request (cheap: only runs when version differs).
-		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Database', 'maybe_upgrade' ), 1 );
+		// Run schema migration as early as possible (priority 0) so tables always
+		// exist before any dashboard query or AJAX handler runs.
+		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Database', 'maybe_upgrade' ), 0 );
 
 		// Safe Mode filter must be registered as early as possible.
 		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Safe_Mode',     'init' ), 1 );
