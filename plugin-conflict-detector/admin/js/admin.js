@@ -1,4 +1,4 @@
-/* Plugin Conflict Detector – Admin JS v1.1 */
+/* Plugin Conflict Detector – Admin JS v1.2 */
 (function ($) {
 	'use strict';
 
@@ -22,8 +22,8 @@
 
 		// ── AJAX health scan ─────────────────────────────────────────────────
 		$('#pcd-run-scan').on('click', function () {
-			var $btn    = $(this);
-			var $status = $('#pcd-scan-status');
+			var $btn     = $(this);
+			var $status  = $('#pcd-scan-status');
 			var $results = $('#pcd-scan-results');
 			var $meta    = $('#pcd-scan-meta');
 
@@ -44,12 +44,12 @@
 						if ($meta.length) {
 							// Use text nodes to avoid XSS — only wrap static markup around them.
 							$meta.empty()
-								.append( document.createTextNode( response.data.scanned_at + '  |  ' ) )
+								.append( document.createTextNode( response.data.scanned_at + '  |  ' ) )
 								.append( $('<strong>').text( response.data.issues ) )
-								.append( document.createTextNode( ' issues found' ) );
+								.append( document.createTextNode( ' ' + pcdData.issuesFound ) );
 						}
 					} else {
-						var errMsg = (response.data && response.data.message) ? response.data.message : 'Unknown error';
+						var errMsg = (response.data && response.data.message) ? response.data.message : pcdData.unknownError;
 						$status.html(
 							'<div class="pcd-notice pcd-notice--error">Error: ' +
 							$('<div>').text( errMsg ).html() +
@@ -58,13 +58,13 @@
 					}
 
 					setTimeout(function () {
-						$btn.text('Run Scan Now');
+						$btn.text(pcdData.runScan);
 						$status.html('');
 					}, 3000);
 				}
 			).fail(function () {
-				$btn.prop('disabled', false).text('Run Scan Now');
-				$status.html('<div class="pcd-notice pcd-notice--error">Request failed. Please try again.</div>');
+				$btn.prop('disabled', false).text(pcdData.runScan);
+				$status.html('<div class="pcd-notice pcd-notice--error">' + pcdData.requestFailed + '</div>');
 			});
 		});
 
@@ -86,7 +86,7 @@
 					var active = response.data.active;
 					$panel.toggleClass('pcd-safe-mode-panel--active', active);
 					$body[ active ? 'slideDown' : 'slideUp' ]( 200 );
-					$btn.text( active ? 'Stop Safe Mode' : 'Start Safe Mode' );
+					$btn.text( active ? pcdData.stopSafeMode : pcdData.startSafeMode );
 					$btn.toggleClass('button-primary', !active).toggleClass('button-secondary', active);
 				}
 			);
@@ -125,7 +125,7 @@
 
 		// ── Clear debug.log ──────────────────────────────────────────────────
 		$('#pcd-clear-log').on('click', function () {
-			if ( ! window.confirm('Are you sure you want to clear debug.log? This cannot be undone.') ) {
+			if ( ! window.confirm( pcdData.confirmClear ) ) {
 				return;
 			}
 
@@ -141,12 +141,12 @@
 						// Reload page after short delay to reflect empty log
 						setTimeout(function () { window.location.reload(); }, 1200);
 					} else {
-						$btn.prop('disabled', false).text('Clear debug.log');
-						alert(response.data && response.data.message ? response.data.message : 'Could not clear log.');
+						$btn.prop('disabled', false).text(pcdData.clearLog);
+						alert(response.data && response.data.message ? response.data.message : pcdData.couldNotClear);
 					}
 				}
 			).fail(function () {
-				$btn.prop('disabled', false).text('Clear debug.log');
+				$btn.prop('disabled', false).text(pcdData.clearLog);
 			});
 		});
 

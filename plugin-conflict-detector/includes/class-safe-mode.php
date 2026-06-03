@@ -219,6 +219,15 @@ final class Safe_Mode {
 			wp_send_json_error( array( 'message' => 'Invalid plugin.' ) );
 		}
 
+		// Validate the supplied slug against the actual list of installed plugins
+		// so only real plugin files can be stored in user meta.
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( ! array_key_exists( $plugin_file, get_plugins() ) ) {
+			wp_send_json_error( array( 'message' => 'Unknown plugin.' ) );
+		}
+
 		$now_disabled = self::toggle_plugin( $plugin_file );
 		wp_send_json_success( array(
 			'disabled' => $now_disabled,

@@ -33,7 +33,9 @@ final class Dashboard {
 	// -------------------------------------------------------------------------
 
 	public static function register_menu(): void {
-		// Top-level menu item — position 65 sits between "Plugins" (65) and "Users" (70).
+		// Top-level menu item.
+		// Position 65.1 sits just after the Plugins menu (core uses 65) to avoid
+		// a collision that would cause WordPress to silently increment our position.
 		add_menu_page(
 			__( 'Plugin Conflict Detector', 'plugin-conflict-detector' ),
 			__( 'Conflict Detector', 'plugin-conflict-detector' ),
@@ -41,7 +43,7 @@ final class Dashboard {
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render_page' ),
 			'dashicons-search',
-			65
+			65.1
 		);
 
 		// Add sub-pages so the tab links appear in the sidebar as well.
@@ -121,12 +123,21 @@ final class Dashboard {
 		);
 
 		wp_localize_script( 'pcd-admin', 'pcdData', array(
-			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'pcd_nonce' ),
-			'scanning' => __( 'Scanning…', 'plugin-conflict-detector' ),
-			'done'     => __( 'Scan complete!', 'plugin-conflict-detector' ),
-			'clearing' => __( 'Clearing…', 'plugin-conflict-detector' ),
-			'cleared'  => __( 'Log cleared.', 'plugin-conflict-detector' ),
+			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+			'nonce'         => wp_create_nonce( 'pcd_nonce' ),
+			'scanning'      => __( 'Scanning…',          'plugin-conflict-detector' ),
+			'done'          => __( 'Scan complete!',      'plugin-conflict-detector' ),
+			'runScan'       => __( 'Run Scan Now',        'plugin-conflict-detector' ),
+			'clearing'      => __( 'Clearing…',           'plugin-conflict-detector' ),
+			'cleared'       => __( 'Log cleared.',        'plugin-conflict-detector' ),
+			'clearLog'      => __( 'Clear debug.log',     'plugin-conflict-detector' ),
+			'issuesFound'   => __( 'issues found',        'plugin-conflict-detector' ),
+			'unknownError'  => __( 'Unknown error',       'plugin-conflict-detector' ),
+			'requestFailed' => __( 'Request failed. Please try again.', 'plugin-conflict-detector' ),
+			'confirmClear'  => __( 'Are you sure you want to clear debug.log? This cannot be undone.', 'plugin-conflict-detector' ),
+			'couldNotClear' => __( 'Could not clear log.', 'plugin-conflict-detector' ),
+			'stopSafeMode'  => __( 'Stop Safe Mode',     'plugin-conflict-detector' ),
+			'startSafeMode' => __( 'Start Safe Mode',    'plugin-conflict-detector' ),
 		) );
 	}
 
@@ -171,6 +182,10 @@ final class Dashboard {
 			wp_send_json_error( array( 'message' => __( 'Log file not found.', 'plugin-conflict-detector' ) ) );
 		}
 
+		// WP_Filesystem is not used here intentionally: it requires an HTTP
+		// credentials form for direct-write mode, making it impractical for a
+		// one-shot log-clear in an AJAX handler. The file path is fully
+		// controlled (WP_CONTENT_DIR constant) and the action is admin-only.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
 		if ( file_put_contents( $log_file, '' ) === false ) {
 			wp_send_json_error( array( 'message' => __( 'Could not clear log file (permission denied).', 'plugin-conflict-detector' ) ) );

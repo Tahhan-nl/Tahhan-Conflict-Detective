@@ -271,7 +271,7 @@ final class Wizard {
 		}
 
 		if ( ! empty( $suspect_files ) ) {
-			echo '<p class="pcd-safe-mode-section-label">' . esc_html__( '⚠ Suspected plugins', 'plugin-conflict-detector' ) . '</p>';
+			echo '<p class="pcd-safe-mode-section-label"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . esc_html__( 'Suspected plugins', 'plugin-conflict-detector' ) . '</p>';
 			self::render_plugin_toggle_list( $suspect_files, $all_plugins, $disabled );
 			$remaining = array_diff( $active_plugins, $suspect_files );
 		} else {
