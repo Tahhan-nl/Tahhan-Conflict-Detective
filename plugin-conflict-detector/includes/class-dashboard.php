@@ -242,6 +242,15 @@ final class Dashboard {
 	// -------------------------------------------------------------------------
 
 	private static function render_dashboard(): void {
+		// Guard: if tables are missing (e.g. FTP deploy without activation),
+		// run install now and show a one-time notice instead of raw DB errors.
+		if ( ! Database::tables_exist() ) {
+			Database::install();
+			echo '<div class="notice notice-warning inline"><p>'
+				. esc_html__( 'Plugin Conflict Detector: database tables were just created. Reload this page to see your data.', 'plugin-conflict-detector' )
+				. '</p></div>';
+		}
+
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
@@ -313,7 +322,7 @@ final class Dashboard {
 		}
 
 		// ── Row 1: System overview (narrow) + Active plugins (wide) ──────────
-		echo '<div class="pcd-grid pcd-grid--top">';
+		echo '<div class="pcd-dash-row-1">';
 
 		// System info
 		echo '<div class="pcd-card">';
@@ -351,10 +360,10 @@ final class Dashboard {
 		}
 		echo '</ul></div>';
 
-		echo '</div>'; // .pcd-grid--top
+		echo '</div>'; // .pcd-dash-row-1
 
 		// ── Row 2: Recent changes + Recent errors (50/50) ─────────────────────
-		echo '<div class="pcd-grid pcd-grid--bottom">';
+		echo '<div class="pcd-dash-row-2">';
 
 		// Recent changes
 		echo '<div class="pcd-card">';
@@ -416,7 +425,7 @@ final class Dashboard {
 		);
 		echo '</div>';
 
-		echo '</div>'; // .pcd-grid--bottom
+		echo '</div>'; // .pcd-dash-row-2
 	}
 
 	// -------------------------------------------------------------------------
