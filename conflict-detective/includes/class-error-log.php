@@ -53,12 +53,12 @@ final class Error_Log {
 
 		// Sort newest-first, then truncate.
 		usort( $entries, static function ( $a, $b ) {
-		$ta = ( $a['time'] !== '' ) ? strtotime( $a['time'] ) : 0;
-		$tb = ( $b['time'] !== '' ) ? strtotime( $b['time'] ) : 0;
-		$ta = $ta ?: 0;
-		$tb = $tb ?: 0;
-		return $tb <=> $ta;
-	} );
+			$ta = ( $a['time'] !== '' ) ? strtotime( $a['time'] ) : 0;
+			$tb = ( $b['time'] !== '' ) ? strtotime( $b['time'] ) : 0;
+			$ta = $ta ?: 0;
+			$tb = $tb ?: 0;
+			return $tb <=> $ta;
+		} );
 
 		return array_slice( $entries, 0, $limit );
 	}
