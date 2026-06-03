@@ -214,6 +214,7 @@ final class Conflict_Scanner {
 			date_i18n( 'd-m-Y H:i', strtotime( $change->changed_at ) )
 		);
 
+		/* translators: %d: number of errors attributed to this plugin */
 		$parts[] = sprintf(
 			_n(
 				'%d error attributed to this plugin after the change.',
@@ -247,6 +248,7 @@ final class Conflict_Scanner {
 	private static function get_recent_changes(): array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must always be fresh.
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes`

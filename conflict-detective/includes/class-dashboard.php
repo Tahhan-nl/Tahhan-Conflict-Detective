@@ -109,16 +109,16 @@ final class Dashboard {
 
 		wp_enqueue_style(
 			'pcd-admin',
-			PCD_PLUGIN_URL . 'admin/css/admin.css',
+			CD_PLUGIN_URL . 'admin/css/admin.css',
 			array(),
-			(string) filemtime( PCD_PLUGIN_DIR . 'admin/css/admin.css' )
+			(string) filemtime( CD_PLUGIN_DIR . 'admin/css/admin.css' )
 		);
 
 		wp_enqueue_script(
 			'pcd-admin',
-			PCD_PLUGIN_URL . 'admin/js/admin.js',
+			CD_PLUGIN_URL . 'admin/js/admin.js',
 			array( 'jquery' ),
-			(string) filemtime( PCD_PLUGIN_DIR . 'admin/js/admin.js' ),
+			(string) filemtime( CD_PLUGIN_DIR . 'admin/js/admin.js' ),
 			true
 		);
 
@@ -186,7 +186,7 @@ final class Dashboard {
 		// credentials form for direct-write mode, making it impractical for a
 		// one-shot log-clear in an AJAX handler. The file path is fully
 		// controlled (WP_CONTENT_DIR constant) and the action is admin-only.
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents, PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- Writing to wp-content/debug.log, not the plugin folder. WP_Filesystem requires interactive credentials in AJAX context.
 		if ( file_put_contents( $log_file, '' ) === false ) {
 			wp_send_json_error( array( 'message' => __( 'Could not clear log file (permission denied).', 'conflict-detective' ) ) );
 		}
@@ -362,7 +362,7 @@ final class Dashboard {
 		printf(
 			'<h2 class="pcd-card__title">%s <span class="pcd-count">%d</span></h2>',
 			esc_html__( 'Active Plugins', 'conflict-detective' ),
-			count( $active_plugins )
+			absint( count( $active_plugins ) )
 		);
 		echo '<ul class="pcd-plugin-list">';
 		foreach ( $active_plugins as $plugin_file ) {
@@ -509,7 +509,7 @@ final class Dashboard {
 				$key === 'all' ? ' pcd-filter-btn--active' : '',
 				esc_attr( $key ),
 				esc_html( $label ),
-				$count
+				absint( $count )
 			);
 		}
 		echo '</div>';
@@ -613,15 +613,16 @@ final class Dashboard {
 				esc_html( $suspect['plugin_name'] ),
 				$i === 0 ? '<span class="pcd-badge pcd-badge--error">' . esc_html__( 'Top suspect', 'conflict-detective' ) . '</span>' : '',
 				esc_attr( $bclass ),
-				$suspect['confidence'],
+				absint( $suspect['confidence'] ),
 				esc_attr( $bclass ),
-				$bar,
+				absint( $bar ),
 				esc_html( $suspect['reason'] ),
 				esc_html__( 'Action', 'conflict-detective' ),
 				esc_html( self::action_label( $suspect['action'] ) ),
 				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $suspect['changed_at'] ) ) ),
 				$suspect['error_count'] > 0
 					? '<span>' . esc_html( sprintf(
+						/* translators: %d: number of errors */
 						_n( '%d error', '%d errors', $suspect['error_count'], 'conflict-detective' ),
 						$suspect['error_count']
 					) ) . '</span>'
@@ -714,6 +715,7 @@ final class Dashboard {
 				esc_html__( 'Last scan:', 'conflict-detective' ),
 				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $last_scan['scanned_at'] ) ) ),
 				esc_html( (string) $last_scan['issues_found'] ),
+				/* translators: %d: number of issues */
 				esc_html( _n( 'issue found', 'issues found', $last_scan['issues_found'], 'conflict-detective' ) )
 			);
 		}
@@ -844,7 +846,7 @@ final class Dashboard {
 				'<a href="%s" class="pcd-page-btn%s">%d</a>',
 				esc_url( $url ),
 				$i === $current ? ' pcd-page-btn--active' : '',
-				$i
+				absint( $i )
 			);
 		}
 		echo '</div>';

@@ -143,12 +143,14 @@ final class Database {
 
 		foreach ( $tables as $table ) {
 			// Table name is built from a controlled prefix, not user input.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema removal on uninstall; no WP_Filesystem equivalent.
 			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 
 		delete_option( self::OPTION_KEY );
 
 		// Remove transient version keys written by Change_History.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk option cleanup on uninstall; no transient API equivalent.
 		$wpdb->query(
 			"DELETE FROM `{$wpdb->options}` WHERE `option_name` LIKE 'pcd\\_prev\\_version\\_%'"  // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		);
@@ -188,6 +190,7 @@ final class Database {
 		// or database restores that wiped the tables but kept wp_options intact.
 		// Uses esc_like() + prepare() to safely escape the table name in the LIKE clause.
 		$table  = $wpdb->prefix . 'cd_plugin_changes';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; no transient API equivalent.
 		$exists = $wpdb->get_var(
 			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
 		);
@@ -206,6 +209,7 @@ final class Database {
 	public static function tables_exist(): bool {
 		global $wpdb;
 		$table  = $wpdb->prefix . 'cd_plugin_changes';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; no transient API equivalent.
 		return null !== $wpdb->get_var(
 			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
 		);
