@@ -8,7 +8,7 @@
 
 ## Phase 1 — MVP ✅ Complete
 
-### Dashboard (`Tools → Conflict Detective`)
+### Dashboard (top-level admin menu → Conflict Detective)
 - Active plugins with versions
 - Recently activated plugins
 - Latest updates
