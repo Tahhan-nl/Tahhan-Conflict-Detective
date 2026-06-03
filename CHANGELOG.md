@@ -11,6 +11,30 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.1] — 2026-06-03
+
+### Fixed
+- Critical infinite recursion crash: `maybe_filter_active_plugins()` called `get_option('active_plugins')` which re-triggered the same `pre_option_active_plugins` filter, causing a stack overflow that took the entire site down. Fixed by reading directly from `$wpdb` instead of `get_option()`.
+
+---
+
+## [2.3.0] — 2026-06-03
+
+### Changed
+- CI action SHA pinning (security hardening in GitHub Actions workflow)
+- Code cleanup: removed orphan comment and fixed usort indentation in class-dashboard.php and class-error-log.php
+
+---
+
+## [2.2.0] — 2026-06-03
+
+### Added
+- Safe Mode tab fully functional: Start/Stop button now triggers AJAX and reloads page on success
+- Redesigned Safe Mode UI: inactive state shows instructions + Start button; active state shows amber banner with plugin count + Stop button above toggle list
+- Architecture fix: `Safe_Mode::init()` and `Database::maybe_upgrade()` moved to file-load time so AJAX handlers are always registered
+
+---
+
 ## [2.1.3] — 2026-06-03
 
 ### Fixed
