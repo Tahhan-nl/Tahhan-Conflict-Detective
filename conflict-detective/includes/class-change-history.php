@@ -115,6 +115,7 @@ final class Change_History {
 	public static function get_recent( int $limit = 50 ): array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must always be fresh.
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes` ORDER BY changed_at DESC LIMIT %d",
@@ -169,6 +170,7 @@ final class Change_History {
 	): void {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log insert; caching not applicable.
 		$wpdb->insert(
 			$wpdb->prefix . 'cd_plugin_changes',
 			array(

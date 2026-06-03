@@ -316,7 +316,7 @@ final class Wizard {
 			printf(
 				'<div class="%s"><span class="pcd-wizard-progress__num">%d</span><span class="pcd-wizard-progress__label">%s</span></div>',
 				esc_attr( $class ),
-				$n,
+				absint( $n ),
 				esc_html( $label )
 			);
 			if ( $n < count( $steps ) ) {
@@ -352,14 +352,15 @@ final class Wizard {
 			esc_html( $s['plugin_name'] ),
 			$is_top ? '<span class="pcd-badge pcd-badge--error">' . esc_html__( 'Top suspect', 'conflict-detective' ) . '</span>' : '',
 			esc_attr( $bar_class ),
-			$s['confidence'],
+			absint( $s['confidence'] ),
 			esc_attr( $bar_class ),
-			$bar_width,
+			absint( $bar_width ),
 			esc_html( $s['reason'] ),
 			esc_html__( 'Action:', 'conflict-detective' ),
 			esc_html( self::action_label( $s['action'] ) ),
 			$s['error_count'] > 0
 				? '<span>' . esc_html( sprintf(
+					/* translators: %d: number of errors */
 					_n( '%d error', '%d errors', $s['error_count'], 'conflict-detective' ),
 					$s['error_count']
 				) ) . '</span>'

@@ -91,6 +91,7 @@ final class Health_Scan {
 		) );
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log insert; caching not applicable.
 		$wpdb->insert(
 			$wpdb->prefix . 'cd_scans',
 			array(
@@ -116,6 +117,7 @@ final class Health_Scan {
 	public static function get_last_scan(): ?array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must be fresh.
 		$row = $wpdb->get_row(
 			"SELECT * FROM `{$wpdb->prefix}cd_scans` WHERE scan_type = 'health' ORDER BY scanned_at DESC LIMIT 1" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
@@ -149,6 +151,7 @@ final class Health_Scan {
 		global $wpdb;
 
 		// Last 10 plugin changes.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must be fresh.
 		$changes = $wpdb->get_results(
 			"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes` ORDER BY changed_at DESC LIMIT 10" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
@@ -357,7 +360,8 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'php-version',
 				'message' => sprintf(
-					__( 'PHP %s is end-of-life. Minimum supported: PHP %s. Recommended: PHP %s.', 'conflict-detective' ),
+					/* translators: 1: current PHP version, 2: minimum PHP version, 3: recommended PHP version */
+					__( 'PHP %1$s is end-of-life. Minimum supported: PHP %2$s. Recommended: PHP %3$s.', 'conflict-detective' ),
 					PHP_VERSION, self::PHP_MINIMUM, self::PHP_RECOMMENDED
 				),
 			);
@@ -365,7 +369,8 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'php-version-warning',
 				'message' => sprintf(
-					__( 'PHP %s is supported but PHP %s or higher is recommended.', 'conflict-detective' ),
+					/* translators: 1: current PHP version, 2: recommended PHP version */
+					__( 'PHP %1$s is supported but PHP %2$s or higher is recommended.', 'conflict-detective' ),
 					PHP_VERSION, self::PHP_RECOMMENDED
 				),
 			);
@@ -377,6 +382,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'memory-low',
 				'message' => sprintf(
+					/* translators: %s: current memory limit value */
 					__( 'Memory limit is %s. At least 64 MB is required; 256 MB recommended.', 'conflict-detective' ),
 					WP_MEMORY_LIMIT
 				),
@@ -385,6 +391,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'memory-warning',
 				'message' => sprintf(
+					/* translators: %s: current memory limit value */
 					__( 'Memory limit is %s. 256 MB or more is recommended for heavy plugins.', 'conflict-detective' ),
 					WP_MEMORY_LIMIT
 				),
@@ -397,6 +404,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'max-exec-low',
 				'message' => sprintf(
+					/* translators: %d: current max_execution_time in seconds */
 					__( 'max_execution_time is %d seconds. At least 30 seconds is recommended.', 'conflict-detective' ),
 					$max_exec
 				),
@@ -411,7 +419,8 @@ final class Health_Scan {
 				$issues[] = array(
 					'type'    => 'wp-update',
 					'message' => sprintf(
-						__( 'WordPress %s is available (current: %s).', 'conflict-detective' ),
+						/* translators: 1: available WordPress version, 2: current WordPress version */
+						__( 'WordPress %1$s is available (current: %2$s).', 'conflict-detective' ),
 						$latest->version, $wp_version
 					),
 				);

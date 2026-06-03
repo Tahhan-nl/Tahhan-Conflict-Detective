@@ -69,7 +69,7 @@ final class Error_Log {
 			'exists'        => file_exists( $path ),
 			'size'          => file_exists( $path ) ? (int) filesize( $path ) : 0,
 			'modified'      => file_exists( $path ) ? date_i18n( 'd-m-Y H:i', (int) filemtime( $path ) ) : '',
-			'writable'      => file_exists( $path ) && is_writable( $path ),
+			'writable'      => file_exists( $path ) && is_writable( $path ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- is_readable check only, no WP_Filesystem equivalent for this guard
 			'debug_enabled' => defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG,
 		);
 	}
@@ -261,7 +261,7 @@ final class Error_Log {
 		// fseek/ftell which are required for the memory-efficient reverse-scan
 		// algorithm below. The path is validated by the caller (file_exists +
 		// is_readable checks) and this method is never called with user input.
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- WP_Filesystem does not expose fseek/ftell needed for memory-efficient reverse scan.
 		$fp = fopen( $path, 'rb' );
 		if ( ! $fp ) {
 			return array();
@@ -277,11 +277,11 @@ final class Error_Log {
 			$read    = min( $chunk_size, $pos );
 			$pos    -= $read;
 			fseek( $fp, $pos );
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fread
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- WP_Filesystem does not expose fseek/ftell needed for memory-efficient reverse scan.
 			$buffer = fread( $fp, $read ) . $buffer;
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem does not expose fseek/ftell needed for memory-efficient reverse scan.
 		fclose( $fp );
 
 		$all = explode( "\n", $buffer );

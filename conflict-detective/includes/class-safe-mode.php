@@ -232,7 +232,9 @@ final class Safe_Mode {
 		wp_send_json_success( array(
 			'disabled' => $now_disabled,
 			'message'  => $now_disabled
+				/* translators: %s: plugin name */
 				? sprintf( __( '"%s" disabled for your session.', 'conflict-detective' ), $plugin_file )
+				/* translators: %s: plugin name */
 				: sprintf( __( '"%s" re-enabled.', 'conflict-detective' ), $plugin_file ),
 		) );
 	}
