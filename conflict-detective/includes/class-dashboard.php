@@ -145,8 +145,10 @@ final class Dashboard {
 			'requestFailed' => __( 'Request failed. Please try again.', 'conflict-detective' ),
 			'confirmClear'  => __( 'Are you sure you want to clear debug.log? This cannot be undone.', 'conflict-detective' ),
 			'couldNotClear' => __( 'Could not clear log.', 'conflict-detective' ),
-			'stopSafeMode'  => __( 'Stop Safe Mode',     'conflict-detective' ),
-			'startSafeMode' => __( 'Start Safe Mode',    'conflict-detective' ),
+			'stopSafeMode'    => __( 'Stop Safe Mode',     'conflict-detective' ),
+			'startSafeMode'   => __( 'Start Safe Mode',    'conflict-detective' ),
+			'safeModeLoading' => __( 'Activating…',        'conflict-detective' ),
+			'safeModeStop'    => __( 'Stopping…',          'conflict-detective' ),
 		) );
 	}
 
@@ -657,82 +659,126 @@ final class Dashboard {
 		$all_plugins    = get_plugins();
 		$active_plugins = (array) get_option( 'active_plugins', array() );
 
-		$panel_class = $is_active ? ' pcd-safe-mode-panel--active' : '';
-		$btn_text    = $is_active
-			? __( 'Stop Safe Mode', 'conflict-detective' )
-			: __( 'Start Safe Mode', 'conflict-detective' );
-		$btn_class   = $is_active ? 'button button-secondary' : 'button button-primary';
-
-		printf(
-			'<div class="pcd-safe-mode-panel%s">',
-			esc_attr( $panel_class )
-		);
-
-		echo '<div class="pcd-safe-mode-header">';
-		echo '<h2>' . esc_html__( 'Safe Testing Mode', 'conflict-detective' ) . '</h2>';
-		printf(
-			'<button id="pcd-toggle-safe-mode" class="%s" type="button">%s</button>',
-			esc_attr( $btn_class ),
-			esc_html( $btn_text )
-		);
-		echo '</div>';
-
-		echo '<p class="pcd-safe-mode-tip">'
-			. esc_html__( 'Safe Mode lets you disable plugins for your admin session only — visitors see the site completely normally. Enable Safe Mode, then use the toggles below to deactivate plugins one by one and check if your problem disappears.', 'conflict-detective' )
-			. '</p>';
-
 		if ( $is_active ) {
-			echo '<div id="pcd-safe-mode-body">';
-		} else {
-			echo '<div id="pcd-safe-mode-body" style="display:none">';
-		}
+			// ── Active state: amber banner + plugin list card ─────────────────────
 
-		echo '<p class="pcd-safe-mode-section-label">'
-			. esc_html__( 'Active plugins — toggle OFF to disable for your session only', 'conflict-detective' )
-			. '</p>';
+			// Banner (outside the card, before the card).
+			echo '<div class="pcd-safe-mode-banner">';
+			echo '<div class="pcd-safe-mode-banner__body">';
+			echo '<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>';
+			echo '<div>';
+			echo '<strong>' . esc_html__( 'Safe Mode Active', 'conflict-detective' ) . '</strong>';
+			printf(
+				'<span>%s</span>',
+				esc_html( sprintf(
+					/* translators: %d number of disabled plugins */
+					_n(
+						'%d plugin disabled for your session — visitors see the full site.',
+						'%d plugins disabled for your session — visitors see the full site.',
+						count( $disabled ),
+						'conflict-detective'
+					),
+					count( $disabled )
+				) )
+			);
+			echo '</div></div>';
+			printf(
+				'<button id="pcd-toggle-safe-mode" class="button pcd-btn-stop" type="button">%s</button>',
+				esc_html__( 'Stop Safe Mode', 'conflict-detective' )
+			);
+			echo '</div>'; // .pcd-safe-mode-banner
 
-		$testable = array_filter( $active_plugins, static function ( $file ) {
-			return strpos( $file, 'conflict-detective/conflict-detective.php' ) === false;
-		} );
+			// Plugin list card.
+			echo '<div class="pcd-card pcd-card--full">';
 
-		if ( empty( $testable ) ) {
-			echo '<p class="pcd-empty">' . esc_html__( 'No other active plugins found.', 'conflict-detective' ) . '</p>';
-		} else {
-			echo '<ul class="pcd-plugin-toggle-list">';
-			foreach ( $testable as $plugin_file ) {
-				$data        = $all_plugins[ $plugin_file ] ?? array( 'Name' => $plugin_file, 'Version' => '' );
-				$is_disabled = in_array( $plugin_file, $disabled, true );
+			$testable = array_filter( $active_plugins, static function ( $file ) {
+				return strpos( $file, 'conflict-detective/conflict-detective.php' ) === false;
+			} );
 
-				$badge = $is_disabled
-					? '<span class="pcd-badge pcd-badge--warning">OFF (test)</span>'
-					: '<span class="pcd-badge pcd-badge--ok">ON</span>';
+			if ( empty( $testable ) ) {
+				echo '<p class="pcd-empty">' . esc_html__( 'No other active plugins found.', 'conflict-detective' ) . '</p>';
+			} else {
+				$disabled_count = count( $disabled );
+				$total_count    = count( $testable );
 
 				printf(
-					'<li class="pcd-plugin-toggle-item%s">
-						<label class="pcd-toggle-switch" aria-label="%s">
-							<input type="checkbox" class="pcd-plugin-toggle-input" data-plugin="%s"%s>
-							<span class="pcd-toggle-slider"></span>
-						</label>
-						<span class="pcd-plugin-toggle-info">
-							<strong>%s</strong>
-							<span class="pcd-version">v%s</span>
-						</span>
-						<span class="pcd-toggle-label">%s</span>
-					</li>',
-					esc_attr( $is_disabled ? ' pcd-plugin-toggle-item--off' : '' ),
-					esc_attr( $data['Name'] ),
-					esc_attr( $plugin_file ),
-					$is_disabled ? '' : ' checked',
-					esc_html( $data['Name'] ),
-					esc_html( $data['Version'] ),
-					wp_kses_post( $badge )
+					'<p class="pcd-safe-mode-count">%s</p>',
+					esc_html( sprintf(
+						/* translators: 1: number of disabled plugins, 2: total plugins */
+						__( '%1$d of %2$d plugins disabled', 'conflict-detective' ),
+						$disabled_count,
+						$total_count
+					) )
 				);
-			}
-			echo '</ul>';
-		}
 
-		echo '</div>'; // #pcd-safe-mode-body
-		echo '</div>'; // .pcd-safe-mode-panel
+				echo '<ul class="pcd-plugin-toggle-list">';
+				foreach ( $testable as $plugin_file ) {
+					$data        = $all_plugins[ $plugin_file ] ?? array( 'Name' => $plugin_file, 'Version' => '' );
+					$is_disabled = in_array( $plugin_file, $disabled, true );
+
+					$badge = $is_disabled
+						? '<span class="pcd-badge pcd-badge--warning">OFF (test)</span>'
+						: '<span class="pcd-badge pcd-badge--ok">ON</span>';
+
+					printf(
+						'<li class="pcd-plugin-toggle-item%s">
+							<label class="pcd-toggle-switch" aria-label="%s">
+								<input type="checkbox" class="pcd-plugin-toggle-input" data-plugin="%s"%s>
+								<span class="pcd-toggle-slider"></span>
+							</label>
+							<span class="pcd-plugin-toggle-info">
+								<strong>%s</strong>
+								<span class="pcd-version">v%s</span>
+							</span>
+							<span class="pcd-toggle-label">%s</span>
+						</li>',
+						esc_attr( $is_disabled ? ' pcd-plugin-toggle-item--off' : '' ),
+						esc_attr( $data['Name'] ),
+						esc_attr( $plugin_file ),
+						$is_disabled ? '' : ' checked',
+						esc_html( $data['Name'] ),
+						esc_html( $data['Version'] ),
+						wp_kses_post( $badge )
+					);
+				}
+				echo '</ul>';
+			}
+
+			echo '</div>'; // .pcd-card
+
+		} else {
+			// ── Inactive state: single card with Start button + how-to steps ─────
+
+			echo '<div class="pcd-card pcd-card--full">';
+			echo '<div class="pcd-card__header">';
+			echo '<h2 class="pcd-card__title">' . esc_html__( 'Safe Testing Mode', 'conflict-detective' ) . '</h2>';
+			printf(
+				'<button id="pcd-toggle-safe-mode" class="button button-primary" type="button">%s</button>',
+				esc_html__( 'Start Safe Mode', 'conflict-detective' )
+			);
+			echo '</div>';
+
+			echo '<p class="pcd-safe-mode-tip">'
+				. esc_html__( 'Safe Mode lets you disable plugins for your admin session only — visitors see the site completely normally. Enable Safe Mode, then use the toggles below to deactivate plugins one by one and check if your problem disappears.', 'conflict-detective' )
+				. '</p>';
+
+			echo '<ol class="pcd-safe-mode-steps">';
+			printf( '<li>%s</li>', wp_kses_post( sprintf(
+				/* translators: button label in bold */
+				__( 'Click <strong>%s</strong>', 'conflict-detective' ),
+				__( 'Start Safe Mode', 'conflict-detective' )
+			) ) );
+			echo '<li>' . esc_html__( 'Disable the plugins you want to test using the toggles that appear', 'conflict-detective' ) . '</li>';
+			echo '<li>' . esc_html__( 'Browse your site — did the problem disappear?', 'conflict-detective' ) . '</li>';
+			printf( '<li>%s</li>', wp_kses_post( sprintf(
+				/* translators: button label in bold */
+				__( 'Click <strong>%s</strong> when you are done testing', 'conflict-detective' ),
+				__( 'Stop Safe Mode', 'conflict-detective' )
+			) ) );
+			echo '</ol>';
+
+			echo '</div>'; // .pcd-card
+		}
 	}
 
 	// -------------------------------------------------------------------------

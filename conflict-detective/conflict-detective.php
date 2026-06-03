@@ -3,7 +3,7 @@
  * Plugin Name:       Conflict Detective
  * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Conflict-Detective
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
- * Version:           2.1.3
+ * Version:           2.1.4
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Tahhan
@@ -29,7 +29,7 @@ if ( defined( 'CD_VERSION' ) ) {
 	return;
 }
 
-define( 'CD_VERSION',     '2.1.3' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
+define( 'CD_VERSION',     '2.1.4' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
 define( 'CD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
 define( 'CD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
 define( 'CD_PLUGIN_FILE', __FILE__ ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
@@ -106,19 +106,20 @@ final class Plugin {
 		register_activation_hook( CD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'install' ) );
 		register_deactivation_hook( CD_PLUGIN_FILE, array( 'PluginConflictDetector\Database', 'on_deactivate' ) );
 
-		// Run schema migration as early as possible (priority 0) so tables always
-		// exist before any dashboard query or AJAX handler runs.
-		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Database', 'maybe_upgrade' ), 0 );
-
-		// Safe Mode filter must be registered as early as possible.
-		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Safe_Mode',     'init' ), 1 );
-
 		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Change_History', 'init' ) );
 		add_action( 'plugins_loaded', array( 'PluginConflictDetector\Dashboard',      'register_ajax' ) );
 		add_action( 'admin_menu',     array( 'PluginConflictDetector\Dashboard',      'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( 'PluginConflictDetector\Dashboard', 'enqueue_assets' ) );
 	}
 }
+
+// Safe Mode MUST init before plugins_loaded fires so its pre_option filter
+// and AJAX handlers are registered immediately when the plugin file loads.
+Safe_Mode::init();
+
+// Schema migration: register at priority 0 from the top-level so it fires
+// BEFORE Plugin::instance() at priority 5.
+add_action( 'plugins_loaded', array( 'PluginConflictDetector\Database', 'maybe_upgrade' ), 0 );
 
 // Boot.
 add_action( 'plugins_loaded', array( 'PluginConflictDetector\Plugin', 'instance' ), 5 );

@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.3
+Stable tag: 2.1.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,16 @@ The plugin monitors the current site only. It is not a network-wide tool in this
 7. Health Scan — duplicate functionality, incompatibilities, and server configuration checks.
 
 == Changelog ==
+
+= 2.1.4 =
+* Fixed critical bug: Safe_Mode::init() and Database::maybe_upgrade() were registered inside Plugin::init() on plugins_loaded priority 5, meaning they were never called (priority 1 and 0 already fired). Both are now wired up directly at file load time, outside the Plugin class.
+* Safe Mode tab fully redesigned: inactive state shows a card with instructions and a Start button; active state shows an amber banner with plugin count and a Stop button above the plugin toggle list.
+* JavaScript Safe Mode toggle now uses delegated event binding ($(document).on) so it works regardless of DOM load order, and reloads the page on success to reflect the new state.
+* Added safeModeLoading and safeModeStop localised strings for button feedback during AJAX calls.
+* Added CSS for .pcd-safe-mode-banner, .pcd-btn-stop, .pcd-safe-mode-steps, and .pcd-safe-mode-count.
+
+= 2.1.3 =
+* Added Safe Mode tab UI (render_safe_mode placeholder).
 
 = 2.1.1 =
 * Security: plugin slug from AJAX request now validated against the installed plugins list before being stored in user meta
