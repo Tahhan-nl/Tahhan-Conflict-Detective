@@ -85,9 +85,16 @@ final class Safe_Mode {
 			return $pre_option;
 		}
 
-		// Return the real option minus the disabled list.
-		$active = get_option( 'active_plugins', array() );
-		return array_values( array_diff( (array) $active, $disabled ) );
+		// Read active_plugins directly from the DB — using get_option() here
+		// would re-trigger this same filter and cause infinite recursion.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Must bypass option filters to avoid recursion.
+		$raw    = $wpdb->get_var( "SELECT option_value FROM {$wpdb->options} WHERE option_name = 'active_plugins' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$active = $raw ? maybe_unserialize( $raw ) : array();
+		if ( ! is_array( $active ) ) {
+			$active = array();
+		}
+		return array_values( array_diff( $active, $disabled ) );
 	}
 
 	// -------------------------------------------------------------------------
