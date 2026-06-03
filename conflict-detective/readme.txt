@@ -2,7 +2,7 @@
 Contributors: tahhan
 Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 2.1.1
 License: GPL-2.0-or-later
