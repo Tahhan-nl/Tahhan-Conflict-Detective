@@ -98,7 +98,7 @@ final class Health_Scan {
 				'scan_type'    => 'health',
 				'result'       => wp_json_encode( $results ),
 				'issues_found' => $issue_count,
-				'scanned_at'   => current_time( 'mysql' ),
+				'scanned_at'   => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%d', '%s' )
 		);
@@ -119,7 +119,10 @@ final class Health_Scan {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must be fresh.
 		$row = $wpdb->get_row(
-			"SELECT * FROM `{$wpdb->prefix}cd_scans` WHERE scan_type = 'health' ORDER BY scanned_at DESC LIMIT 1" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->prepare(
+				"SELECT * FROM `{$wpdb->prefix}cd_scans` WHERE scan_type = %s ORDER BY scanned_at DESC LIMIT 1",
+				'health'
+			)
 		);
 
 		if ( ! $row ) {
@@ -153,7 +156,10 @@ final class Health_Scan {
 		// Last 10 plugin changes.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must be fresh.
 		$changes = $wpdb->get_results(
-			"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes` ORDER BY changed_at DESC LIMIT 10" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->prepare(
+				"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes` ORDER BY changed_at DESC LIMIT %d",
+				10
+			)
 		);
 
 		if ( empty( $changes ) ) {
