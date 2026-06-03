@@ -223,7 +223,7 @@ final class Health_Scan {
 					'label'   => $group['label'],
 					'message' => sprintf(
 						/* translators: 1: category label, 2: comma-separated plugin names */
-						__( 'Multiple %1$s plugins active: %2$s', 'plugin-conflict-detector' ),
+						__( 'Multiple %1$s plugins active: %2$s', 'conflict-detector' ),
 						$group['label'],
 						implode( ', ', $active_names )
 					),
@@ -258,7 +258,7 @@ final class Health_Scan {
 						'type'    => 'outdated',
 						'message' => sprintf(
 							/* translators: plugin name */
-							__( '"%s" has not been updated in over 2 years.', 'plugin-conflict-detector' ),
+							__( '"%s" has not been updated in over 2 years.', 'conflict-detector' ),
 							$name
 						),
 					);
@@ -297,7 +297,7 @@ final class Health_Scan {
 				'type'    => 'missing-parent',
 				'message' => sprintf(
 					/* translators: parent theme name */
-					__( 'Parent theme "%s" is missing.', 'plugin-conflict-detector' ),
+					__( 'Parent theme "%s" is missing.', 'conflict-detector' ),
 					$theme->get( 'Template' )
 				),
 			);
@@ -314,7 +314,7 @@ final class Health_Scan {
 					'type'    => 'missing-file',
 					'message' => sprintf(
 						/* translators: filename */
-						__( '"%s" is missing from the active theme.', 'plugin-conflict-detector' ),
+						__( '"%s" is missing from the active theme.', 'conflict-detector' ),
 						$file
 					),
 				);
@@ -328,7 +328,7 @@ final class Health_Scan {
 				'type'    => 'update-available',
 				'message' => sprintf(
 					/* translators: theme name */
-					__( 'An update is available for theme "%s".', 'plugin-conflict-detector' ),
+					__( 'An update is available for theme "%s".', 'conflict-detector' ),
 					$theme->get( 'Name' )
 				),
 			);
@@ -357,7 +357,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'php-version',
 				'message' => sprintf(
-					__( 'PHP %s is end-of-life. Minimum supported: PHP %s. Recommended: PHP %s.', 'plugin-conflict-detector' ),
+					__( 'PHP %s is end-of-life. Minimum supported: PHP %s. Recommended: PHP %s.', 'conflict-detector' ),
 					PHP_VERSION, self::PHP_MINIMUM, self::PHP_RECOMMENDED
 				),
 			);
@@ -365,7 +365,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'php-version-warning',
 				'message' => sprintf(
-					__( 'PHP %s is supported but PHP %s or higher is recommended.', 'plugin-conflict-detector' ),
+					__( 'PHP %s is supported but PHP %s or higher is recommended.', 'conflict-detector' ),
 					PHP_VERSION, self::PHP_RECOMMENDED
 				),
 			);
@@ -377,7 +377,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'memory-low',
 				'message' => sprintf(
-					__( 'Memory limit is %s. At least 64 MB is required; 256 MB recommended.', 'plugin-conflict-detector' ),
+					__( 'Memory limit is %s. At least 64 MB is required; 256 MB recommended.', 'conflict-detector' ),
 					WP_MEMORY_LIMIT
 				),
 			);
@@ -385,7 +385,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'memory-warning',
 				'message' => sprintf(
-					__( 'Memory limit is %s. 256 MB or more is recommended for heavy plugins.', 'plugin-conflict-detector' ),
+					__( 'Memory limit is %s. 256 MB or more is recommended for heavy plugins.', 'conflict-detector' ),
 					WP_MEMORY_LIMIT
 				),
 			);
@@ -397,7 +397,7 @@ final class Health_Scan {
 			$issues[] = array(
 				'type'    => 'max-exec-low',
 				'message' => sprintf(
-					__( 'max_execution_time is %d seconds. At least 30 seconds is recommended.', 'plugin-conflict-detector' ),
+					__( 'max_execution_time is %d seconds. At least 30 seconds is recommended.', 'conflict-detector' ),
 					$max_exec
 				),
 			);
@@ -411,7 +411,7 @@ final class Health_Scan {
 				$issues[] = array(
 					'type'    => 'wp-update',
 					'message' => sprintf(
-						__( 'WordPress %s is available (current: %s).', 'plugin-conflict-detector' ),
+						__( 'WordPress %s is available (current: %s).', 'conflict-detector' ),
 						$latest->version, $wp_version
 					),
 				);
