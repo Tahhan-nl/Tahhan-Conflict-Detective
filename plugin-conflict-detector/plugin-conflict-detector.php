@@ -3,7 +3,7 @@
  * Plugin Name:       Plugin Conflict Detector
  * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
- * Version:           2.0.0
+ * Version:           2.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Tahhan
@@ -29,7 +29,7 @@ if ( defined( 'PCD_VERSION' ) ) {
 	return;
 }
 
-define( 'PCD_VERSION',     '2.0.0' );
+define( 'PCD_VERSION',     '2.1.0' );
 define( 'PCD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'PCD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'PCD_PLUGIN_FILE', __FILE__ );

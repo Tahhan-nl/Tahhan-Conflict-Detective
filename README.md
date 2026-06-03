@@ -5,7 +5,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-0073aa?logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-8892be?logo=php)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-2.1.0-green)](CHANGELOG.md)
 
 ---
 
@@ -19,19 +19,19 @@ No more manually deactivating plugins one by one. No more guessing.
 
 ---
 
-## Features — Phase 1 (MVP)
+## Features
 
-### Dashboard
+### Phase 1 — Dashboard & Monitoring
+
+**Dashboard**  
 A single-screen overview under **Tools → Conflict Detector**:
 
 - Active plugins with versions
-- WordPress & PHP version
-- Active theme
-- Memory limit & debug mode status
+- WordPress & PHP version, active theme, memory limit, debug mode
 - Recent plugin changes
 - Latest error log entries
 
-### Error Log Viewer
+**Error Log Viewer**  
 Automatically reads `debug.log` and the server PHP error log.  
 Each entry is **attributed to the plugin** that owns the file where the error occurred.
 
@@ -41,7 +41,7 @@ Call to undefined method WC_Gateway::process_payment()
 wp-content/plugins/woocommerce/includes/gateways/...  :247
 ```
 
-### Plugin Change History
+**Plugin Change History**  
 Every plugin lifecycle event is logged with a timestamp:
 
 | Date & Time         | Plugin      | Action   | Version       |
@@ -49,24 +49,51 @@ Every plugin lifecycle event is logged with a timestamp:
 | 02-06-2026 12:10:05 | WooCommerce | Updated  | 8.3.0 → 8.4.0 |
 | 02-06-2026 12:10:58 | Elementor   | Updated  | 3.20 → 3.21   |
 
-### Health Scan
+**Health Scan**  
 On-demand scan across three areas:
 
-**Plugins**
-- Duplicate functionality (multiple SEO, caching, security, backup plugins)
-- Known incompatibilities between specific plugin pairs
-- Outdated plugins (not updated in > 2 years)
+*Plugins* — Duplicate functionality (SEO, caching, security, backup), known incompatibilities, outdated plugins (> 2 years)  
+*Theme* — Missing core files, missing parent theme, pending updates  
+*Server* — PHP version, memory limit, `max_execution_time`, WordPress core updates
 
-**Theme**
-- Missing `functions.php`, `style.css`, `index.php`
-- Missing parent theme (child themes)
-- Pending theme update
+---
 
-**Server**
-- PHP version (minimum 7.4, recommended 8.2)
-- Memory limit (minimum 64 MB, recommended 256 MB)
-- `max_execution_time` (minimum 30 s)
-- WordPress core update available
+### Phase 2 — Smart Conflict Detection
+
+**Conflict Scanner**  
+Automatically correlates plugin update timestamps with error-log spikes and reports:
+
+```
+Suspect plugin:  WooCommerce  (updated 12:10)
+First error:     woocommerce-gateway.php  (12:11)
+Confidence:      92%
+```
+
+Detected conflicts are stored in the database and can be marked as resolved with one click.
+
+**Safe Testing Mode**  
+*Unique feature — visitors are never affected.*
+
+Disable any plugin for your own admin session (cookie-isolated) while the live site stays completely intact. Test freely, then re-enable with one click.
+
+```
+WooCommerce   [OFF — admin only]
+Elementor     [ON]
+RankMath      [ON]
+```
+
+**Conflict Wizard**  
+Step-by-step guided diagnosis for 7 symptom categories:
+
+- White screen of death
+- Login problem
+- WooCommerce issue
+- Slow site
+- Broken admin panel
+- Front-end error
+- Other
+
+Each symptom triggers an automatic analysis linking recent changes to matching errors, with a tailored advice list.
 
 ---
 
@@ -74,8 +101,8 @@ On-demand scan across three areas:
 
 | Phase | Status | Features |
 |-------|--------|----------|
-| 1 – MVP | ✅ Done | Dashboard, Error Log, Change History, Health Scan |
-| 2 – Smart Detection | 🔲 Planned | Conflict Scanner (confidence %), Safe Testing Mode, Conflict Wizard |
+| 1 – MVP | ✅ Complete | Dashboard, Error Log, Change History, Health Scan |
+| 2 – Smart Detection | ✅ Complete | Conflict Scanner (confidence %), Safe Testing Mode, Conflict Wizard |
 | 3 – Advanced Analysis | 🔲 Planned | Performance impact per plugin, Plugin Interaction Map, Ajax & Cron Monitor |
 | 4 – Agency Edition | 🔲 Planned | Multi-site dashboard, Email alerts, PDF reporting |
 
@@ -114,25 +141,29 @@ Then activate via **Plugins → Installed Plugins**.
 
 ## Database
 
-The plugin creates three tables on activation (prefixed with your `$wpdb->prefix`):
+The plugin creates four tables on activation (prefixed with your `$wpdb->prefix`):
 
 | Table | Purpose |
 |-------|---------|
 | `{prefix}cd_plugin_changes` | Audit log of every plugin activation, deactivation, update, and deletion |
 | `{prefix}cd_errors` | Parsed PHP / WordPress error entries |
 | `{prefix}cd_scans` | Serialised health-scan results |
+| `{prefix}cd_conflicts` | Detected conflict records with confidence scores |
 
 Tables are **preserved on deactivation** so history is not lost.  
 Tables are **removed on uninstall** (Plugin → Delete).
+
+> **FTP / manual deployments:** The plugin detects missing tables on every request and recreates them automatically — no activation hook required.
 
 ---
 
 ## Security
 
-- All database queries use `$wpdb->prepare()` or whitelisted table names.
+- All database queries use `$wpdb->prepare()` combined with `$wpdb->esc_like()` where needed.
 - All output is escaped with WordPress core helpers (`esc_html`, `esc_attr`, `esc_url`, `wp_kses_post`).
-- Every form uses a WordPress nonce.
+- Every form and AJAX action uses a WordPress nonce.
 - All admin pages are guarded by `current_user_can( 'manage_options' )`.
+- Safe Testing Mode is cookie-isolated — only the admin session is affected, never visitors.
 
 ---
 
