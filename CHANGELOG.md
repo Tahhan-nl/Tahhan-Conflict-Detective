@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **WordPress Conflict Detector** are documented here.
+All notable changes to **WordPress Conflict Detective** are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).  
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -81,7 +81,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [1.0.0] — 2026-06-02
 
 ### Added
-- **Dashboard** tab under **Tools → Conflict Detector**
+- **Dashboard** tab under **Tools → Conflict Detective**
   - System overview: WordPress version, PHP version, active theme, memory limit, debug mode
   - Active plugins list with version numbers
   - Recent plugin changes widget (last 5 entries)

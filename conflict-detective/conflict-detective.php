@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Conflict Detector
+ * Plugin Name:       Conflict Detective
  * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Plugin-Conflict-Detector
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
  * Version:           2.1.1
@@ -10,7 +10,7 @@
  * Author URI:        https://github.com/Tahhan-nl
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       conflict-detector
+ * Text Domain:       conflict-detective
  * Domain Path:       /languages
  *
  * @package PluginConflictDetector
@@ -47,7 +47,7 @@ if ( version_compare( PHP_VERSION, PCD_MIN_PHP, '<' ) ) {
 			esc_html(
 				sprintf(
 					/* translators: 1: required PHP version, 2: current PHP version */
-					__( 'Conflict Detector requires PHP %1$s or higher. Your server is running PHP %2$s.', 'conflict-detector' ),
+					__( 'Conflict Detective requires PHP %1$s or higher. Your server is running PHP %2$s.', 'conflict-detective' ),
 					PCD_MIN_PHP,
 					PHP_VERSION
 				)

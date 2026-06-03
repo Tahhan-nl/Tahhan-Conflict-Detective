@@ -1,4 +1,4 @@
-/* Conflict Detector – Admin JS v1.2 */
+/* Conflict Detective – Admin JS v1.2 */
 (function ($) {
 	'use strict';
 
