@@ -69,27 +69,35 @@
 		});
 
 		// ── Safe Mode — toggle on/off ─────────────────────────────────────────
-		$('#pcd-toggle-safe-mode').on('click', function () {
-			var $btn   = $(this);
-			var $panel = $btn.closest('.pcd-safe-mode-panel');
-			var $body  = $('#pcd-safe-mode-body');
+		$(document).on('click', '#pcd-toggle-safe-mode', function () {
+			var $btn     = $(this);
+			var stopping = $btn.hasClass('pcd-btn-stop');
+			var origText = $btn.text();
 
-			$btn.prop('disabled', true);
+			$btn.prop('disabled', true).text( stopping
+				? ( pcdData.safeModeStop    || 'Stopping…'   )
+				: ( pcdData.safeModeLoading || 'Activating…' )
+			);
 
 			$.post(
 				pcdData.ajaxUrl,
-				{ action: 'pcd_safe_mode_toggle', nonce: pcdData.nonce },
-				function (response) {
-					$btn.prop('disabled', false);
-					if ( ! response.success ) { return; }
-
-					var active = response.data.active;
-					$panel.toggleClass('pcd-safe-mode-panel--active', active);
-					$body[ active ? 'slideDown' : 'slideUp' ]( 200 );
-					$btn.text( active ? pcdData.stopSafeMode : pcdData.startSafeMode );
-					$btn.toggleClass('button-primary', !active).toggleClass('button-secondary', active);
+				{ action: 'pcd_safe_mode_toggle', nonce: pcdData.nonce }
+			)
+			.done(function (response) {
+				if ( response && response.success ) {
+					window.location.reload();
+				} else {
+					var msg = (response && response.data && response.data.message)
+						? response.data.message
+						: pcdData.unknownError;
+					alert( msg );
+					$btn.prop('disabled', false).text(origText);
 				}
-			);
+			})
+			.fail(function () {
+				alert( pcdData.requestFailed );
+				$btn.prop('disabled', false).text(origText);
+			});
 		});
 
 		// ── Safe Mode — toggle individual plugin ──────────────────────────────
