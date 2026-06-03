@@ -87,14 +87,15 @@ final class Wizard {
 		echo '<p class="pcd-wizard__sub">' . esc_html__( 'Choose the symptom that best describes the problem. The detector will analyse your site and suggest the most likely cause.', 'plugin-conflict-detector' ) . '</p>';
 
 		echo '<div class="pcd-symptom-grid">';
+		// Dashicons class per symptom — no emoji.
 		$icons = array(
-			'white-screen'   => '⬜',
-			'login-issue'    => '🔒',
-			'woocommerce'    => '🛒',
-			'slow-site'      => '🐢',
-			'admin-broken'   => '⚙️',
-			'frontend-error' => '❌',
-			'other'          => '❓',
+			'white-screen'   => 'dashicons-visibility',
+			'login-issue'    => 'dashicons-lock',
+			'woocommerce'    => 'dashicons-cart',
+			'slow-site'      => 'dashicons-performance',
+			'admin-broken'   => 'dashicons-admin-settings',
+			'frontend-error' => 'dashicons-dismiss',
+			'other'          => 'dashicons-editor-help',
 		);
 
 		foreach ( self::SYMPTOMS as $slug => $label ) {
@@ -107,11 +108,11 @@ final class Wizard {
 
 			printf(
 				'<a href="%s" class="pcd-symptom-card">
-					<span class="pcd-symptom-icon" aria-hidden="true">%s</span>
+					<span class="pcd-symptom-icon" aria-hidden="true"><span class="dashicons %s"></span></span>
 					<span class="pcd-symptom-label">%s</span>
 				</a>',
 				esc_url( $url ),
-				$icons[ $slug ] ?? '❓',
+				esc_attr( $icons[ $slug ] ?? 'dashicons-marker' ),
 				esc_html( $label )
 			);
 		}
@@ -147,11 +148,11 @@ final class Wizard {
 
 		// ---- Symptom-specific advice ---------------------------------------
 		echo '<h3>' . esc_html__( 'Recommended actions', 'plugin-conflict-detector' ) . '</h3>';
-		echo '<ol class="pcd-advice-list">';
+		echo '<ul class="pcd-advice-list">';
 		foreach ( self::get_advice( $symptom, $suspects ) as $advice ) {
-			echo '<li>' . wp_kses_post( $advice ) . '</li>';
+			echo '<li><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>' . wp_kses_post( $advice ) . '</li>';
 		}
-		echo '</ol>';
+		echo '</ul>';
 
 		// ---- Recent timeline snapshot --------------------------------------
 		if ( ! empty( $changes ) || ! empty( $errors ) ) {
@@ -185,12 +186,11 @@ final class Wizard {
 			foreach ( array_slice( $timeline, 0, 10 ) as $event ) {
 				printf(
 					'<div class="pcd-timeline__event pcd-timeline__event--%s">
-						<span class="pcd-timeline__dot" aria-hidden="true">%s</span>
+						<span class="pcd-timeline__dot" aria-hidden="true"></span>
 						<span class="pcd-timeline__time">%s</span>
 						<span class="pcd-timeline__label">%s</span>
 					</div>',
 					esc_attr( $event['type'] ),
-					$event['type'] === 'error' ? '🔴' : '🔵',
 					esc_html( date_i18n( 'd-m-Y H:i', $event['ts'] ) ),
 					esc_html( $event['label'] )
 				);
