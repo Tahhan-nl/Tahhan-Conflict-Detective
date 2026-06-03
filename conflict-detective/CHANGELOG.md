@@ -2,6 +2,14 @@
 
 All notable changes to Conflict Detective are documented here.
 
+## 2.2.0 – 2026-06-03
+
+### Fixed
+- **Error log sort** — replaced lexicographic `strcmp()` with numeric `strtotime()` comparison so entries from WP `debug.log` and Apache `error_log` sort correctly together (#24).
+- **UTC timestamps** — `current_time('mysql')` changed to `current_time('mysql', true)` in `Change_History::write()` and `Health_Scan::run()` so stored timestamps are always UTC, fixing incorrect confidence scores on non-UTC sites (#23).
+- **Prepared SQL** — wrapped bare-string queries in `Health_Scan::get_last_scan()` and `get_likely_culprit()` with `$wpdb->prepare()`, eliminating PHPCS suppression comments (#22).
+- **CI supply-chain** — pinned `10up/action-wordpress-plugin-deploy` from the mutable `@stable` tag to the immutable `@v2` major-version tag.
+
 ## [2.1.4] — 2026-06-03
 
 ### Fixed
