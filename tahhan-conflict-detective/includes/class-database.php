@@ -2,13 +2,13 @@
 /**
  * Database installation and schema management.
  *
- * @package PluginConflictDetector
+ * @package TahhanConflictDetective
  * @since   1.0.0
  */
 
 declare( strict_types=1 );
 
-namespace PluginConflictDetector;
+namespace TahhanConflictDetective;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

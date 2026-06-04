@@ -2,13 +2,13 @@
 /**
  * Site health scanner.
  *
- * @package PluginConflictDetector
+ * @package TahhanConflictDetective
  * @since   1.0.0
  */
 
 declare( strict_types=1 );
 
-namespace PluginConflictDetector;
+namespace TahhanConflictDetective;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -232,7 +232,7 @@ final class Health_Scan {
 					'label'   => $group['label'],
 					'message' => sprintf(
 						/* translators: 1: category label, 2: comma-separated plugin names */
-						__( 'Multiple %1$s plugins active: %2$s', 'conflict-detective' ),
+						__( 'Multiple %1$s plugins active: %2$s', 'tahhan-conflict-detective' ),
 						$group['label'],
 						implode( ', ', $active_names )
 					),
@@ -267,7 +267,7 @@ final class Health_Scan {
 						'type'    => 'outdated',
 						'message' => sprintf(
 							/* translators: plugin name */
-							__( '"%s" has not been updated in over 2 years.', 'conflict-detective' ),
+							__( '"%s" has not been updated in over 2 years.', 'tahhan-conflict-detective' ),
 							$name
 						),
 					);
@@ -306,7 +306,7 @@ final class Health_Scan {
 				'type'    => 'missing-parent',
 				'message' => sprintf(
 					/* translators: parent theme name */
-					__( 'Parent theme "%s" is missing.', 'conflict-detective' ),
+					__( 'Parent theme "%s" is missing.', 'tahhan-conflict-detective' ),
 					$theme->get( 'Template' )
 				),
 			);
@@ -323,7 +323,7 @@ final class Health_Scan {
 					'type'    => 'missing-file',
 					'message' => sprintf(
 						/* translators: filename */
-						__( '"%s" is missing from the active theme.', 'conflict-detective' ),
+						__( '"%s" is missing from the active theme.', 'tahhan-conflict-detective' ),
 						$file
 					),
 				);
@@ -337,7 +337,7 @@ final class Health_Scan {
 				'type'    => 'update-available',
 				'message' => sprintf(
 					/* translators: theme name */
-					__( 'An update is available for theme "%s".', 'conflict-detective' ),
+					__( 'An update is available for theme "%s".', 'tahhan-conflict-detective' ),
 					$theme->get( 'Name' )
 				),
 			);
@@ -367,7 +367,7 @@ final class Health_Scan {
 				'type'    => 'php-version',
 				'message' => sprintf(
 					/* translators: 1: current PHP version, 2: minimum PHP version, 3: recommended PHP version */
-					__( 'PHP %1$s is end-of-life. Minimum supported: PHP %2$s. Recommended: PHP %3$s.', 'conflict-detective' ),
+					__( 'PHP %1$s is end-of-life. Minimum supported: PHP %2$s. Recommended: PHP %3$s.', 'tahhan-conflict-detective' ),
 					PHP_VERSION, self::PHP_MINIMUM, self::PHP_RECOMMENDED
 				),
 			);
@@ -376,7 +376,7 @@ final class Health_Scan {
 				'type'    => 'php-version-warning',
 				'message' => sprintf(
 					/* translators: 1: current PHP version, 2: recommended PHP version */
-					__( 'PHP %1$s is supported but PHP %2$s or higher is recommended.', 'conflict-detective' ),
+					__( 'PHP %1$s is supported but PHP %2$s or higher is recommended.', 'tahhan-conflict-detective' ),
 					PHP_VERSION, self::PHP_RECOMMENDED
 				),
 			);
@@ -389,7 +389,7 @@ final class Health_Scan {
 				'type'    => 'memory-low',
 				'message' => sprintf(
 					/* translators: %s: current memory limit value */
-					__( 'Memory limit is %s. At least 64 MB is required; 256 MB recommended.', 'conflict-detective' ),
+					__( 'Memory limit is %s. At least 64 MB is required; 256 MB recommended.', 'tahhan-conflict-detective' ),
 					WP_MEMORY_LIMIT
 				),
 			);
@@ -398,7 +398,7 @@ final class Health_Scan {
 				'type'    => 'memory-warning',
 				'message' => sprintf(
 					/* translators: %s: current memory limit value */
-					__( 'Memory limit is %s. 256 MB or more is recommended for heavy plugins.', 'conflict-detective' ),
+					__( 'Memory limit is %s. 256 MB or more is recommended for heavy plugins.', 'tahhan-conflict-detective' ),
 					WP_MEMORY_LIMIT
 				),
 			);
@@ -411,7 +411,7 @@ final class Health_Scan {
 				'type'    => 'max-exec-low',
 				'message' => sprintf(
 					/* translators: %d: current max_execution_time in seconds */
-					__( 'max_execution_time is %d seconds. At least 30 seconds is recommended.', 'conflict-detective' ),
+					__( 'max_execution_time is %d seconds. At least 30 seconds is recommended.', 'tahhan-conflict-detective' ),
 					$max_exec
 				),
 			);
@@ -426,7 +426,7 @@ final class Health_Scan {
 					'type'    => 'wp-update',
 					'message' => sprintf(
 						/* translators: 1: available WordPress version, 2: current WordPress version */
-						__( 'WordPress %1$s is available (current: %2$s).', 'conflict-detective' ),
+						__( 'WordPress %1$s is available (current: %2$s).', 'tahhan-conflict-detective' ),
 						$latest->version, $wp_version
 					),
 				);

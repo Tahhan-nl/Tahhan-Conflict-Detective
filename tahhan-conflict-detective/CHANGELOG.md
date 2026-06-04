@@ -1,6 +1,17 @@
 # Changelog
 
-All notable changes to Conflict Detective are documented here.
+All notable changes to Tahhan Conflict Detective are documented here.
+
+## [2.4.0] — 2026-06-04
+
+### Changed
+- Plugin renamed to **Tahhan Conflict Detective** and re-submitted to WordPress.org with new slug `tahhan-conflict-detective` to satisfy WP.org uniqueness requirements.
+- Namespace changed from `PluginConflictDetector` to `TahhanConflictDetective` across all PHP files.
+- Text domain changed from `conflict-detective` to `tahhan-conflict-detective` throughout.
+- `Contributors` field updated to `mustafatahhan` in `readme.txt`.
+- Debug log clear handler now uses `WP_Filesystem::put_contents()` instead of `file_put_contents()` as required by WordPress.org guidelines.
+
+---
 
 ## 2.2.0 – 2026-06-03
 

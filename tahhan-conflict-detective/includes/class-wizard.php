@@ -2,13 +2,13 @@
 /**
  * Conflict Wizard — step-by-step guided diagnosis.
  *
- * @package PluginConflictDetector
+ * @package TahhanConflictDetective
  * @since   2.0.0
  */
 
 declare( strict_types=1 );
 
-namespace PluginConflictDetector;
+namespace TahhanConflictDetective;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -83,8 +83,8 @@ final class Wizard {
 	/** Step 1 — Choose symptom */
 	private static function render_step1(): void {
 		echo '<div class="pcd-wizard__step">';
-		echo '<h2 class="pcd-wizard__heading">' . esc_html__( 'What is not working?', 'conflict-detective' ) . '</h2>';
-		echo '<p class="pcd-wizard__sub">' . esc_html__( 'Choose the symptom that best describes the problem. The detector will analyse your site and suggest the most likely cause.', 'conflict-detective' ) . '</p>';
+		echo '<h2 class="pcd-wizard__heading">' . esc_html__( 'What is not working?', 'tahhan-conflict-detective' ) . '</h2>';
+		echo '<p class="pcd-wizard__sub">' . esc_html__( 'Choose the symptom that best describes the problem. The detector will analyse your site and suggest the most likely cause.', 'tahhan-conflict-detective' ) . '</p>';
 
 		echo '<div class="pcd-symptom-grid">';
 		// Dashicons class per symptom — no emoji.
@@ -124,7 +124,7 @@ final class Wizard {
 		echo '<div class="pcd-wizard__step">';
 		printf(
 			'<h2 class="pcd-wizard__heading">%s: <em>%s</em></h2>',
-			esc_html__( 'Analysing', 'conflict-detective' ),
+			esc_html__( 'Analysing', 'tahhan-conflict-detective' ),
 			esc_html( self::SYMPTOMS[ $symptom ] ?? $symptom )
 		);
 
@@ -134,7 +134,7 @@ final class Wizard {
 
 		// ---- Top suspects --------------------------------------------------
 		if ( ! empty( $suspects ) ) {
-			echo '<h3>' . esc_html__( 'Most likely suspects', 'conflict-detective' ) . '</h3>';
+			echo '<h3>' . esc_html__( 'Most likely suspects', 'tahhan-conflict-detective' ) . '</h3>';
 			echo '<div class="pcd-suspect-list">';
 			foreach ( $suspects as $i => $s ) {
 				self::render_suspect_card( $s, $i === 0 );
@@ -142,12 +142,12 @@ final class Wizard {
 			echo '</div>';
 		} else {
 			echo '<div class="pcd-notice pcd-notice--info">';
-			esc_html_e( 'Not enough data to identify a suspect yet. The more plugin changes and errors are logged, the better the analysis.', 'conflict-detective' );
+			esc_html_e( 'Not enough data to identify a suspect yet. The more plugin changes and errors are logged, the better the analysis.', 'tahhan-conflict-detective' );
 			echo '</div>';
 		}
 
 		// ---- Symptom-specific advice ---------------------------------------
-		echo '<h3>' . esc_html__( 'Recommended actions', 'conflict-detective' ) . '</h3>';
+		echo '<h3>' . esc_html__( 'Recommended actions', 'tahhan-conflict-detective' ) . '</h3>';
 		echo '<ul class="pcd-advice-list">';
 		foreach ( self::get_advice( $symptom, $suspects ) as $advice ) {
 			echo '<li><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>' . wp_kses_post( $advice ) . '</li>';
@@ -156,7 +156,7 @@ final class Wizard {
 
 		// ---- Recent timeline snapshot --------------------------------------
 		if ( ! empty( $changes ) || ! empty( $errors ) ) {
-			echo '<h3>' . esc_html__( 'Recent timeline', 'conflict-detective' ) . '</h3>';
+			echo '<h3>' . esc_html__( 'Recent timeline', 'tahhan-conflict-detective' ) . '</h3>';
 			echo '<div class="pcd-timeline">';
 
 			$timeline = array();
@@ -212,8 +212,8 @@ final class Wizard {
 		), admin_url( 'admin.php' ) );
 
 		echo '<div class="pcd-wizard__nav">';
-		printf( '<a href="%s" class="button">%s</a>', esc_url( $back_url ), esc_html__( '← Start over', 'conflict-detective' ) );
-		printf( '<a href="%s" class="button button-primary">%s</a>', esc_url( $next_url ), esc_html__( 'Use Safe Mode to test →', 'conflict-detective' ) );
+		printf( '<a href="%s" class="button">%s</a>', esc_url( $back_url ), esc_html__( '← Start over', 'tahhan-conflict-detective' ) );
+		printf( '<a href="%s" class="button button-primary">%s</a>', esc_url( $next_url ), esc_html__( 'Use Safe Mode to test →', 'tahhan-conflict-detective' ) );
 		echo '</div></div>';
 	}
 
@@ -222,8 +222,8 @@ final class Wizard {
 		$suspects = Conflict_Scanner::analyse( 3 );
 
 		echo '<div class="pcd-wizard__step">';
-		echo '<h2 class="pcd-wizard__heading">' . esc_html__( 'Test with Safe Mode', 'conflict-detective' ) . '</h2>';
-		echo '<p class="pcd-wizard__sub">' . esc_html__( 'Safe Mode lets you disable suspected plugins only for your browser session. Visitors see nothing different.', 'conflict-detective' ) . '</p>';
+		echo '<h2 class="pcd-wizard__heading">' . esc_html__( 'Test with Safe Mode', 'tahhan-conflict-detective' ) . '</h2>';
+		echo '<p class="pcd-wizard__sub">' . esc_html__( 'Safe Mode lets you disable suspected plugins only for your browser session. Visitors see nothing different.', 'tahhan-conflict-detective' ) . '</p>';
 
 		// Safe Mode toggle + plugin list.
 		$is_active = Safe_Mode::is_active();
@@ -242,11 +242,11 @@ final class Wizard {
 				</div>
 				<button id="pcd-toggle-safe-mode" class="button %s" type="button">%s</button>
 			</div>',
-			esc_html__( 'Safe Testing Mode', 'conflict-detective' ),
+			esc_html__( 'Safe Testing Mode', 'tahhan-conflict-detective' ),
 			$is_active ? 'pcd-badge--warning' : 'pcd-badge--ok',
-			$is_active ? esc_html__( 'ACTIVE', 'conflict-detective' ) : esc_html__( 'OFF', 'conflict-detective' ),
+			$is_active ? esc_html__( 'ACTIVE', 'tahhan-conflict-detective' ) : esc_html__( 'OFF', 'tahhan-conflict-detective' ),
 			$is_active ? 'button-secondary' : 'button-primary',
-			$is_active ? esc_html__( 'Stop Safe Mode', 'conflict-detective' ) : esc_html__( 'Start Safe Mode', 'conflict-detective' )
+			$is_active ? esc_html__( 'Stop Safe Mode', 'tahhan-conflict-detective' ) : esc_html__( 'Start Safe Mode', 'tahhan-conflict-detective' )
 		);
 
 		echo '<div id="pcd-safe-mode-body" ' . ( $is_active ? '' : 'style="display:none"' ) . '>';
@@ -258,7 +258,7 @@ final class Wizard {
 		$all_plugins    = get_plugins();
 		$active_plugins = (array) get_option( 'active_plugins', array() );
 
-		echo '<p class="pcd-safe-mode-tip">' . esc_html__( 'Toggle plugins OFF to test without them. Only you see these changes — your visitors are unaffected.', 'conflict-detective' ) . '</p>';
+		echo '<p class="pcd-safe-mode-tip">' . esc_html__( 'Toggle plugins OFF to test without them. Only you see these changes — your visitors are unaffected.', 'tahhan-conflict-detective' ) . '</p>';
 
 		// Show suspected plugins at the top.
 		$suspect_files = array();
@@ -271,7 +271,7 @@ final class Wizard {
 		}
 
 		if ( ! empty( $suspect_files ) ) {
-			echo '<p class="pcd-safe-mode-section-label"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . esc_html__( 'Suspected plugins', 'conflict-detective' ) . '</p>';
+			echo '<p class="pcd-safe-mode-section-label"><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . esc_html__( 'Suspected plugins', 'tahhan-conflict-detective' ) . '</p>';
 			self::render_plugin_toggle_list( $suspect_files, $all_plugins, $disabled );
 			$remaining = array_diff( $active_plugins, $suspect_files );
 		} else {
@@ -279,7 +279,7 @@ final class Wizard {
 		}
 
 		if ( ! empty( $remaining ) ) {
-			echo '<p class="pcd-safe-mode-section-label">' . esc_html__( 'Other active plugins', 'conflict-detective' ) . '</p>';
+			echo '<p class="pcd-safe-mode-section-label">' . esc_html__( 'Other active plugins', 'tahhan-conflict-detective' ) . '</p>';
 			self::render_plugin_toggle_list( $remaining, $all_plugins, $disabled );
 		}
 
@@ -293,7 +293,7 @@ final class Wizard {
 		), admin_url( 'admin.php' ) );
 
 		echo '<div class="pcd-wizard__nav">';
-		printf( '<a href="%s" class="button">%s</a>', esc_url( $back_url ), esc_html__( '← Back to analysis', 'conflict-detective' ) );
+		printf( '<a href="%s" class="button">%s</a>', esc_url( $back_url ), esc_html__( '← Back to analysis', 'tahhan-conflict-detective' ) );
 		echo '</div></div>';
 	}
 
@@ -303,12 +303,12 @@ final class Wizard {
 
 	private static function render_progress( int $step ): void {
 		$steps = array(
-			1 => __( 'Choose symptom', 'conflict-detective' ),
-			2 => __( 'Analysis',       'conflict-detective' ),
-			3 => __( 'Test & fix',     'conflict-detective' ),
+			1 => __( 'Choose symptom', 'tahhan-conflict-detective' ),
+			2 => __( 'Analysis',       'tahhan-conflict-detective' ),
+			3 => __( 'Test & fix',     'tahhan-conflict-detective' ),
 		);
 
-		echo '<div class="pcd-wizard-progress" aria-label="' . esc_attr__( 'Wizard progress', 'conflict-detective' ) . '">';
+		echo '<div class="pcd-wizard-progress" aria-label="' . esc_attr__( 'Wizard progress', 'tahhan-conflict-detective' ) . '">';
 		foreach ( $steps as $n => $label ) {
 			$class = 'pcd-wizard-progress__step';
 			if ( $n < $step )  $class .= ' pcd-wizard-progress__step--done';
@@ -350,18 +350,18 @@ final class Wizard {
 			</div>',
 			$is_top ? ' pcd-suspect-card--top' : '',
 			esc_html( $s['plugin_name'] ),
-			$is_top ? '<span class="pcd-badge pcd-badge--error">' . esc_html__( 'Top suspect', 'conflict-detective' ) . '</span>' : '',
+			$is_top ? '<span class="pcd-badge pcd-badge--error">' . esc_html__( 'Top suspect', 'tahhan-conflict-detective' ) . '</span>' : '',
 			esc_attr( $bar_class ),
 			absint( $s['confidence'] ),
 			esc_attr( $bar_class ),
 			absint( $bar_width ),
 			esc_html( $s['reason'] ),
-			esc_html__( 'Action:', 'conflict-detective' ),
+			esc_html__( 'Action:', 'tahhan-conflict-detective' ),
 			esc_html( self::action_label( $s['action'] ) ),
 			$s['error_count'] > 0
 				? '<span>' . esc_html( sprintf(
 					/* translators: %d: number of errors */
-					_n( '%d error', '%d errors', $s['error_count'], 'conflict-detective' ),
+					_n( '%d error', '%d errors', $s['error_count'], 'tahhan-conflict-detective' ),
 					$s['error_count']
 				) ) . '</span>'
 				: ''
@@ -388,12 +388,12 @@ final class Wizard {
 				$is_disabled ? ' pcd-plugin-toggle-item--off' : '',
 				esc_html( $data['Name'] ),
 				esc_html( $data['Version'] ),
-				esc_attr__( 'Toggle this plugin on/off for your session', 'conflict-detective' ),
+				esc_attr__( 'Toggle this plugin on/off for your session', 'tahhan-conflict-detective' ),
 				esc_attr( $file ),
 				$is_disabled ? '' : 'checked',
 				$is_disabled
-					? '<span class="pcd-badge pcd-badge--warning">' . esc_html__( 'OFF (test)', 'conflict-detective' ) . '</span>'
-					: '<span class="pcd-badge pcd-badge--ok">' . esc_html__( 'ON', 'conflict-detective' ) . '</span>'
+					? '<span class="pcd-badge pcd-badge--warning">' . esc_html__( 'OFF (test)', 'tahhan-conflict-detective' ) . '</span>'
+					: '<span class="pcd-badge pcd-badge--ok">' . esc_html__( 'ON', 'tahhan-conflict-detective' ) . '</span>'
 			);
 		}
 		echo '</ul>';
@@ -417,44 +417,44 @@ final class Wizard {
 			$top = $suspects[0];
 			$advice[] = sprintf(
 				/* translators: plugin name */
-				__( '<strong>Start with "%s"</strong> — it has the highest confidence score. Use Safe Mode (next step) to disable it and check if the problem disappears.', 'conflict-detective' ),
+				__( '<strong>Start with "%s"</strong> — it has the highest confidence score. Use Safe Mode (next step) to disable it and check if the problem disappears.', 'tahhan-conflict-detective' ),
 				$top['plugin_name']
 			);
 		}
 
 		$symptom_advice = array(
 			'white-screen' => array(
-				__( 'Enable <code>WP_DEBUG</code> and <code>WP_DEBUG_LOG</code> in <code>wp-config.php</code> to capture the fatal error causing the blank page.', 'conflict-detective' ),
-				__( 'Check the Error Log tab for recent <em>Fatal</em> errors — the file path will point to the conflicting plugin.', 'conflict-detective' ),
-				__( 'If you cannot access the admin, connect via FTP/SFTP and rename <code>wp-content/plugins</code> to disable all plugins at once.', 'conflict-detective' ),
+				__( 'Enable <code>WP_DEBUG</code> and <code>WP_DEBUG_LOG</code> in <code>wp-config.php</code> to capture the fatal error causing the blank page.', 'tahhan-conflict-detective' ),
+				__( 'Check the Error Log tab for recent <em>Fatal</em> errors — the file path will point to the conflicting plugin.', 'tahhan-conflict-detective' ),
+				__( 'If you cannot access the admin, connect via FTP/SFTP and rename <code>wp-content/plugins</code> to disable all plugins at once.', 'tahhan-conflict-detective' ),
 			),
 			'login-issue' => array(
-				__( 'Security and login-protection plugins are the most common cause. Disable Wordfence, iThemes Security, or similar plugins via Safe Mode.', 'conflict-detective' ),
-				__( 'Clear your browser cookies and try a private/incognito window.', 'conflict-detective' ),
-				__( 'Check the Error Log for <em>Warning</em> entries in session or authentication files.', 'conflict-detective' ),
+				__( 'Security and login-protection plugins are the most common cause. Disable Wordfence, iThemes Security, or similar plugins via Safe Mode.', 'tahhan-conflict-detective' ),
+				__( 'Clear your browser cookies and try a private/incognito window.', 'tahhan-conflict-detective' ),
+				__( 'Check the Error Log for <em>Warning</em> entries in session or authentication files.', 'tahhan-conflict-detective' ),
 			),
 			'woocommerce' => array(
-				__( 'Disable WooCommerce payment gateway and shipping plugins first — they are the most frequent source of WooCommerce conflicts.', 'conflict-detective' ),
-				__( 'Switch to the Storefront theme temporarily to rule out a theme conflict.', 'conflict-detective' ),
-				__( 'Check the Error Log for errors in <code>woocommerce/</code> files and cross-reference with the Change History.', 'conflict-detective' ),
+				__( 'Disable WooCommerce payment gateway and shipping plugins first — they are the most frequent source of WooCommerce conflicts.', 'tahhan-conflict-detective' ),
+				__( 'Switch to the Storefront theme temporarily to rule out a theme conflict.', 'tahhan-conflict-detective' ),
+				__( 'Check the Error Log for errors in <code>woocommerce/</code> files and cross-reference with the Change History.', 'tahhan-conflict-detective' ),
 			),
 			'slow-site' => array(
-				__( 'Caching and optimisation plugins can conflict. If you have multiple caching plugins active, the Health Scan "duplicate functionality" check will flag them.', 'conflict-detective' ),
-				__( 'Use Safe Mode to disable heavy page-builder plugins (Elementor, Divi) one at a time and measure load time.', 'conflict-detective' ),
-				__( 'Check the Health Scan → Server section: a low memory limit (&lt;256 MB) degrades performance under heavy plugins.', 'conflict-detective' ),
+				__( 'Caching and optimisation plugins can conflict. If you have multiple caching plugins active, the Health Scan "duplicate functionality" check will flag them.', 'tahhan-conflict-detective' ),
+				__( 'Use Safe Mode to disable heavy page-builder plugins (Elementor, Divi) one at a time and measure load time.', 'tahhan-conflict-detective' ),
+				__( 'Check the Health Scan → Server section: a low memory limit (&lt;256 MB) degrades performance under heavy plugins.', 'tahhan-conflict-detective' ),
 			),
 			'admin-broken' => array(
-				__( 'Admin-bar, dashboard-widget, and analytics plugins often break the WP admin after updates. Check the Change History for recent updates.', 'conflict-detective' ),
-				__( 'Open your browser console (F12) and look for JavaScript errors — they usually point directly to the conflicting plugin file.', 'conflict-detective' ),
+				__( 'Admin-bar, dashboard-widget, and analytics plugins often break the WP admin after updates. Check the Change History for recent updates.', 'tahhan-conflict-detective' ),
+				__( 'Open your browser console (F12) and look for JavaScript errors — they usually point directly to the conflicting plugin file.', 'tahhan-conflict-detective' ),
 			),
 			'frontend-error' => array(
-				__( 'Check the Error Log tab and filter for <em>Fatal</em> and <em>Warning</em> entries — the file column identifies the plugin.', 'conflict-detective' ),
-				__( 'Cross-reference the timestamp of the first error with the Change History to find the triggering update.', 'conflict-detective' ),
+				__( 'Check the Error Log tab and filter for <em>Fatal</em> and <em>Warning</em> entries — the file column identifies the plugin.', 'tahhan-conflict-detective' ),
+				__( 'Cross-reference the timestamp of the first error with the Change History to find the triggering update.', 'tahhan-conflict-detective' ),
 			),
 			'other' => array(
-				__( 'Open the Error Log tab and look for entries around the time the problem started.', 'conflict-detective' ),
-				__( 'Check the Change History for any plugin updates or activations shortly before the issue appeared.', 'conflict-detective' ),
-				__( 'Run a Health Scan to detect known incompatibilities and configuration issues.', 'conflict-detective' ),
+				__( 'Open the Error Log tab and look for entries around the time the problem started.', 'tahhan-conflict-detective' ),
+				__( 'Check the Change History for any plugin updates or activations shortly before the issue appeared.', 'tahhan-conflict-detective' ),
+				__( 'Run a Health Scan to detect known incompatibilities and configuration issues.', 'tahhan-conflict-detective' ),
 			),
 		);
 
@@ -464,10 +464,10 @@ final class Wizard {
 
 	private static function action_label( string $action ): string {
 		return array(
-			'activated'   => __( 'Activated',   'conflict-detective' ),
-			'deactivated' => __( 'Deactivated', 'conflict-detective' ),
-			'updated'     => __( 'Updated',     'conflict-detective' ),
-			'deleted'     => __( 'Deleted',     'conflict-detective' ),
+			'activated'   => __( 'Activated',   'tahhan-conflict-detective' ),
+			'deactivated' => __( 'Deactivated', 'tahhan-conflict-detective' ),
+			'updated'     => __( 'Updated',     'tahhan-conflict-detective' ),
+			'deleted'     => __( 'Deleted',     'tahhan-conflict-detective' ),
 		)[ $action ] ?? $action;
 	}
 }
