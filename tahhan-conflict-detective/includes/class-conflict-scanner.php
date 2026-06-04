@@ -3,13 +3,13 @@
  * Conflict Scanner — correlates plugin changes with error log entries
  * and produces a ranked list of suspects with a confidence percentage.
  *
- * @package PluginConflictDetector
+ * @package TahhanConflictDetective
  * @since   2.0.0
  */
 
 declare( strict_types=1 );
 
-namespace PluginConflictDetector;
+namespace TahhanConflictDetective;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -208,7 +208,7 @@ final class Conflict_Scanner {
 
 		$parts[] = sprintf(
 			/* translators: 1: action, 2: plugin name, 3: formatted date */
-			__( '%1$s "%2$s" on %3$s.', 'conflict-detective' ),
+			__( '%1$s "%2$s" on %3$s.', 'tahhan-conflict-detective' ),
 			ucfirst( $change->action ),
 			$change->plugin_name,
 			date_i18n( 'd-m-Y H:i', strtotime( $change->changed_at ) )
@@ -220,7 +220,7 @@ final class Conflict_Scanner {
 				'%d error attributed to this plugin after the change.',
 				'%d errors attributed to this plugin after the change.',
 				$error_count,
-				'conflict-detective'
+				'tahhan-conflict-detective'
 			),
 			$error_count
 		);
@@ -228,7 +228,7 @@ final class Conflict_Scanner {
 		if ( $within_window && $first_error_ts !== PHP_INT_MAX ) {
 			$parts[] = sprintf(
 				/* translators: formatted time */
-				__( 'First error appeared at %s — within the timeline window.', 'conflict-detective' ),
+				__( 'First error appeared at %s — within the timeline window.', 'tahhan-conflict-detective' ),
 				date_i18n( 'H:i', $first_error_ts )
 			);
 		}

@@ -3,13 +3,13 @@
  * Safe Testing Mode — disables selected plugins for the admin only.
  * Visitors are completely unaffected.
  *
- * @package PluginConflictDetector
+ * @package TahhanConflictDetective
  * @since   2.0.0
  */
 
 declare( strict_types=1 );
 
-namespace PluginConflictDetector;
+namespace TahhanConflictDetective;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -203,10 +203,10 @@ final class Safe_Mode {
 
 		if ( self::is_active() ) {
 			self::disable();
-			wp_send_json_success( array( 'active' => false, 'message' => __( 'Safe Mode disabled. All plugins are active again.', 'conflict-detective' ) ) );
+			wp_send_json_success( array( 'active' => false, 'message' => __( 'Safe Mode disabled. All plugins are active again.', 'tahhan-conflict-detective' ) ) );
 		} else {
 			self::enable();
-			wp_send_json_success( array( 'active' => true, 'message' => __( 'Safe Mode enabled. You can now disable plugins for testing.', 'conflict-detective' ) ) );
+			wp_send_json_success( array( 'active' => true, 'message' => __( 'Safe Mode enabled. You can now disable plugins for testing.', 'tahhan-conflict-detective' ) ) );
 		}
 	}
 
@@ -218,7 +218,7 @@ final class Safe_Mode {
 		}
 
 		if ( ! self::is_active() ) {
-			wp_send_json_error( array( 'message' => __( 'Safe Mode is not active.', 'conflict-detective' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Safe Mode is not active.', 'tahhan-conflict-detective' ) ) );
 		}
 
 		$plugin_file = isset( $_POST['plugin'] ) ? sanitize_text_field( wp_unslash( $_POST['plugin'] ) ) : '';
@@ -240,9 +240,9 @@ final class Safe_Mode {
 			'disabled' => $now_disabled,
 			'message'  => $now_disabled
 				/* translators: %s: plugin name */
-				? sprintf( __( '"%s" disabled for your session.', 'conflict-detective' ), $plugin_file )
+				? sprintf( __( '"%s" disabled for your session.', 'tahhan-conflict-detective' ), $plugin_file )
 				/* translators: %s: plugin name */
-				: sprintf( __( '"%s" re-enabled.', 'conflict-detective' ), $plugin_file ),
+				: sprintf( __( '"%s" re-enabled.', 'tahhan-conflict-detective' ), $plugin_file ),
 		) );
 	}
 

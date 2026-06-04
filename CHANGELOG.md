@@ -11,6 +11,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.4.0] — 2026-06-04
+
+### Changed
+- Plugin renamed to **Tahhan Conflict Detective** (slug: `tahhan-conflict-detective`) for WordPress.org compliance.
+- Namespace changed from `PluginConflictDetector` to `TahhanConflictDetective` across all PHP files.
+- Text domain changed from `conflict-detective` to `tahhan-conflict-detective` throughout.
+- `Contributors` updated to `mustafatahhan` in `readme.txt`.
+- Debug log clear handler now uses `WP_Filesystem::put_contents()` instead of `file_put_contents()`.
+
+---
+
 ## [2.3.1] — 2026-06-03
 
 ### Fixed
@@ -130,7 +141,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.3...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.3.1...v2.4.0
+[2.3.1]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.3.0...v2.3.1
+[2.3.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.3...v2.2.0
 [2.1.3]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.0...v2.1.1
