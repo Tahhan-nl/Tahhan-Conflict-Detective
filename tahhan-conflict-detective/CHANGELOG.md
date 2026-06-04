@@ -65,9 +65,9 @@ All notable changes to Tahhan Conflict Detective are documented here.
 
 - Initial release — Dashboard, Error Log Viewer, Plugin Change History, Health Scan.
 
-[2.1.4]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.3...v2.1.4
-[2.1.3]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.1.1...v2.1.2
-[2.1.1]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v2.0.0...v2.1.1
-[2.0.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/compare/v1.0.0...v2.0.0
-[1.0.0]: https://github.com/Tahhan-nl/WordPress-Conflict-Detective/releases/tag/v1.0.0
+[2.1.4]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.0.0...v2.1.1
+[2.0.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/releases/tag/v1.0.0

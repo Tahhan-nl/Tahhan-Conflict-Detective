@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Tahhan Conflict Detective
- * Plugin URI:        https://github.com/Tahhan-nl/WordPress-Conflict-Detective
+ * Plugin URI:        https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
  * Version:           2.4.0
  * Requires at least: 5.8
