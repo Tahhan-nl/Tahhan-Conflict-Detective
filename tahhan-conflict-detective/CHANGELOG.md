@@ -2,14 +2,19 @@
 
 All notable changes to Tahhan Conflict Detective are documented here.
 
+## [2.5.0] — 2026-06-04
+
+### Changed
+- All prefixes standardised to `tahcd_` / `TAHCD_`: constants, AJAX actions, nonce, meta keys, cookie, option keys, script handle, and JS data object — resolves WordPress.org prefix uniqueness requirement.
+
 ## [2.4.0] — 2026-06-04
 
 ### Changed
-- Plugin renamed to **Tahhan Conflict Detective** and re-submitted to WordPress.org with new slug `tahhan-conflict-detective` to satisfy WP.org uniqueness requirements.
-- Namespace changed from `PluginConflictDetector` to `TahhanConflictDetective` across all PHP files.
-- Text domain changed from `conflict-detective` to `tahhan-conflict-detective` throughout.
-- `Contributors` field updated to `mustafatahhan` in `readme.txt`.
-- Debug log clear handler now uses `WP_Filesystem::put_contents()` instead of `file_put_contents()` as required by WordPress.org guidelines.
+- Plugin renamed to **Tahhan Conflict Detective** (slug: `tahhan-conflict-detective`).
+- Namespace changed from `PluginConflictDetector` to `TahhanConflictDetective`.
+- Text domain changed from `conflict-detective` to `tahhan-conflict-detective`.
+- Contributors updated to `mustafatahhan`.
+- Debug log clear uses `WP_Filesystem::put_contents()` instead of `file_put_contents()`.
 
 ---
 

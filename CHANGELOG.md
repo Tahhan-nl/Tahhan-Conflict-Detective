@@ -11,6 +11,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.5.0] — 2026-06-04
+
+### Changed
+- All plugin-specific prefixes standardised to `tahcd_` / `TAHCD_` to satisfy WordPress.org uniqueness requirements:
+  - Constants renamed: `CD_VERSION` → `TAHCD_VERSION`, `CD_PLUGIN_DIR` → `TAHCD_PLUGIN_DIR`, etc. (all six constants). `phpcs:ignore` suppression comments removed — now properly prefixed.
+  - AJAX action hooks: `pcd_run_scan`, `pcd_clear_log`, `pcd_safe_mode_toggle`, `pcd_safe_mode_toggle_plugin` → `tahcd_*`
+  - Nonce action: `pcd_nonce` → `tahcd_nonce`
+  - User meta keys: `_pcd_safe_token`, `_pcd_disabled_plugins` → `_tahcd_*`
+  - Cookie name: `pcd_safe_mode` → `tahcd_safe_mode`
+  - Database option keys: `pcd_db_version`, `pcd_prev_version_` → `tahcd_*`
+  - Script/style handle: `pcd-admin` → `tahcd-admin`
+  - Localised JS data object: `pcdData` → `tahcdData`
+
+---
+
 ## [2.4.0] — 2026-06-04
 
 ### Changed
@@ -141,7 +156,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.2.0...v2.3.0

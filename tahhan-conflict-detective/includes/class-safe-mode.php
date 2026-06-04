@@ -39,9 +39,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Safe_Mode {
 
-	const COOKIE_NAME       = 'pcd_safe_mode';
-	const META_TOKEN        = '_pcd_safe_token';
-	const META_DISABLED     = '_pcd_disabled_plugins';
+	const COOKIE_NAME       = 'tahcd_safe_mode';
+	const META_TOKEN        = '_tahcd_safe_token';
+	const META_DISABLED     = '_tahcd_disabled_plugins';
 	const COOKIE_EXPIRY     = HOUR_IN_SECONDS * 8;
 
 	// -------------------------------------------------------------------------
@@ -53,8 +53,8 @@ final class Safe_Mode {
 		add_filter( 'pre_option_active_plugins', array( __CLASS__, 'maybe_filter_active_plugins' ) );
 
 		// AJAX handlers.
-		add_action( 'wp_ajax_pcd_safe_mode_toggle',         array( __CLASS__, 'ajax_toggle_mode' ) );
-		add_action( 'wp_ajax_pcd_safe_mode_toggle_plugin',  array( __CLASS__, 'ajax_toggle_plugin' ) );
+		add_action( 'wp_ajax_tahcd_safe_mode_toggle',         array( __CLASS__, 'ajax_toggle_mode' ) );
+		add_action( 'wp_ajax_tahcd_safe_mode_toggle_plugin',  array( __CLASS__, 'ajax_toggle_plugin' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -195,7 +195,7 @@ final class Safe_Mode {
 	// -------------------------------------------------------------------------
 
 	public static function ajax_toggle_mode(): void {
-		check_ajax_referer( 'pcd_nonce', 'nonce' );
+		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
@@ -211,7 +211,7 @@ final class Safe_Mode {
 	}
 
 	public static function ajax_toggle_plugin(): void {
-		check_ajax_referer( 'pcd_nonce', 'nonce' );
+		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );

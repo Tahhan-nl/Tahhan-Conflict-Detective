@@ -3,7 +3,7 @@
  * Plugin Name:       Tahhan Conflict Detective
  * Plugin URI:        https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
- * Version:           2.4.0
+ * Version:           2.5.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Tahhan
@@ -25,22 +25,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Guard against double-loading (e.g. mu-plugins + plugins).
-if ( defined( 'CD_VERSION' ) ) {
+if ( defined( 'TAHCD_VERSION' ) ) {
 	return;
 }
 
-define( 'CD_VERSION',     '2.4.0' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
-define( 'CD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
-define( 'CD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
-define( 'CD_PLUGIN_FILE', __FILE__ ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
-define( 'CD_MIN_PHP',     '7.4' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
-define( 'CD_MIN_WP',      '5.8' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
+define( 'TAHCD_VERSION',     '2.5.0' );
+define( 'TAHCD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
+define( 'TAHCD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
+define( 'TAHCD_PLUGIN_FILE', __FILE__ );
+define( 'TAHCD_MIN_PHP',     '7.4' );
+define( 'TAHCD_MIN_WP',      '5.8' );
 
 /**
  * Abort early if the environment does not meet our requirements.
  * Showing an admin notice is friendlier than a white screen.
  */
-if ( version_compare( PHP_VERSION, CD_MIN_PHP, '<' ) ) {
+if ( version_compare( PHP_VERSION, TAHCD_MIN_PHP, '<' ) ) {
 	add_action( 'admin_notices', static function () {
 		printf(
 			'<div class="notice notice-error"><p>%s</p></div>',
@@ -48,7 +48,7 @@ if ( version_compare( PHP_VERSION, CD_MIN_PHP, '<' ) ) {
 				sprintf(
 					/* translators: 1: required PHP version, 2: current PHP version */
 					__( 'Conflict Detective requires PHP %1$s or higher. Your server is running PHP %2$s.', 'tahhan-conflict-detective' ),
-					CD_MIN_PHP,
+					TAHCD_MIN_PHP,
 					PHP_VERSION
 				)
 			)
@@ -57,14 +57,14 @@ if ( version_compare( PHP_VERSION, CD_MIN_PHP, '<' ) ) {
 	return;
 }
 
-require_once CD_PLUGIN_DIR . 'includes/class-database.php';
-require_once CD_PLUGIN_DIR . 'includes/class-change-history.php';
-require_once CD_PLUGIN_DIR . 'includes/class-error-log.php';
-require_once CD_PLUGIN_DIR . 'includes/class-health-scan.php';
-require_once CD_PLUGIN_DIR . 'includes/class-conflict-scanner.php';
-require_once CD_PLUGIN_DIR . 'includes/class-safe-mode.php';
-require_once CD_PLUGIN_DIR . 'includes/class-wizard.php';
-require_once CD_PLUGIN_DIR . 'includes/class-dashboard.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-database.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-change-history.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-error-log.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-health-scan.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-conflict-scanner.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-safe-mode.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-wizard.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-dashboard.php';
 
 /**
  * Main plugin bootstrap — singleton, never instantiate directly.
@@ -103,8 +103,8 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init(): void {
-		register_activation_hook( CD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'install' ) );
-		register_deactivation_hook( CD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'on_deactivate' ) );
+		register_activation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'install' ) );
+		register_deactivation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'on_deactivate' ) );
 
 		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Change_History', 'init' ) );
 		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Dashboard',      'register_ajax' ) );

@@ -117,23 +117,23 @@ final class Dashboard {
 		}
 
 		wp_enqueue_style(
-			'pcd-admin',
-			CD_PLUGIN_URL . 'admin/css/admin.css',
+			'tahcd-admin',
+			TAHCD_PLUGIN_URL . 'admin/css/admin.css',
 			array(),
-			(string) filemtime( CD_PLUGIN_DIR . 'admin/css/admin.css' )
+			(string) filemtime( TAHCD_PLUGIN_DIR . 'admin/css/admin.css' )
 		);
 
 		wp_enqueue_script(
-			'pcd-admin',
-			CD_PLUGIN_URL . 'admin/js/admin.js',
+			'tahcd-admin',
+			TAHCD_PLUGIN_URL . 'admin/js/admin.js',
 			array( 'jquery' ),
-			(string) filemtime( CD_PLUGIN_DIR . 'admin/js/admin.js' ),
+			(string) filemtime( TAHCD_PLUGIN_DIR . 'admin/js/admin.js' ),
 			true
 		);
 
-		wp_localize_script( 'pcd-admin', 'pcdData', array(
+		wp_localize_script( 'tahcd-admin', 'tahcdData', array(
 			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-			'nonce'         => wp_create_nonce( 'pcd_nonce' ),
+			'nonce'         => wp_create_nonce( 'tahcd_nonce' ),
 			'scanning'      => __( 'Scanning…',          'tahhan-conflict-detective' ),
 			'done'          => __( 'Scan complete!',      'tahhan-conflict-detective' ),
 			'runScan'       => __( 'Run Scan Now',        'tahhan-conflict-detective' ),
@@ -156,8 +156,8 @@ final class Dashboard {
 	 * Registers AJAX handlers — must be called on init/plugins_loaded.
 	 */
 	public static function register_ajax(): void {
-		add_action( 'wp_ajax_pcd_run_scan',   array( __CLASS__, 'ajax_run_scan' ) );
-		add_action( 'wp_ajax_pcd_clear_log',  array( __CLASS__, 'ajax_clear_log' ) );
+		add_action( 'wp_ajax_tahcd_run_scan',   array( __CLASS__, 'ajax_run_scan' ) );
+		add_action( 'wp_ajax_tahcd_clear_log',  array( __CLASS__, 'ajax_clear_log' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -165,7 +165,7 @@ final class Dashboard {
 	// -------------------------------------------------------------------------
 
 	public static function ajax_run_scan(): void {
-		check_ajax_referer( 'pcd_nonce', 'nonce' );
+		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
@@ -181,7 +181,7 @@ final class Dashboard {
 	}
 
 	public static function ajax_clear_log(): void {
-		check_ajax_referer( 'pcd_nonce', 'nonce' );
+		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );

@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Change_History {
 
 	/** Option-name prefix for cached "previous version" values. */
-	private const PREV_VERSION_PREFIX = 'pcd_prev_version_';
+	private const PREV_VERSION_PREFIX = 'tahcd_prev_version_';
 
 	// -------------------------------------------------------------------------
 	// Boot

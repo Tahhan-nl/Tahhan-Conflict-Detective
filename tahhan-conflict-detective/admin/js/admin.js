@@ -27,18 +27,18 @@
 			var $results = $('#pcd-scan-results');
 			var $meta    = $('#pcd-scan-meta');
 
-			$btn.prop('disabled', true).text(pcdData.scanning);
-			$status.html('<div class="pcd-notice pcd-notice--info">' + pcdData.scanning + '</div>');
+			$btn.prop('disabled', true).text(tahcdData.scanning);
+			$status.html('<div class="pcd-notice pcd-notice--info">' + tahcdData.scanning + '</div>');
 
 			$.post(
-				pcdData.ajaxUrl,
-				{ action: 'pcd_run_scan', nonce: pcdData.nonce },
+				tahcdData.ajaxUrl,
+				{ action: 'tahcd_run_scan', nonce: tahcdData.nonce },
 				function (response) {
-					$btn.prop('disabled', false).text(pcdData.done);
+					$btn.prop('disabled', false).text(tahcdData.done);
 
 					if (response.success) {
 						$status.html(
-							'<div class="pcd-notice pcd-notice--success">' + pcdData.done + '</div>'
+							'<div class="pcd-notice pcd-notice--success">' + tahcdData.done + '</div>'
 						);
 						$results.html(response.data.html);
 						if ($meta.length) {
@@ -46,10 +46,10 @@
 							$meta.empty()
 								.append( document.createTextNode( response.data.scanned_at + '  |  ' ) )
 								.append( $('<strong>').text( response.data.issues ) )
-								.append( document.createTextNode( ' ' + pcdData.issuesFound ) );
+								.append( document.createTextNode( ' ' + tahcdData.issuesFound ) );
 						}
 					} else {
-						var errMsg = (response.data && response.data.message) ? response.data.message : pcdData.unknownError;
+						var errMsg = (response.data && response.data.message) ? response.data.message : tahcdData.unknownError;
 						$status.html(
 							'<div class="pcd-notice pcd-notice--error">Error: ' +
 							$('<div>').text( errMsg ).html() +
@@ -58,13 +58,13 @@
 					}
 
 					setTimeout(function () {
-						$btn.text(pcdData.runScan);
+						$btn.text(tahcdData.runScan);
 						$status.html('');
 					}, 3000);
 				}
 			).fail(function () {
-				$btn.prop('disabled', false).text(pcdData.runScan);
-				$status.html('<div class="pcd-notice pcd-notice--error">' + pcdData.requestFailed + '</div>');
+				$btn.prop('disabled', false).text(tahcdData.runScan);
+				$status.html('<div class="pcd-notice pcd-notice--error">' + tahcdData.requestFailed + '</div>');
 			});
 		});
 
@@ -75,13 +75,13 @@
 			var origText = $btn.text();
 
 			$btn.prop('disabled', true).text( stopping
-				? ( pcdData.safeModeStop    || 'Stopping…'   )
-				: ( pcdData.safeModeLoading || 'Activating…' )
+				? ( tahcdData.safeModeStop    || 'Stopping…'   )
+				: ( tahcdData.safeModeLoading || 'Activating…' )
 			);
 
 			$.post(
-				pcdData.ajaxUrl,
-				{ action: 'pcd_safe_mode_toggle', nonce: pcdData.nonce }
+				tahcdData.ajaxUrl,
+				{ action: 'tahcd_safe_mode_toggle', nonce: tahcdData.nonce }
 			)
 			.done(function (response) {
 				if ( response && response.success ) {
@@ -89,13 +89,13 @@
 				} else {
 					var msg = (response && response.data && response.data.message)
 						? response.data.message
-						: pcdData.unknownError;
+						: tahcdData.unknownError;
 					alert( msg );
 					$btn.prop('disabled', false).text(origText);
 				}
 			})
 			.fail(function () {
-				alert( pcdData.requestFailed );
+				alert( tahcdData.requestFailed );
 				$btn.prop('disabled', false).text(origText);
 			});
 		});
@@ -110,8 +110,8 @@
 			$input.prop('disabled', true);
 
 			$.post(
-				pcdData.ajaxUrl,
-				{ action: 'pcd_safe_mode_toggle_plugin', nonce: pcdData.nonce, plugin: plugin },
+				tahcdData.ajaxUrl,
+				{ action: 'tahcd_safe_mode_toggle_plugin', nonce: tahcdData.nonce, plugin: plugin },
 				function (response) {
 					$input.prop('disabled', false);
 					if ( ! response.success ) {
@@ -133,28 +133,28 @@
 
 		// ── Clear debug.log ──────────────────────────────────────────────────
 		$('#pcd-clear-log').on('click', function () {
-			if ( ! window.confirm( pcdData.confirmClear ) ) {
+			if ( ! window.confirm( tahcdData.confirmClear ) ) {
 				return;
 			}
 
 			var $btn = $(this);
-			$btn.prop('disabled', true).text(pcdData.clearing);
+			$btn.prop('disabled', true).text(tahcdData.clearing);
 
 			$.post(
-				pcdData.ajaxUrl,
-				{ action: 'pcd_clear_log', nonce: pcdData.nonce },
+				tahcdData.ajaxUrl,
+				{ action: 'tahcd_clear_log', nonce: tahcdData.nonce },
 				function (response) {
 					if (response.success) {
-						$btn.text(pcdData.cleared);
+						$btn.text(tahcdData.cleared);
 						// Reload page after short delay to reflect empty log
 						setTimeout(function () { window.location.reload(); }, 1200);
 					} else {
-						$btn.prop('disabled', false).text(pcdData.clearLog);
-						alert(response.data && response.data.message ? response.data.message : pcdData.couldNotClear);
+						$btn.prop('disabled', false).text(tahcdData.clearLog);
+						alert(response.data && response.data.message ? response.data.message : tahcdData.couldNotClear);
 					}
 				}
 			).fail(function () {
-				$btn.prop('disabled', false).text(pcdData.clearLog);
+				$btn.prop('disabled', false).text(tahcdData.clearLog);
 			});
 		});
 

@@ -34,7 +34,7 @@ final class Database {
 	const SCHEMA_VERSION = 2;
 
 	/** @var string Option key that tracks the installed schema version. */
-	const OPTION_KEY = 'pcd_db_version';
+	const OPTION_KEY = 'tahcd_db_version';
 
 	// -------------------------------------------------------------------------
 	// Lifecycle
