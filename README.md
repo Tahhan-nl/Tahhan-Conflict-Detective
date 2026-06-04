@@ -119,7 +119,7 @@ See [ROADMAP.md](ROADMAP.md) for the full specification.
 
 ### From Source (development)
 ```bash
-git clone git@github.com:Tahhan-nl/WordPress-Conflict-Detective.git
+git clone git@github.com:Tahhan-nl/Tahhan-Conflict-Detective.git
 cd WordPress-Conflict-Detective
 
 # Copy the plugin folder into your local WordPress install
