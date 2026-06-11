@@ -85,11 +85,21 @@ final class Safe_Mode {
 			return $pre_option;
 		}
 
-		// Read active_plugins directly from the DB — using get_option() here
-		// would re-trigger this same filter and cause infinite recursion.
+		// Read active_plugins directly — get_option() here would re-trigger
+		// this same filter and cause infinite recursion. We try the object
+		// cache first; only fall back to a raw query when the cache is cold.
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Must bypass option filters to avoid recursion.
-		$raw    = $wpdb->get_var( "SELECT option_value FROM {$wpdb->options} WHERE option_name = 'active_plugins' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$raw = wp_cache_get( 'active_plugins', 'options' );
+		if ( false === $raw ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Must bypass option filters to avoid recursion; result is cached immediately below.
+			$raw = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+					'active_plugins'
+				)
+			);
+			wp_cache_set( 'active_plugins', $raw, 'options' );
+		}
 		$active = $raw ? maybe_unserialize( $raw ) : array();
 		if ( ! is_array( $active ) ) {
 			$active = array();

@@ -11,6 +11,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.5.2] — 2026-06-11
+
+### Fixed
+- `Safe_Mode::maybe_filter_active_plugins()` direct DB query now uses object cache (`wp_cache_get/set`) to satisfy WordPress.org Plugin Check — resolves `DirectDatabaseQuery.NoCaching` warning. The `DirectQuery` is unavoidable (calling `get_option()` here would cause infinite recursion) and is suppressed with an inline `phpcs:ignore` comment explaining why.
+- Raw SQL replaced with `$wpdb->prepare()` for the `active_plugins` lookup.
+
+---
+
 ## [2.5.1] — 2026-06-11
 
 ### Fixed
@@ -167,7 +175,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.2...HEAD
+[2.5.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.3.1...v2.4.0
