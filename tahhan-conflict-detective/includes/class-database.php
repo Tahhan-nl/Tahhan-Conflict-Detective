@@ -151,7 +151,10 @@ final class Database {
 		// Remove transient version keys written by Change_History.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk option cleanup on uninstall; no transient API equivalent.
 		$wpdb->query(
-			"DELETE FROM `{$wpdb->options}` WHERE `option_name` LIKE 'pcd\\_prev\\_version\\_%'"  // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->prepare(
+				"DELETE FROM `{$wpdb->options}` WHERE `option_name` LIKE %s",
+				$wpdb->esc_like( 'tahcd_prev_version_' ) . '%'
+			)
 		);
 	}
 
