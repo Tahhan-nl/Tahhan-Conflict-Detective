@@ -48,7 +48,7 @@ Step-by-step guided diagnosis. Choose your symptom (white screen, login problem,
 
 == Installation ==
 
-1. Upload the `conflict-detective` folder to the `/wp-content/plugins/` directory.
+1. Upload the `tahhan-conflict-detective` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the **Plugins** menu in WordPress.
 3. Navigate to **Conflict Detective** in the WordPress admin sidebar.
 
