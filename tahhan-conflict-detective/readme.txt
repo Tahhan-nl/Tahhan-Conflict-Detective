@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.5.0
+Stable tag: 2.5.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,28 @@ The plugin monitors the current site only. It is not a network-wide tool in this
 7. Health Scan — duplicate functionality, incompatibilities, and server configuration checks.
 
 == Changelog ==
+
+= 2.5.1 =
+* Fixed: uninstall routine now correctly deletes `tahcd_prev_version_*` options (was using the stale `pcd_prev_version_` prefix, leaving orphaned rows in wp_options).
+* Fixed: Safe Mode plugin list no longer shows Conflict Detective itself (self-exclusion filter used the old slug `conflict-detective/conflict-detective.php`).
+* Docs: readme.txt changelog updated with entries for v2.2.0 through v2.5.0.
+
+= 2.5.0 =
+* All plugin-specific prefixes standardised to `tahcd_` / `TAHCD_` to satisfy WordPress.org uniqueness requirements (constants, AJAX actions, nonce, user meta, cookie, option keys, script handle, JS data object).
+
+= 2.4.0 =
+* Plugin renamed to Tahhan Conflict Detective (slug: `tahhan-conflict-detective`) for WordPress.org compliance. Namespace changed to `TahhanConflictDetective`. Text domain changed to `tahhan-conflict-detective`.
+* Debug log clear handler now uses `WP_Filesystem::put_contents()` instead of `file_put_contents()`.
+
+= 2.3.1 =
+* Fixed critical infinite recursion crash: `maybe_filter_active_plugins()` called `get_option('active_plugins')` which re-triggered the same filter, causing a stack overflow. Fixed by reading directly from `$wpdb`.
+
+= 2.3.0 =
+* CI action SHA pinning for security hardening. Code cleanup in class-dashboard.php and class-error-log.php.
+
+= 2.2.0 =
+* Safe Mode tab fully functional: Start/Stop button now triggers AJAX and reloads on success.
+* Architecture fix: `Safe_Mode::init()` and `Database::maybe_upgrade()` moved to file-load time.
 
 = 2.1.4 =
 * Fixed critical bug: Safe_Mode::init() and Database::maybe_upgrade() were registered inside Plugin::init() on plugins_loaded priority 5, meaning they were never called (priority 1 and 0 already fired). Both are now wired up directly at file load time, outside the Plugin class.

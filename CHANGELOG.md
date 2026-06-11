@@ -11,6 +11,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.5.1] — 2026-06-11
+
+### Fixed
+- `class-database.php::drop_tables()` now deletes option rows using the current `tahcd_prev_version_` prefix (was hardcoded to the stale `pcd_prev_version_` prefix since v2.5.0 rename, leaving orphaned rows in `wp_options` on uninstall). Also switched to `$wpdb->prepare()` + `$wpdb->esc_like()` for correctness.
+- `class-dashboard.php::render_safe_mode()` self-exclusion filter now correctly matches `tahhan-conflict-detective/tahhan-conflict-detective.php` (was checking old slug `conflict-detective/conflict-detective.php`, causing the plugin itself to appear in the Safe Mode toggle list).
+
+### Changed
+- `tahhan-conflict-detective/readme.txt` changelog updated with condensed entries for v2.2.0 through v2.5.0 to keep the WordPress.org plugin page in sync.
+
+---
+
 ## [2.5.0] — 2026-06-04
 
 ### Changed
@@ -156,7 +167,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.3.0...v2.3.1

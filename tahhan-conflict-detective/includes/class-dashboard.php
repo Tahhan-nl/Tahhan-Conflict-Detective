@@ -689,7 +689,7 @@ final class Dashboard {
 			echo '<div class="pcd-card pcd-card--full">';
 
 			$testable = array_filter( $active_plugins, static function ( $file ) {
-				return strpos( $file, 'conflict-detective/conflict-detective.php' ) === false;
+				return strpos( $file, 'tahhan-conflict-detective/tahhan-conflict-detective.php' ) === false;
 			} );
 
 			if ( empty( $testable ) ) {
