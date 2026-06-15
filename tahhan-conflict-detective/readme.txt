@@ -76,13 +76,13 @@ The plugin monitors the current site only. It is not a network-wide tool in this
 
 == Screenshots ==
 
-1. Dashboard — system overview, active plugins, recent changes and errors at a glance.
-2. Conflict Scanner — automatically detected suspect plugin with confidence percentage.
-3. Safe Testing Mode — disable plugins for your session without affecting visitors.
-4. Conflict Wizard — step-by-step guided diagnosis with tailored advice.
-5. Error Log — parsed PHP errors attributed to the owning plugin, with type filters.
-6. Change History — full audit trail of every plugin activation, update, and deletion.
-7. Health Scan — duplicate functionality, incompatibilities, and server configuration checks.
+1. Dashboard — live system overview: active plugins, stat cards, recent changes and the likely conflict culprit widget.
+2. Conflict Scanner — detected conflicts ranked by confidence score with one-click "Mark Resolved".
+3. Safe Testing Mode — amber active banner shows disabled-plugin count; toggle any plugin on/off for your session only.
+4. Conflict Wizard — step-by-step diagnosis selects your symptom and produces a tailored action plan.
+5. Error Log Viewer — PHP errors parsed from debug.log and server error_log, attributed to the owning plugin with type filters.
+6. Change History — full audit trail of every plugin activation, deactivation, update, installation and deletion with timestamps.
+7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
 
