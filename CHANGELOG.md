@@ -11,6 +11,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.1] — 2026-06-16
+
+### Changed
+- `Tested up to` updated to WordPress 7.0.
+
+---
+
 ## [2.6.0] — 2026-06-16
 
 ### Added
@@ -202,7 +209,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.1...HEAD
+[2.6.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.2...v2.6.0
 [2.5.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.0...v2.5.1

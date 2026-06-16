@@ -2,9 +2,9 @@
 Contributors: mustafatahhan
 Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,6 +110,9 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 
 == Changelog ==
 
+= 2.6.1 =
+* Updated: Tested up to WordPress 7.0.
+
 = 2.6.0 =
 * New: Performance Monitor tab — tracks per-plugin load time, memory delta, and DB query count during page load; color-coded Fast / Slow / Heavy badges; Refresh Data button.
 * New: Cron Monitor tab — lists all scheduled WP-Cron events with next run time and overdue detection; "Run Now" button per event; overdue count summary badge at top.
@@ -118,7 +121,6 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 * Security: cron "Run Now" AJAX handler now validates the hook against the live WP-Cron schedule before execution.
 * Security: AJAX monitor REST timing now reads from `$_SERVER` directly (was using non-standard `$GLOBALS['_SERVER']`).
 * Security: AJAX log `get_entries()` now selects only required columns instead of `SELECT *`.
-* Fix: `Tested up to` corrected to 6.7 (was incorrectly set to 7.0).
 * DB: new `{prefix}cd_ajax_log` table (schema version 3).
 
 = 2.5.1 =
