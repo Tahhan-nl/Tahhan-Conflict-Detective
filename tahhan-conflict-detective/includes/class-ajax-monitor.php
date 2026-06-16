@@ -191,6 +191,16 @@ final class Ajax_Monitor {
 
 		$table = $wpdb->prefix . self::TABLE_SUFFIX;
 
+		// Guard: skip the insert silently when the table does not yet exist
+		// (e.g. fresh install where the activation hook has not run yet).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; no transient API equivalent.
+		$table_exists = $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
+		);
+		if ( null === $table_exists || '' === $table_exists ) {
+			return;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- intentional log write; no caching layer needed
 		$wpdb->insert(
 			$table,
@@ -249,7 +259,7 @@ final class Ajax_Monitor {
 			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
 		);
 
-		if ( null === $table_exists ) {
+		if ( null === $table_exists || '' === $table_exists ) {
 			return array();
 		}
 
@@ -284,6 +294,10 @@ final class Ajax_Monitor {
 	 * @return void
 	 */
 	public static function render(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'tahhan-conflict-detective' ) );
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$filter = isset( $_GET['tahcd_ajax_filter'] ) ? sanitize_key( $_GET['tahcd_ajax_filter'] ) : 'all';
 		$valid  = array( 'all', 'ajax', 'rest', 'slow' );

@@ -162,6 +162,19 @@ final class Database {
 
 		delete_option( self::OPTION_KEY );
 
+		// Remove Phase 3 transient (Performance Monitor snapshot).
+		delete_transient( 'tahcd_perf_snapshot' );
+
+		// Remove Safe Mode user meta from all users.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk user meta cleanup on uninstall; delete_metadata() requires a user ID.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM `{$wpdb->usermeta}` WHERE `meta_key` IN (%s, %s)",
+				'_tahcd_safe_token',
+				'_tahcd_disabled_plugins'
+			)
+		);
+
 		// Remove transient version keys written by Change_History.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk option cleanup on uninstall; no transient API equivalent.
 		$wpdb->query(

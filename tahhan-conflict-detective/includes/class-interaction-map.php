@@ -147,6 +147,13 @@ final class Interaction_Map {
 		$ecosystems     = array();
 		$standalone     = array();
 
+		if ( empty( $all_plugins ) ) {
+			return array(
+				'ecosystems' => array(),
+				'standalone' => array(),
+			);
+		}
+
 		foreach ( $all_plugins as $basename => $data ) {
 			$slug      = self::slug_from_basename( $basename );
 			$ecosystem = self::KNOWN_ECOSYSTEMS[ $slug ] ?? null;
@@ -217,6 +224,10 @@ final class Interaction_Map {
 	 * @return void
 	 */
 	public static function render(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'tahhan-conflict-detective' ) );
+		}
+
 		$map = self::build_map();
 
 		echo '<div class="pcd-card pcd-card--full">';
@@ -230,6 +241,12 @@ final class Interaction_Map {
 
 		$ecosystems = $map['ecosystems'];
 		$standalone = $map['standalone'];
+
+		if ( empty( $ecosystems ) && empty( $standalone ) ) {
+			echo '<p class="pcd-empty">' . esc_html__( 'No plugins found.', 'tahhan-conflict-detective' ) . '</p>';
+			echo '</div>';
+			return;
+		}
 
 		echo '<div class="tahcd-interaction-tree">';
 

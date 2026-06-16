@@ -46,6 +46,18 @@ Disable any plugin for your own admin session while visitors remain completely u
 **Conflict Wizard**
 Step-by-step guided diagnosis. Choose your symptom (white screen, login problem, WooCommerce issue, slow site, broken admin, front-end error, or other) and the wizard automatically analyses recent changes and errors to produce a tailored action plan.
 
+**Performance Monitor** *(new in 2.6.0)*
+Tracks the estimated load time, memory delta, and database query count for every active plugin during the current page load. Results are color-coded as Fast / Slow / Heavy and refreshed on demand.
+
+**Cron Monitor** *(new in 2.6.0)*
+Lists all scheduled WordPress Cron events with their next run time and interval. Overdue events are highlighted in red. Each event can be triggered manually via a "Run Now" button — validated against the live WP-Cron schedule before execution.
+
+**AJAX / REST Monitor** *(new in 2.6.0)*
+Automatically logs slow AJAX and REST API calls (those taking more than 500 ms) to a dedicated database table. Filter by All / AJAX / REST / Slow to quickly identify bottleneck endpoints.
+
+**Plugin Interaction Map** *(new in 2.6.0)*
+Visualises your plugins grouped into known ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, and more). Highlights declared plugin dependencies and shows active/inactive state at a glance. Plugins that don't belong to a known ecosystem are listed separately as Standalone Plugins.
+
 == Installation ==
 
 1. Upload the `tahhan-conflict-detective` folder to the `/wp-content/plugins/` directory.
@@ -73,6 +85,18 @@ The plugin detects missing database tables on every request and recreates them a
 
 = Is this plugin compatible with Multisite? =
 The plugin monitors the current site only. It is not a network-wide tool in this version.
+
+= How does the Performance Monitor work? =
+Performance Monitor hooks into WordPress's `plugin_loaded` action, which fires once for every plugin that loads. It records a snapshot of the PHP execution time, memory usage, and database query count immediately before and after each plugin loads, then computes the delta. The results are stored in a 5-minute transient and can be refreshed on demand. Because measurements happen at request time, values vary between requests — treat them as estimates rather than precise benchmarks.
+
+= Does the AJAX / REST Monitor log every request? =
+No. Only requests that take longer than 500 ms are written to the database. The log is automatically trimmed to the most recent 500 entries.
+
+= Can I manually trigger a WordPress Cron event? =
+Yes. Go to **Conflict Detective → Cron Monitor** and click the "Run Now" button next to any event. The plugin validates the hook name against the live WP-Cron schedule before execution so arbitrary code cannot be triggered via this interface.
+
+= What is the Plugin Interaction Map? =
+The Interaction Map groups your installed plugins into known ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, Contact Form 7, WPML, LearnDash, Divi, WP Rocket, and more). Plugins within the same ecosystem are more likely to interact and potentially conflict with each other. The map also reads the `Requires Plugins` header introduced in WordPress 6.5 to show explicit declared dependencies.
 
 == Screenshots ==
 

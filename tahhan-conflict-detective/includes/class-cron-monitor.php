@@ -178,6 +178,10 @@ final class Cron_Monitor {
 	 * @return void
 	 */
 	public static function render(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'tahhan-conflict-detective' ) );
+		}
+
 		$events = self::get_events();
 
 		echo '<div class="pcd-card pcd-card--full">';

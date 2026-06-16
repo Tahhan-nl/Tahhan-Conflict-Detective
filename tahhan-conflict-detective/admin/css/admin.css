@@ -1113,6 +1113,30 @@
 }
 
 /* ================================================================
+   Phase 3 — Responsive table wrappers
+   ================================================================ */
+
+/* Performance table: #tahcd-perf-table-wrap already exists as a div
+   so we can apply overflow-x there directly. */
+#tahcd-perf-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Cron and AJAX tables are rendered directly into .pcd-card -- use
+   a generated scroll wrapper via CSS so no PHP changes are needed. */
+@media screen and (max-width: 782px) {
+	#tahcd-perf-table-wrap,
+	.tahcd-cron-table,
+	.tahcd-ajax-log-table {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		display: block;
+		width: 100%;
+	}
+}
+
+/* ================================================================
    Phase 3 — Performance Monitor
    ================================================================ */
 
