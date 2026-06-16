@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
 
+# Minimal permissions — this workflow only reads code and pushes to SVN via
+# external credentials. It does not need write access to the GitHub repo.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Push to WordPress.org SVN

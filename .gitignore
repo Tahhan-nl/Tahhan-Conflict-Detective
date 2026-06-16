@@ -1,32 +1,56 @@
-# OS
+# ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# IDE
+# ── IDE / editors ─────────────────────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
-# Composer
+# ── Claude Code (local AI assistant config — never commit) ───────────────────
+.claude/
+.claude
+
+# ── Local environment & secrets ───────────────────────────────────────────────
+.env
+.env.*
+*.local
+*.local.*
+secrets.json
+credentials.json
+auth.json
+
+# ── Composer ──────────────────────────────────────────────────────────────────
 vendor/
 composer.lock
 
-# Node (if tooling is added later)
+# ── Node (if tooling is added later) ──────────────────────────────────────────
 node_modules/
 package-lock.json
 yarn.lock
 
-# Build artefacts
+# ── Build artefacts & release ZIPs ────────────────────────────────────────────
 *.zip
 dist/
+build/
 
-# WordPress-specific
+# ── Python cache ──────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ── WordPress-specific ────────────────────────────────────────────────────────
 wp-config.php
 debug.log
 *.log
 
-# PHP CS cache
+# ── PHP CS / linting cache ────────────────────────────────────────────────────
 .phpcs-cache
 .php_cs.cache
 .php-cs-fixer.cache
