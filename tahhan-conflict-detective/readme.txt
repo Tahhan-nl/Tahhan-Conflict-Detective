@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 2.6.0-beta.1
+Stable tag: 2.6.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,7 +110,7 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 
 == Changelog ==
 
-= 2.6.0-beta.1 =
+= 2.6.0 =
 * New: Performance Monitor tab — tracks per-plugin load time, memory delta, and DB query count during page load; color-coded Fast / Slow / Heavy badges; Refresh Data button.
 * New: Cron Monitor tab — lists all scheduled WP-Cron events with next run time and overdue detection; "Run Now" button per event; overdue count summary badge at top.
 * New: AJAX / REST Monitor tab — logs slow AJAX and REST API calls (>500 ms) to a dedicated DB table; filter bar for All / AJAX / REST / Slow views.

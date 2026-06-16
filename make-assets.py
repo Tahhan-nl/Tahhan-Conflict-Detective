@@ -155,68 +155,198 @@ icon128=make_icon(128); icon128.save(f"{OUT}/icon-128x128.png")
 print("Icons ✅")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# BANNER
+# BANNER  — professional redesign
 # ═══════════════════════════════════════════════════════════════════════════════
-def make_banner(W,H):
-    img  = Image.new("RGB",(W,H),(22,40,65))
+def make_banner(W, H):
+    img  = Image.new("RGB", (W, H), (11, 22, 44))
     draw = ImageDraw.Draw(img)
+    scale = H / 500  # normalise all sizes to the 1544×500 master
 
-    # subtle grid lines
-    for x in range(0,W,W//16):
-        draw.line([x,0,x,H],fill=(255,255,255,15))
-    for y in range(0,H,H//8):
-        draw.line([0,y,W,y],fill=(255,255,255,15))
+    # ── background: two-tone deep-navy gradient via horizontal strips ──────────
+    for row in range(H):
+        t = row / H
+        r = int(11  + (18  - 11)  * t)
+        g = int(22  + (36  - 22)  * t)
+        b = int(44  + (72  - 44)  * t)
+        draw.line([(0, row), (W, row)], fill=(r, g, b))
 
-    # left accent bar
-    draw.rectangle([0,0,max(5,W//120),H],fill=BLUE)
+    # ── subtle diagonal mesh ──────────────────────────────────────────────────
+    mesh_col = (255, 255, 255)
+    step = int(60 * scale)
+    for i in range(-H, W + H, step):
+        draw.line([(i, 0), (i + H, H)], fill=mesh_col + (0,), width=1)
+        # PIL RGB images don't support alpha per-pixel via line; simulate with
+        # a very dark colour close to bg instead
+    mesh_fill = (18, 34, 66)
+    for i in range(-H, W + H, step):
+        draw.line([(i, 0), (i + H, H)], fill=mesh_fill, width=1)
 
-    # large magnifying-glass right side
-    cx=int(W*0.79); cy=int(H*0.48); cr=int(H*0.30); cw=max(8,H//28)
-    # glow
-    for g in range(6,0,-1):
-        alpha=int(30*g/6)
-        c=(34+alpha,113+alpha,177+alpha)
-        draw.ellipse([cx-cr-g*3,cy-cr-g*3,cx+cr+g*3,cy+cr+g*3],outline=c,width=2)
-    draw.ellipse([cx-cr,cy-cr,cx+cr,cy+cr],fill=BLUE)
-    draw.ellipse([cx-cr+cw,cy-cr+cw,cx+cr-cw,cy+cr-cw],fill=(22,40,65))
-    ang=0.7071
-    x1=int(cx+(cr-cw)*ang); y1=int(cy+(cr-cw)*ang)
-    draw.line([x1,y1,int(x1+cr*0.75*ang),int(y1+cr*0.75*ang)],fill=BLUE,width=max(6,H//35))
-    # "?" inside lens
-    fs2=max(14,int((cr-cw)*0.65))
-    fn2=F(fs2,bold=True)
-    bb=draw.textbbox((0,0),"?",font=fn2)
-    draw.text((cx-(bb[2]-bb[0])//2,cy-(bb[3]-bb[1])//2-bb[1]),"?",font=fn2,fill=BLUE_LT)
+    # ── left vivid accent stripe ───────────────────────────────────────────────
+    sw = max(4, int(6 * scale))
+    for x in range(sw):
+        t = x / sw
+        r = int(34  + (80  - 34)  * t)
+        g = int(113 + (160 - 113) * t)
+        b = int(177 + (220 - 177) * t)
+        draw.line([(x, 0), (x, H)], fill=(r, g, b))
 
-    # --- left text ---
-    PL=int(W*0.07)
-    # "Tahhan" in blue
-    fn_big=F(max(28,H//5),bold=True)
-    draw.text((PL,int(H*0.15)),"Tahhan",font=fn_big,fill=BLUE_LT)
-    bb=draw.textbbox((0,0),"Tahhan",font=fn_big)
-    y2=int(H*0.15)+bb[3]-bb[1]+int(H*0.04)
-    draw.text((PL,y2),"Conflict Detective",font=fn_big,fill=WHITE)
-    bb2=draw.textbbox((0,0),"Conflict Detective",font=fn_big)
-    y3=y2+bb2[3]-bb2[1]+int(H*0.06)
+    # ── right-side mini UI card ───────────────────────────────────────────────
+    card_x  = int(W * 0.565)
+    card_y  = int(H * 0.09)
+    card_w  = int(W * 0.40)
+    card_h  = int(H * 0.82)
+    card_r  = int(12 * scale)
+    # card shadow (4 offset layers)
+    for sh in range(8, 0, -1):
+        alpha = int(12 * sh / 8)
+        shade = (0 + alpha, 10 + alpha, 25 + alpha)
+        rrect(draw,
+              (card_x + sh, card_y + sh, card_x + card_w + sh, card_y + card_h + sh),
+              card_r, shade)
+    # card body
+    rrect(draw, (card_x, card_y, card_x + card_w, card_y + card_h), card_r, (20, 32, 58))
+    # card top-bar chrome strip
+    bar_h = int(22 * scale)
+    rrect(draw, (card_x, card_y, card_x + card_w, card_y + bar_h), card_r, (30, 46, 80))
+    draw.rectangle([card_x, card_y + bar_h // 2,
+                    card_x + card_w, card_y + bar_h], fill=(30, 46, 80))
+    # traffic lights
+    for ci, cc in enumerate([(220,80,80),(220,160,60),(80,190,110)]):
+        cx2 = card_x + int(14 * scale) + ci * int(16 * scale)
+        cy2 = card_y + int(8 * scale)
+        r2  = int(5 * scale)
+        draw.ellipse([cx2 - r2, cy2 - r2, cx2 + r2, cy2 + r2], fill=cc)
+
+    # ── mini stat cards inside the card ───────────────────────────────────────
+    mini_pad  = int(14 * scale)
+    mini_y    = card_y + bar_h + int(14 * scale)
+    mini_cols = 2
+    mini_cw   = (card_w - mini_pad * (mini_cols + 1)) // mini_cols
+    mini_ch   = int(52 * scale)
+    mini_data = [
+        ("24",  "Active Plugins",  BLUE,  GREEN),
+        ("87%", "Confidence",      GREEN, GREEN),
+        ("7",   "Errors Found",    RED,   RED),
+        ("3",   "Changes Today",   AMBER, AMBER),
+    ]
+    for mi, (val, lbl, stripe, _) in enumerate(mini_data):
+        col_i = mi % mini_cols
+        row_i = mi // mini_cols
+        mx = card_x + mini_pad + col_i * (mini_cw + mini_pad)
+        my = mini_y + row_i * (mini_ch + int(8 * scale))
+        rrect(draw, (mx, my, mx + mini_cw, my + mini_ch), int(6 * scale), (28, 44, 74))
+        draw.rectangle([mx, my, mx + int(4 * scale), my + mini_ch], fill=stripe)
+        fn_val = F(max(12, int(18 * scale)), bold=True)
+        fn_lbl = F(max(8,  int(10 * scale)))
+        draw.text((mx + int(10 * scale), my + int(6 * scale)),  val, font=fn_val, fill=WHITE)
+        draw.text((mx + int(10 * scale), my + int(30 * scale)), lbl, font=fn_lbl, fill=(140, 160, 195))
+
+    # ── mini progress bar (conflict confidence) ───────────────────────────────
+    pb_y  = mini_y + 2 * (mini_ch + int(8 * scale)) + int(10 * scale)
+    pb_x  = card_x + mini_pad
+    pb_w  = card_w - mini_pad * 2
+    pb_h  = int(8 * scale)
+    fn_pb = F(max(7, int(9 * scale)))
+    draw.text((pb_x, pb_y - int(14 * scale)),
+              "WooCommerce — conflict confidence", font=fn_pb, fill=(120, 145, 185))
+    rrect(draw, (pb_x, pb_y, pb_x + pb_w, pb_y + pb_h), pb_h // 2, (30, 46, 80))
+    rrect(draw, (pb_x, pb_y, pb_x + int(pb_w * 0.87), pb_y + pb_h), pb_h // 2, GREEN)
+    draw.text((pb_x + int(pb_w * 0.87) + int(6 * scale), pb_y - int(2 * scale)),
+              "87%", font=fn_pb, fill=GREEN)
+
+    # ── feature pill row inside card ─────────────────────────────────────────
+    pill_y  = pb_y + pb_h + int(14 * scale)
+    pill_x  = card_x + mini_pad
+    pill_fs = max(7, int(9 * scale))
+    pills   = ["Conflict Scanner", "Safe Mode", "Cron Monitor", "AJAX Log"]
+    for pill_txt in pills:
+        fn_pill = F(pill_fs)
+        bb = draw.textbbox((0, 0), pill_txt, font=fn_pill)
+        pw = bb[2] - bb[0] + int(14 * scale)
+        ph = bb[3] - bb[1] + int(8 * scale)
+        if pill_x + pw > card_x + card_w - mini_pad:
+            break
+        rrect(draw, (pill_x, pill_y, pill_x + pw, pill_y + ph),
+              ph // 2, (34, 56, 100))
+        draw.rectangle([pill_x, pill_y, pill_x + int(3 * scale), pill_y + ph],
+                       fill=BLUE_LT)
+        draw.text((pill_x + int(7 * scale), pill_y + int(4 * scale) - bb[1]),
+                  pill_txt, font=fn_pill, fill=(160, 185, 220))
+        pill_x += pw + int(6 * scale)
+
+    # ── left-side text block ──────────────────────────────────────────────────
+    PL = int(W * 0.055)
+
+    # small overline label
+    fn_over = F(max(9, int(12 * scale)))
+    over_y  = int(H * 0.13)
+    draw.text((PL, over_y), "WORDPRESS PLUGIN", font=fn_over, fill=(90, 130, 185))
+
+    # main headline split across two lines
+    fn_h1 = F(max(24, int(H * 0.175)), bold=True)
+    h1a = "Conflict"
+    h1b = "Detective"
+    bba = draw.textbbox((0, 0), h1a, font=fn_h1)
+    h1a_h = bba[3] - bba[1]
+    title_y = over_y + int(22 * scale)
+    draw.text((PL, title_y),          h1a, font=fn_h1, fill=WHITE)
+    draw.text((PL, title_y + h1a_h + int(4 * scale)), h1b, font=fn_h1, fill=(72, 148, 220))
+
+    bbb = draw.textbbox((0, 0), h1b, font=fn_h1)
+    h1b_h = bbb[3] - bbb[1]
+    tagline_y = title_y + h1a_h + int(4 * scale) + h1b_h + int(18 * scale)
 
     # tagline
-    fn_tag=F(max(11,H//18))
-    draw.text((PL,y3),"Automatically detects which plugin broke your WordPress site.",
-              font=fn_tag,fill=(180,195,215))
+    fn_tag = F(max(10, int(H * 0.052)))
+    draw.text((PL, tagline_y),
+              "Pinpoints which plugin broke your site.", font=fn_tag, fill=(170, 195, 230))
+    bbt = draw.textbbox((0, 0), "Pinpoints which plugin broke your site.", font=fn_tag)
+    draw.text((PL, tagline_y + (bbt[3] - bbt[1]) + int(6 * scale)),
+              "No manual trial and error.", font=fn_tag, fill=(110, 140, 180))
 
-    # version badge
-    y4=int(H*0.82)
-    fn_b=F(max(10,H//22),bold=True)
-    txt="v2.5.2  •  Free  •  WordPress.org"
-    bb3=draw.textbbox((0,0),txt,font=fn_b)
-    bw=bb3[2]-bb3[0]+28; bh=bb3[3]-bb3[1]+12
-    rrect(draw,(PL,y4,PL+bw,y4+bh),bh//2,BLUE)
-    draw.text((PL+14,y4+6-bb3[1]),txt,font=fn_b,fill=WHITE)
+    # ── feature bullets (3 rows) ─────────────────────────────────────────────
+    bullet_y = tagline_y + (bbt[3] - bbt[1]) * 2 + int(26 * scale)
+    fn_bul   = F(max(9, int(H * 0.044)))
+    features = [
+        ("✓", "Conflict Scanner  — confidence score"),
+        ("✓", "Safe Testing Mode — zero visitor impact"),
+        ("✓", "Performance + Cron + AJAX monitors"),
+    ]
+    for sym, feat in features:
+        draw.text((PL,              bullet_y), sym,  font=fn_bul, fill=(72, 200, 120))
+        draw.text((PL + int(22 * scale), bullet_y), feat, font=fn_bul, fill=(200, 215, 235))
+        bb_bul = draw.textbbox((0, 0), feat, font=fn_bul)
+        bullet_y += (bb_bul[3] - bb_bul[1]) + int(8 * scale)
+
+    # ── bottom badge row ──────────────────────────────────────────────────────
+    badge_y  = int(H * 0.845)
+    fn_badge = F(max(8, int(H * 0.038)), bold=True)
+    badge_items = ["v2.6.0", "Free", "GPL-2.0", "WordPress.org"]
+    bx = PL
+    for bi, btxt in enumerate(badge_items):
+        bb4 = draw.textbbox((0, 0), btxt, font=fn_badge)
+        bw4 = bb4[2] - bb4[0] + int(20 * scale)
+        bh4 = bb4[3] - bb4[1] + int(10 * scale)
+        bg4 = BLUE if bi == 0 else (28, 44, 74)
+        border4 = None if bi == 0 else (50, 75, 120)
+        rrect(draw, (bx, badge_y, bx + bw4, badge_y + bh4), bh4 // 2, bg4,
+              outline=border4, width=1)
+        draw.text((bx + int(10 * scale), badge_y + int(5 * scale) - bb4[1]),
+                  btxt, font=fn_badge, fill=WHITE)
+        bx += bw4 + int(8 * scale)
+
+    # ── "by Tahhan" author credit ─────────────────────────────────────────────
+    fn_auth = F(max(8, int(H * 0.034)))
+    auth_txt = "by Tahhan"
+    bba2 = draw.textbbox((0, 0), auth_txt, font=fn_auth)
+    draw.text((PL, badge_y + (bba2[3] - bba2[1]) + int(H * 0.04 + 10 * scale)),
+              auth_txt, font=fn_auth, fill=(70, 95, 140))
 
     return img
 
-make_banner(1544,500).save(f"{OUT}/banner-1544x500.png")
-make_banner(772,250).save(f"{OUT}/banner-772x250.png")
+
+make_banner(1544, 500).save(f"{OUT}/banner-1544x500.png")
+make_banner(772,  250).save(f"{OUT}/banner-772x250.png")
 print("Banners ✅")
 
 # ═══════════════════════════════════════════════════════════════════════════════
