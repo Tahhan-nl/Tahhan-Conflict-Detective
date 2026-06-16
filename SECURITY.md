@@ -12,7 +12,7 @@
 
 **Please do not report security vulnerabilities via GitHub Issues** — issues are public and could expose users before a fix is available.
 
-Instead, email: **mustafa@superspace.nl**
+Instead, email: **mustafa@tahhan.cloud**
 
 Include in your report:
 - A clear description of the vulnerability
