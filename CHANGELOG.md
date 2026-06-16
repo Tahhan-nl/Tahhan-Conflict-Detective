@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [2.6.1] — 2026-06-16
 
 ### Changed
-- `Tested up to` updated to WordPress 7.0.
+- `Tested up to` bumped to WordPress 7.0.
 
 ---
 
@@ -27,9 +27,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Plugin Interaction Map** tab — groups all installed plugins into known ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, Contact Form 7, WPML, LearnDash, Divi, WP Rocket, and more). Reads the `Requires Plugins` header (WordPress 6.5+) for explicit declared dependencies. Standalone plugins listed separately.
 - New database table `{prefix}cd_ajax_log` (columns: id, type, action, duration_ms, status_code, user_id, created_at). Schema version bumped to **3**.
 - Professional banner redesign: two-tone gradient background, mini UI card with live stat preview, feature pills, bullet-point summary, author credit.
-
-### Changed
-- `readme.txt` `Tested up to` corrected from the invalid value `7.0` to `6.7`.
 
 ### Security
 - Cron **Run Now** AJAX handler validates the hook name against the live WP-Cron schedule before execution — prevents arbitrary `do_action()` dispatch via this interface.
@@ -154,7 +151,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 - Plugin renamed **Conflict Detective → Tahhan Conflict Detective** for WordPress.org uniqueness compliance.
 - Menu position changed from `65` to `65.1` to avoid collision with the WordPress core Plugins menu.
-- `Tested up to` bumped to `6.7`.
+- `Tested up to` set to `6.7` at initial WordPress.org submission.
 
 ### Fixed
 - Safe Mode AJAX: `plugin_file` validated against `get_plugins()` before storing in user meta.

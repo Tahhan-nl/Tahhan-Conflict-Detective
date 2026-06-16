@@ -5,8 +5,8 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-0073aa?logo=wordpress)](https://wordpress.org/plugins/tahhan-conflict-detective/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-8892be?logo=php)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.6.0-green)](CHANGELOG.md)
-[![Tested up to](https://img.shields.io/badge/Tested%20up%20to-WP%206.7-0073aa)](https://wordpress.org/plugins/tahhan-conflict-detective/)
+[![Version](https://img.shields.io/badge/Version-2.6.1-green)](CHANGELOG.md)
+[![Tested up to](https://img.shields.io/badge/Tested%20up%20to-WP%207.0-0073aa)](https://wordpress.org/plugins/tahhan-conflict-detective/)
 
 ---
 

@@ -5,13 +5,20 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.6.1] — 2026-06-16
+
+### Changed
+- `Tested up to` bumped to WordPress 7.0.
+
+---
+
 ## [2.6.0] — 2026-06-16
 
 ### Added
-- Performance Monitor tab — per-plugin load time, memory delta, DB query count. Fast / Slow / Heavy badges. 5-minute transient cache, refreshable on demand.
-- Cron Monitor tab — full WP-Cron event list with next run time, overdue detection (red), and a validated **Run Now** button per event.
-- AJAX / REST Monitor tab — logs slow calls (> 500 ms) to `{prefix}cd_ajax_log`. Filter: All / AJAX / REST / Slow. Auto-trims to 500 rows.
-- Plugin Interaction Map tab — ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, and more) plus `Requires Plugins` dependency reading.
+- **Performance Monitor** tab — per-plugin load time, memory delta, DB query count. Fast / Slow / Heavy badges. 5-minute transient cache, refreshable on demand.
+- **Cron Monitor** tab — full WP-Cron event list with next run time, overdue detection (red), and a validated **Run Now** button per event.
+- **AJAX / REST Monitor** tab — logs slow calls (> 500 ms) to `{prefix}cd_ajax_log`. Filter: All / AJAX / REST / Slow. Auto-trims to 500 rows.
+- **Plugin Interaction Map** tab — ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, and more) plus `Requires Plugins` dependency reading.
 - New database table `{prefix}cd_ajax_log`. Schema version → 3.
 - Professional banner redesign.
 
@@ -20,9 +27,6 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 - AJAX monitor reads `$_SERVER` directly (not `$GLOBALS['_SERVER']`).
 - `get_entries()` selects only required columns (no `SELECT *`).
 - All new `render()` methods guarded by `current_user_can('manage_options')`.
-
-### Fixed
-- `Tested up to` corrected to 6.7 (was incorrectly set to 7.0).
 
 ---
 
