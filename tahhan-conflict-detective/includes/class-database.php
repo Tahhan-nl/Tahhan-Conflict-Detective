@@ -31,7 +31,7 @@ final class Database {
 	 * The database schema version stored in wp_options.
 	 * Bump this when a schema migration is needed.
 	 */
-	const SCHEMA_VERSION = 2;
+	const SCHEMA_VERSION = 3;
 
 	/** @var string Option key that tracks the installed schema version. */
 	const OPTION_KEY = 'tahcd_db_version';
@@ -105,6 +105,19 @@ final class Database {
 				KEY idx_detected_at (detected_at),
 				KEY idx_plugin_slug (plugin_slug(100))
 			) $collate;",
+
+			// Phase 3: AJAX / REST slow-call log.
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cd_ajax_log (
+				id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
+				type        VARCHAR(10)  NOT NULL DEFAULT 'ajax',
+				action      VARCHAR(200) NOT NULL DEFAULT '',
+				duration_ms INT(11)      NOT NULL DEFAULT 0,
+				status_code SMALLINT(6)  NOT NULL DEFAULT 200,
+				user_id     BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
+				created_at  DATETIME     NOT NULL,
+				PRIMARY KEY (id),
+				KEY type_created (type, created_at)
+			) $collate;",
 		);
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -139,6 +152,7 @@ final class Database {
 			$wpdb->prefix . 'cd_errors',
 			$wpdb->prefix . 'cd_scans',
 			$wpdb->prefix . 'cd_conflicts',
+			$wpdb->prefix . 'cd_ajax_log',
 		);
 
 		foreach ( $tables as $table ) {

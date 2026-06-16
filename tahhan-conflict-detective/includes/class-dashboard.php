@@ -109,6 +109,42 @@ final class Dashboard {
 			self::PAGE_SLUG . '&tab=safe-mode',
 			array( __CLASS__, 'render_page' )
 		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Performance', 'tahhan-conflict-detective' ),
+			__( 'Performance', 'tahhan-conflict-detective' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=performance',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Cron Monitor', 'tahhan-conflict-detective' ),
+			__( 'Cron Monitor', 'tahhan-conflict-detective' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=cron',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'AJAX Monitor', 'tahhan-conflict-detective' ),
+			__( 'AJAX Monitor', 'tahhan-conflict-detective' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=ajax-monitor',
+			array( __CLASS__, 'render_page' )
+		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Interaction Map', 'tahhan-conflict-detective' ),
+			__( 'Interaction Map', 'tahhan-conflict-detective' ),
+			'manage_options',
+			self::PAGE_SLUG . '&tab=interaction-map',
+			array( __CLASS__, 'render_page' )
+		);
 	}
 
 	public static function enqueue_assets( string $hook ): void {
@@ -132,23 +168,30 @@ final class Dashboard {
 		);
 
 		wp_localize_script( 'tahcd-admin', 'tahcdData', array(
-			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-			'nonce'         => wp_create_nonce( 'tahcd_nonce' ),
-			'scanning'      => __( 'Scanning…',          'tahhan-conflict-detective' ),
-			'done'          => __( 'Scan complete!',      'tahhan-conflict-detective' ),
-			'runScan'       => __( 'Run Scan Now',        'tahhan-conflict-detective' ),
-			'clearing'      => __( 'Clearing…',           'tahhan-conflict-detective' ),
-			'cleared'       => __( 'Log cleared.',        'tahhan-conflict-detective' ),
-			'clearLog'      => __( 'Clear debug.log',     'tahhan-conflict-detective' ),
-			'issuesFound'   => __( 'issues found',        'tahhan-conflict-detective' ),
-			'unknownError'  => __( 'Unknown error',       'tahhan-conflict-detective' ),
-			'requestFailed' => __( 'Request failed. Please try again.', 'tahhan-conflict-detective' ),
-			'confirmClear'  => __( 'Are you sure you want to clear debug.log? This cannot be undone.', 'tahhan-conflict-detective' ),
-			'couldNotClear' => __( 'Could not clear log.', 'tahhan-conflict-detective' ),
-			'stopSafeMode'    => __( 'Stop Safe Mode',     'tahhan-conflict-detective' ),
-			'startSafeMode'   => __( 'Start Safe Mode',    'tahhan-conflict-detective' ),
-			'safeModeLoading' => __( 'Activating…',        'tahhan-conflict-detective' ),
-			'safeModeStop'    => __( 'Stopping…',          'tahhan-conflict-detective' ),
+			'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+			'nonce'             => wp_create_nonce( 'tahcd_nonce' ),
+			'scanning'          => __( 'Scanning…',          'tahhan-conflict-detective' ),
+			'done'              => __( 'Scan complete!',      'tahhan-conflict-detective' ),
+			'runScan'           => __( 'Run Scan Now',        'tahhan-conflict-detective' ),
+			'clearing'          => __( 'Clearing…',           'tahhan-conflict-detective' ),
+			'cleared'           => __( 'Log cleared.',        'tahhan-conflict-detective' ),
+			'clearLog'          => __( 'Clear debug.log',     'tahhan-conflict-detective' ),
+			'issuesFound'       => __( 'issues found',        'tahhan-conflict-detective' ),
+			'unknownError'      => __( 'Unknown error',       'tahhan-conflict-detective' ),
+			'requestFailed'     => __( 'Request failed. Please try again.', 'tahhan-conflict-detective' ),
+			'confirmClear'      => __( 'Are you sure you want to clear debug.log? This cannot be undone.', 'tahhan-conflict-detective' ),
+			'couldNotClear'     => __( 'Could not clear log.', 'tahhan-conflict-detective' ),
+			'stopSafeMode'      => __( 'Stop Safe Mode',      'tahhan-conflict-detective' ),
+			'startSafeMode'     => __( 'Start Safe Mode',     'tahhan-conflict-detective' ),
+			'safeModeLoading'   => __( 'Activating…',         'tahhan-conflict-detective' ),
+			'safeModeStop'      => __( 'Stopping…',           'tahhan-conflict-detective' ),
+			// Phase 3.
+			'refreshing'        => __( 'Refreshing…',         'tahhan-conflict-detective' ),
+			'refreshData'       => __( 'Refresh Data',        'tahhan-conflict-detective' ),
+			'running'           => __( 'Running…',            'tahhan-conflict-detective' ),
+			'runNow'            => __( 'Run Now',             'tahhan-conflict-detective' ),
+			'cronRunError'      => __( 'Failed to run cron event.', 'tahhan-conflict-detective' ),
+			'perfRefreshError'  => __( 'Failed to refresh performance data.', 'tahhan-conflict-detective' ),
 		) );
 	}
 
@@ -158,6 +201,8 @@ final class Dashboard {
 	public static function register_ajax(): void {
 		add_action( 'wp_ajax_tahcd_run_scan',   array( __CLASS__, 'ajax_run_scan' ) );
 		add_action( 'wp_ajax_tahcd_clear_log',  array( __CLASS__, 'ajax_clear_log' ) );
+		// Phase 3 AJAX handlers are registered by their own classes
+		// (Performance::register_ajax, Cron_Monitor::register_ajax).
 	}
 
 	// -------------------------------------------------------------------------
@@ -220,13 +265,17 @@ final class Dashboard {
 
 		// Tab definitions: label + dashicon class.
 		$tabs = array(
-			'dashboard' => array( 'label' => __( 'Dashboard',       'tahhan-conflict-detective' ), 'icon' => 'dashicons-dashboard' ),
-			'scanner'   => array( 'label' => __( 'Conflict Scanner','tahhan-conflict-detective' ), 'icon' => 'dashicons-search' ),
-			'wizard'    => array( 'label' => __( 'Conflict Wizard', 'tahhan-conflict-detective' ), 'icon' => 'dashicons-editor-help' ),
-			'errors'    => array( 'label' => __( 'Error Log',       'tahhan-conflict-detective' ), 'icon' => 'dashicons-warning' ),
-			'history'   => array( 'label' => __( 'Change History',  'tahhan-conflict-detective' ), 'icon' => 'dashicons-backup' ),
-			'scan'      => array( 'label' => __( 'Health Scan',     'tahhan-conflict-detective' ), 'icon' => 'dashicons-shield' ),
-			'safe-mode' => array( 'label' => __( 'Safe Mode',       'tahhan-conflict-detective' ), 'icon' => 'dashicons-shield-alt' ),
+			'dashboard'       => array( 'label' => __( 'Dashboard',       'tahhan-conflict-detective' ), 'icon' => 'dashicons-dashboard' ),
+			'scanner'         => array( 'label' => __( 'Conflict Scanner','tahhan-conflict-detective' ), 'icon' => 'dashicons-search' ),
+			'wizard'          => array( 'label' => __( 'Conflict Wizard', 'tahhan-conflict-detective' ), 'icon' => 'dashicons-editor-help' ),
+			'errors'          => array( 'label' => __( 'Error Log',       'tahhan-conflict-detective' ), 'icon' => 'dashicons-warning' ),
+			'history'         => array( 'label' => __( 'Change History',  'tahhan-conflict-detective' ), 'icon' => 'dashicons-backup' ),
+			'scan'            => array( 'label' => __( 'Health Scan',     'tahhan-conflict-detective' ), 'icon' => 'dashicons-shield' ),
+			'safe-mode'       => array( 'label' => __( 'Safe Mode',       'tahhan-conflict-detective' ), 'icon' => 'dashicons-shield-alt' ),
+			'performance'     => array( 'label' => __( 'Performance',     'tahhan-conflict-detective' ), 'icon' => 'dashicons-performance' ),
+			'cron'            => array( 'label' => __( 'Cron Monitor',    'tahhan-conflict-detective' ), 'icon' => 'dashicons-clock' ),
+			'ajax-monitor'    => array( 'label' => __( 'AJAX Monitor',    'tahhan-conflict-detective' ), 'icon' => 'dashicons-rest-api' ),
+			'interaction-map' => array( 'label' => __( 'Interaction Map', 'tahhan-conflict-detective' ), 'icon' => 'dashicons-networking' ),
 		);
 
 		if ( ! array_key_exists( $tab, $tabs ) ) {
@@ -255,13 +304,17 @@ final class Dashboard {
 
 		echo '<div class="pcd-content">';
 		switch ( $tab ) {
-			case 'scanner':   self::render_scanner();   break;
-			case 'wizard':    Wizard::render();         break;
-			case 'errors':    self::render_errors();    break;
-			case 'history':   self::render_history();   break;
-			case 'scan':      self::render_scan();      break;
-			case 'safe-mode': self::render_safe_mode(); break;
-			default:          self::render_dashboard();
+			case 'scanner':         self::render_scanner();         break;
+			case 'wizard':          Wizard::render();               break;
+			case 'errors':          self::render_errors();          break;
+			case 'history':         self::render_history();         break;
+			case 'scan':            self::render_scan();            break;
+			case 'safe-mode':       self::render_safe_mode();       break;
+			case 'performance':     Performance::render();          break;
+			case 'cron':            Cron_Monitor::render();         break;
+			case 'ajax-monitor':    Ajax_Monitor::render();         break;
+			case 'interaction-map': Interaction_Map::render();      break;
+			default:                self::render_dashboard();
 		}
 		echo '</div></div>';
 	}
