@@ -113,8 +113,16 @@ final class Error_Log {
 	 * @param  string $source Label for the 'source' field (e.g. 'debug.log').
 	 * @return array<int, array<string, string>>
 	 */
+	/** Maximum file size (bytes) we will attempt to tail. 50 MB guard. */
+	private const MAX_FILE_SIZE = 52428800; // 50 MB
+
 	private static function parse_file( string $path, string $source ): array {
 		if ( ! file_exists( $path ) || ! is_readable( $path ) ) {
+			return array();
+		}
+
+		// Skip files that are unreasonably large to protect memory and execution time.
+		if ( filesize( $path ) > self::MAX_FILE_SIZE ) {
 			return array();
 		}
 

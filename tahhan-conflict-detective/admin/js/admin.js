@@ -131,6 +131,68 @@
 			});
 		});
 
+		// ── Phase 3: Performance Monitor — refresh button ────────────────────
+		$(document).on('click', '#tahcd-refresh-perf', function () {
+			var $btn  = $(this);
+			var $wrap = $('#tahcd-perf-table-wrap');
+
+			$btn.prop('disabled', true).text(tahcdData.refreshing || 'Refreshing…');
+
+			$.post(
+				tahcdData.ajaxUrl,
+				{ action: 'tahcd_get_performance', nonce: tahcdData.nonce },
+				function (response) {
+					$btn.prop('disabled', false).text(tahcdData.refreshData || 'Refresh Data');
+					if (response.success && response.data.html) {
+						$wrap.html(response.data.html);
+					} else {
+						var msg = (response.data && response.data.message)
+							? response.data.message
+							: (tahcdData.perfRefreshError || 'Failed to refresh performance data.');
+						$wrap.html('<div class="pcd-notice pcd-notice--error">' + $('<div>').text(msg).html() + '</div>');
+					}
+				}
+			).fail(function () {
+				$btn.prop('disabled', false).text(tahcdData.refreshData || 'Refresh Data');
+				$wrap.html('<div class="pcd-notice pcd-notice--error">' + (tahcdData.requestFailed || 'Request failed.') + '</div>');
+			});
+		});
+
+		// ── Phase 3: Cron Monitor — manually run a cron event ────────────────
+		$(document).on('click', '.tahcd-run-cron-btn', function () {
+			var $btn    = $(this);
+			var hook    = $btn.data('hook');
+			var $result = $('#tahcd-cron-run-result');
+
+			$btn.prop('disabled', true).text(tahcdData.running || 'Running…');
+
+			$.post(
+				tahcdData.ajaxUrl,
+				{ action: 'tahcd_run_cron_event', nonce: tahcdData.nonce, hook: hook },
+				function (response) {
+					$btn.prop('disabled', false).text(tahcdData.runNow || 'Run Now');
+					if (response.success) {
+						var msg = response.data && response.data.message ? response.data.message : 'Done.';
+						$result.html(
+							'<div class="pcd-notice pcd-notice--success">' + $('<div>').text(msg).html() + '</div>'
+						);
+					} else {
+						var errMsg = (response.data && response.data.message)
+							? response.data.message
+							: (tahcdData.cronRunError || 'Failed to run cron event.');
+						$result.html(
+							'<div class="pcd-notice pcd-notice--error">' + $('<div>').text(errMsg).html() + '</div>'
+						);
+					}
+					// Auto-hide the notice after 4 seconds.
+					setTimeout(function () { $result.html(''); }, 4000);
+				}
+			).fail(function () {
+				$btn.prop('disabled', false).text(tahcdData.runNow || 'Run Now');
+				$result.html('<div class="pcd-notice pcd-notice--error">' + (tahcdData.requestFailed || 'Request failed.') + '</div>');
+			});
+		});
+
 		// ── Clear debug.log ──────────────────────────────────────────────────
 		$('#pcd-clear-log').on('click', function () {
 			if ( ! window.confirm( tahcdData.confirmClear ) ) {

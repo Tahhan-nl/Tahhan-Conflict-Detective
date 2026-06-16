@@ -7,22 +7,22 @@
    ---------------------------------------------------------------- */
 
 :root {
-	/* Brand */
-	--pcd-blue:          #2563eb;
-	--pcd-blue-hover:    #1d4ed8;
+	/* Brand — aligned with WP admin colour palette */
+	--pcd-blue:          #2271b1;
+	--pcd-blue-hover:    #135e96;
 	--pcd-blue-light:    #eff6ff;
 	--pcd-blue-border:   #bfdbfe;
 
-	/* Status */
-	--pcd-green:         #16a34a;
+	/* Status — aligned with WP admin colour palette */
+	--pcd-green:         #00a32a;
 	--pcd-green-light:   #f0fdf4;
 	--pcd-green-border:  #bbf7d0;
 
-	--pcd-amber:         #d97706;
+	--pcd-amber:         #dba617;
 	--pcd-amber-light:   #fffbeb;
 	--pcd-amber-border:  #fde68a;
 
-	--pcd-red:           #dc2626;
+	--pcd-red:           #d63638;
 	--pcd-red-light:     #fef2f2;
 	--pcd-red-border:    #fecaca;
 
@@ -366,6 +366,9 @@
 	font-size: 13px;
 }
 
+.pcd-errors-table tbody tr:nth-child(even) td,
+.pcd-history-table tbody tr:nth-child(even) td { background: #f9f9f9; }
+
 .pcd-errors-table tr:hover td,
 .pcd-history-table tr:hover td { background: var(--pcd-bg); }
 
@@ -676,8 +679,8 @@
 	line-height: 1.7;
 }
 
-.pcd-btn-danger { border-color: var(--pcd-red) !important; color: var(--pcd-red) !important; }
-.pcd-btn-danger:hover { background: var(--pcd-red) !important; color: #fff !important; }
+.pcd-btn-danger { background: var(--pcd-red) !important; border-color: var(--pcd-red) !important; color: #fff !important; }
+.pcd-btn-danger:hover { background: #a00 !important; border-color: #a00 !important; color: #fff !important; }
 
 #pcd-scan-status:empty { display: none; }
 
@@ -1062,15 +1065,15 @@
 	color: var(--pcd-text-2);
 }
 .pcd-btn-stop {
-	background: var(--pcd-amber) !important;
-	border-color: var(--pcd-amber) !important;
+	background: var(--pcd-red) !important;
+	border-color: var(--pcd-red) !important;
 	color: #fff !important;
 	font-weight: 500;
 }
 .pcd-btn-stop:hover,
 .pcd-btn-stop:focus {
-	background: #b45309 !important;
-	border-color: #b45309 !important;
+	background: #a00 !important;
+	border-color: #a00 !important;
 	color: #fff !important;
 }
 
@@ -1107,4 +1110,380 @@
 .pcd-wrap .button-primary:focus {
 	background: var(--pcd-blue-hover) !important;
 	border-color: #1e40af !important;
+}
+
+/* ================================================================
+   Phase 3 — Responsive table wrappers
+   ================================================================ */
+
+/* Performance table: #tahcd-perf-table-wrap already exists as a div
+   so we can apply overflow-x there directly. */
+#tahcd-perf-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Cron and AJAX tables are rendered directly into .pcd-card -- use
+   a generated scroll wrapper via CSS so no PHP changes are needed. */
+@media screen and (max-width: 782px) {
+	#tahcd-perf-table-wrap,
+	.tahcd-cron-table,
+	.tahcd-ajax-log-table {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		display: block;
+		width: 100%;
+	}
+}
+
+/* ================================================================
+   Phase 3 — Performance Monitor
+   ================================================================ */
+
+.tahcd-perf-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	margin-top: 14px;
+}
+
+.tahcd-perf-table th {
+	padding: 8px 12px;
+	text-align: left;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: var(--pcd-text-2);
+	background: var(--pcd-bg);
+	border-bottom: 1px solid var(--pcd-border);
+}
+
+.tahcd-perf-table td {
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--pcd-border);
+	vertical-align: middle;
+}
+
+.tahcd-perf-table tbody tr:nth-child(even) td { background: #f9f9f9; }
+.tahcd-perf-table tr:hover td { background: var(--pcd-bg); }
+
+/* Color-coded rows */
+.tahcd-perf-row--fast  td { background: var(--pcd-green-light); }
+.tahcd-perf-row--slow  td { background: var(--pcd-amber-light); }
+.tahcd-perf-row--heavy td { background: var(--pcd-red-light); }
+
+.tahcd-perf-row--fast:hover  td { filter: brightness(0.97); }
+.tahcd-perf-row--slow:hover  td { filter: brightness(0.97); }
+.tahcd-perf-row--heavy:hover td { filter: brightness(0.97); }
+
+/* Status badges */
+.tahcd-perf-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: var(--pcd-r-sm);
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .03em;
+}
+
+.tahcd-perf-badge--fast  {
+	background: var(--pcd-green-light);
+	color: #14532d;
+	border: 1px solid var(--pcd-green-border);
+}
+.tahcd-perf-badge--slow  {
+	background: var(--pcd-amber-light);
+	color: #78350f;
+	border: 1px solid var(--pcd-amber-border);
+}
+.tahcd-perf-badge--heavy {
+	background: var(--pcd-red-light);
+	color: #7f1d1d;
+	border: 1px solid var(--pcd-red-border);
+}
+
+.tahcd-perf-plugin { font-weight: 500; max-width: 300px; }
+.tahcd-perf-time,
+.tahcd-perf-mem,
+.tahcd-perf-queries { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; }
+
+/* ================================================================
+   Phase 3 — Cron Monitor
+   ================================================================ */
+
+.tahcd-cron-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	margin-top: 14px;
+}
+
+.tahcd-cron-table th {
+	padding: 8px 12px;
+	text-align: left;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: var(--pcd-text-2);
+	background: var(--pcd-bg);
+	border-bottom: 1px solid var(--pcd-border);
+}
+
+.tahcd-cron-table td {
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--pcd-border);
+	vertical-align: middle;
+}
+
+.tahcd-cron-table tbody tr:nth-child(even) td { background: #f9f9f9; }
+.tahcd-cron-table tr:hover td { background: var(--pcd-bg); }
+
+.tahcd-cron-row--overdue td { background: var(--pcd-red-light); }
+.tahcd-cron-row--overdue:hover td { filter: brightness(0.97); }
+
+/* Overdue badge */
+.tahcd-cron-overdue {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: var(--pcd-r-sm);
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	background: var(--pcd-red);
+	color: #fff;
+}
+
+.tahcd-cron-hook {
+	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+	font-size: 12px;
+	max-width: 380px;
+	word-break: break-all;
+}
+
+#tahcd-cron-run-result { margin-bottom: 12px; }
+
+/* ================================================================
+   Phase 3 — AJAX / REST Monitor
+   ================================================================ */
+
+.tahcd-ajax-log-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	margin-top: 14px;
+}
+
+.tahcd-ajax-log-table th {
+	padding: 8px 12px;
+	text-align: left;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: var(--pcd-text-2);
+	background: var(--pcd-bg);
+	border-bottom: 1px solid var(--pcd-border);
+}
+
+.tahcd-ajax-log-table td {
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--pcd-border);
+	vertical-align: middle;
+}
+
+.tahcd-ajax-log-table tbody tr:nth-child(even) td { background: #f9f9f9; }
+.tahcd-ajax-log-table tr:hover td { background: var(--pcd-bg); }
+
+.tahcd-ajax-action {
+	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+	font-size: 12px;
+	max-width: 360px;
+	word-break: break-all;
+}
+
+.tahcd-ajax-duration {
+	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--pcd-red);
+}
+
+/* ================================================================
+   Phase 3 — Plugin Interaction Map
+   ================================================================ */
+
+.tahcd-interaction-tree {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+	margin-top: 6px;
+}
+
+.tahcd-tree-section__title {
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	color: var(--pcd-text) !important;
+	margin: 0 0 14px !important;
+	padding: 0 0 10px !important;
+	border-bottom: 1px solid var(--pcd-border) !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+}
+
+/* Ecosystem grid */
+.tahcd-ecosystem-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
+}
+
+.tahcd-ecosystem-cluster {
+	background: var(--pcd-surface);
+	border: 1px solid var(--pcd-border);
+	border-radius: var(--pcd-r-lg);
+	padding: 16px 18px;
+	box-shadow: var(--pcd-shadow);
+}
+
+.tahcd-cluster-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--pcd-border);
+}
+
+.tahcd-cluster-name {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--pcd-text);
+}
+
+/* Plugin nodes within a cluster */
+.tahcd-cluster-plugins {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tahcd-plugin-node {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 6px 0;
+	border-bottom: 1px solid var(--pcd-border);
+	font-size: 13px;
+}
+
+.tahcd-plugin-node:last-child { border-bottom: none; }
+
+.tahcd-plugin-node--inactive { opacity: 0.55; }
+
+.tahcd-plugin-node__name { flex: 1; font-weight: 500; min-width: 0; word-break: break-word; }
+.tahcd-plugin-node__ver  { font-size: 11px; color: var(--pcd-text-3); }
+
+/* Dependency sub-list */
+.tahcd-dep-list {
+	margin: 2px 0 4px 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.tahcd-dep-node {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: var(--pcd-text-2);
+	padding: 2px 0;
+	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+.tahcd-dep-node .dashicons {
+	font-size: 12px;
+	width: 12px;
+	height: 12px;
+	color: var(--pcd-text-3);
+}
+
+/* Standalone grid */
+.tahcd-standalone-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 10px;
+	margin-bottom: 12px;
+}
+
+.tahcd-standalone-card {
+	background: var(--pcd-surface);
+	border: 1px solid var(--pcd-border);
+	border-radius: var(--pcd-r);
+	padding: 12px 14px;
+	font-size: 13px;
+}
+
+.tahcd-standalone-card--inactive { opacity: 0.6; }
+
+.tahcd-standalone-card__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.tahcd-standalone-card__name {
+	flex: 1;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--pcd-text);
+	line-height: 1.4;
+	min-width: 0;
+	word-break: break-word;
+}
+
+.tahcd-dep-list--card { margin-top: 6px; margin-left: 0; }
+
+/* Inactive details/summary */
+.tahcd-inactive-wrap {
+	margin-top: 8px;
+}
+
+.tahcd-inactive-summary {
+	cursor: pointer;
+	font-size: 12px;
+	color: var(--pcd-blue);
+	font-weight: 500;
+	padding: 6px 0;
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	user-select: none;
+}
+
+.tahcd-inactive-summary::-webkit-details-marker { display: none; }
+.tahcd-inactive-summary::before {
+	content: '▶';
+	font-size: 10px;
+	transition: transform .15s;
+}
+details[open] .tahcd-inactive-summary::before { transform: rotate(90deg); }
+details[open] .tahcd-inactive-wrap .tahcd-standalone-grid { margin-top: 10px; }
+
+@media screen and (max-width: 900px) {
+	.tahcd-ecosystem-grid   { grid-template-columns: 1fr; }
+	.tahcd-standalone-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media screen and (max-width: 600px) {
+	.tahcd-standalone-grid  { grid-template-columns: 1fr; }
 }

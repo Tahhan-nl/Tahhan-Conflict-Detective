@@ -3,7 +3,7 @@
  * Plugin Name:       Tahhan Conflict Detective
  * Plugin URI:        https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
- * Version:           2.5.2
+ * Version:           2.6.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Tahhan
@@ -29,7 +29,7 @@ if ( defined( 'TAHCD_VERSION' ) ) {
 	return;
 }
 
-define( 'TAHCD_VERSION',     '2.5.2' );
+define( 'TAHCD_VERSION',     '2.6.0' );
 define( 'TAHCD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'TAHCD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'TAHCD_PLUGIN_FILE', __FILE__ );
@@ -64,6 +64,10 @@ require_once TAHCD_PLUGIN_DIR . 'includes/class-health-scan.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-conflict-scanner.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-safe-mode.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-wizard.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-performance.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-cron-monitor.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-ajax-monitor.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-interaction-map.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-dashboard.php';
 
 /**
@@ -106,9 +110,11 @@ final class Plugin {
 		register_activation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'install' ) );
 		register_deactivation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'on_deactivate' ) );
 
-		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Change_History', 'init' ) );
-		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Dashboard',      'register_ajax' ) );
-		add_action( 'admin_menu',     array( 'TahhanConflictDetective\Dashboard',      'register_menu' ) );
+		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Change_History',  'init' ) );
+		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Ajax_Monitor',    'init' ) );
+		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Cron_Monitor',    'register_ajax' ) );
+		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Dashboard',       'register_ajax' ) );
+		add_action( 'admin_menu',     array( 'TahhanConflictDetective\Dashboard',       'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( 'TahhanConflictDetective\Dashboard', 'enqueue_assets' ) );
 	}
 }
@@ -116,6 +122,10 @@ final class Plugin {
 // Safe Mode MUST init before plugins_loaded fires so its pre_option filter
 // and AJAX handlers are registered immediately when the plugin file loads.
 Safe_Mode::init();
+
+// Performance Monitor MUST init before plugins_loaded so its `plugin_loaded`
+// hook fires for the remaining plugins that load after us.
+Performance::init();
 
 // Schema migration: register at priority 0 from the top-level so it fires
 // BEFORE Plugin::instance() at priority 5.

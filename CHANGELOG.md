@@ -11,6 +11,27 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.0] — 2026-06-16
+
+### Added
+- **Performance Monitor** — tracks per-plugin estimated load time, memory delta, and DB query count during the current page load; results color-coded Fast / Slow / Heavy; Refresh Data button; 5-minute transient cache.
+- **Cron Monitor** — lists all scheduled WP-Cron events with next run time and overdue detection (red highlight); manual "Run Now" button validated against live `_get_cron_array()` schedule before execution; overdue summary badge at top.
+- **AJAX / REST Monitor** — logs slow AJAX and REST API calls (>500 ms) to new `{prefix}cd_ajax_log` table; filter bar for All / AJAX / REST / Slow views; auto-trims to 500 entries.
+- **Plugin Interaction Map** — groups installed plugins into known ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, Contact Form 7, WPML, LearnDash, Divi, WP Rocket, and more); reads `Requires Plugins` header (WP 6.5+) for explicit dependencies; standalone plugins listed separately.
+- New database table `{prefix}cd_ajax_log`; schema version bumped to 3.
+- Professional banner redesign: two-tone gradient, mini UI card preview, feature pills, bullet points.
+
+### Changed
+- `readme.txt`: `Tested up to` corrected to 6.7 (was incorrectly set to 7.0 in earlier beta).
+
+### Security
+- Cron "Run Now" AJAX handler validates hook against live WP-Cron schedule before execution — prevents arbitrary action dispatch.
+- AJAX monitor REST timing reads from `$_SERVER` directly (was using non-standard `$GLOBALS['_SERVER']`).
+- AJAX log `get_entries()` selects only required columns (no `SELECT *`).
+- All four new `render()` methods guarded by `current_user_can('manage_options')`.
+
+---
+
 ## [2.5.2] — 2026-06-11
 
 ### Fixed
@@ -175,7 +196,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.2...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.2...v2.6.0
 [2.5.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.4.0...v2.5.0
