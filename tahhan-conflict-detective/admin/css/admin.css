@@ -7,22 +7,22 @@
    ---------------------------------------------------------------- */
 
 :root {
-	/* Brand */
-	--pcd-blue:          #2563eb;
-	--pcd-blue-hover:    #1d4ed8;
+	/* Brand — aligned with WP admin colour palette */
+	--pcd-blue:          #2271b1;
+	--pcd-blue-hover:    #135e96;
 	--pcd-blue-light:    #eff6ff;
 	--pcd-blue-border:   #bfdbfe;
 
-	/* Status */
-	--pcd-green:         #16a34a;
+	/* Status — aligned with WP admin colour palette */
+	--pcd-green:         #00a32a;
 	--pcd-green-light:   #f0fdf4;
 	--pcd-green-border:  #bbf7d0;
 
-	--pcd-amber:         #d97706;
+	--pcd-amber:         #dba617;
 	--pcd-amber-light:   #fffbeb;
 	--pcd-amber-border:  #fde68a;
 
-	--pcd-red:           #dc2626;
+	--pcd-red:           #d63638;
 	--pcd-red-light:     #fef2f2;
 	--pcd-red-border:    #fecaca;
 
@@ -366,6 +366,9 @@
 	font-size: 13px;
 }
 
+.pcd-errors-table tbody tr:nth-child(even) td,
+.pcd-history-table tbody tr:nth-child(even) td { background: #f9f9f9; }
+
 .pcd-errors-table tr:hover td,
 .pcd-history-table tr:hover td { background: var(--pcd-bg); }
 
@@ -676,8 +679,8 @@
 	line-height: 1.7;
 }
 
-.pcd-btn-danger { border-color: var(--pcd-red) !important; color: var(--pcd-red) !important; }
-.pcd-btn-danger:hover { background: var(--pcd-red) !important; color: #fff !important; }
+.pcd-btn-danger { background: var(--pcd-red) !important; border-color: var(--pcd-red) !important; color: #fff !important; }
+.pcd-btn-danger:hover { background: #a00 !important; border-color: #a00 !important; color: #fff !important; }
 
 #pcd-scan-status:empty { display: none; }
 
@@ -1062,15 +1065,15 @@
 	color: var(--pcd-text-2);
 }
 .pcd-btn-stop {
-	background: var(--pcd-amber) !important;
-	border-color: var(--pcd-amber) !important;
+	background: var(--pcd-red) !important;
+	border-color: var(--pcd-red) !important;
 	color: #fff !important;
 	font-weight: 500;
 }
 .pcd-btn-stop:hover,
 .pcd-btn-stop:focus {
-	background: #b45309 !important;
-	border-color: #b45309 !important;
+	background: #a00 !important;
+	border-color: #a00 !important;
 	color: #fff !important;
 }
 
@@ -1138,6 +1141,7 @@
 	vertical-align: middle;
 }
 
+.tahcd-perf-table tbody tr:nth-child(even) td { background: #f9f9f9; }
 .tahcd-perf-table tr:hover td { background: var(--pcd-bg); }
 
 /* Color-coded rows */
@@ -1210,6 +1214,7 @@
 	vertical-align: middle;
 }
 
+.tahcd-cron-table tbody tr:nth-child(even) td { background: #f9f9f9; }
 .tahcd-cron-table tr:hover td { background: var(--pcd-bg); }
 
 .tahcd-cron-row--overdue td { background: var(--pcd-red-light); }
@@ -1266,6 +1271,7 @@
 	vertical-align: middle;
 }
 
+.tahcd-ajax-log-table tbody tr:nth-child(even) td { background: #f9f9f9; }
 .tahcd-ajax-log-table tr:hover td { background: var(--pcd-bg); }
 
 .tahcd-ajax-action {

@@ -147,6 +147,13 @@ final class Cron_Monitor {
 			wp_send_json_error( array( 'message' => __( 'No hook specified.', 'tahhan-conflict-detective' ) ) );
 		}
 
+		// Validate the hook exists in the WP-Cron schedule to prevent arbitrary
+		// hook execution via AJAX.
+		$valid_hooks = array_column( self::get_events(), 'hook' );
+		if ( ! in_array( $hook, $valid_hooks, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown cron hook.', 'tahhan-conflict-detective' ) ), 400 );
+		}
+
 		$elapsed = self::run_event( $hook );
 
 		wp_send_json_success( array(
@@ -181,6 +188,24 @@ final class Cron_Monitor {
 		echo '<p class="pcd-scanner-intro">'
 			. esc_html__( 'Lists all scheduled WordPress cron events. Overdue events (next run more than 5 minutes in the past) are highlighted in red. You can manually trigger any event using the "Run Now" button.', 'tahhan-conflict-detective' )
 			. '</p>';
+
+		// Overdue count summary badge.
+		$overdue_count = count( array_filter( $events, static function ( $e ) { return (bool) $e['overdue']; } ) );
+		if ( $overdue_count > 0 ) {
+			printf(
+				'<div class="pcd-notice pcd-notice--error" style="margin-bottom:16px;">%s</div>',
+				esc_html( sprintf(
+					/* translators: %d: number of overdue cron events */
+					_n(
+						'%d overdue cron event detected.',
+						'%d overdue cron events detected.',
+						$overdue_count,
+						'tahhan-conflict-detective'
+					),
+					$overdue_count
+				) )
+			);
+		}
 
 		if ( empty( $events ) ) {
 			echo '<p class="pcd-empty">' . esc_html__( 'No scheduled cron events found.', 'tahhan-conflict-detective' ) . '</p>';

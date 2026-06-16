@@ -147,8 +147,8 @@ final class Ajax_Monitor {
 		// Fall back to REQUEST_TIME_FLOAT if the server property is unavailable.
 		$start = null;
 
-		if ( isset( $GLOBALS['_SERVER']['REQUEST_TIME_FLOAT'] ) ) {
-			$start = (float) $GLOBALS['_SERVER']['REQUEST_TIME_FLOAT'];
+		if ( isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ) {
+			$start = (float) $_SERVER['REQUEST_TIME_FLOAT']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- float cast is safe
 		} elseif ( defined( 'WP_START_TIMESTAMP' ) ) {
 			$start = (float) WP_START_TIMESTAMP;
 		}
@@ -266,7 +266,7 @@ final class Ajax_Monitor {
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a controlled constant; $where is prepared above
-				"SELECT * FROM `{$table}` {$where} ORDER BY id DESC LIMIT %d",
+				"SELECT id, type, action, duration_ms, status_code, user_id, created_at FROM `{$table}` {$where} ORDER BY id DESC LIMIT %d",
 				$limit
 			)
 		);
@@ -306,10 +306,10 @@ final class Ajax_Monitor {
 		$base_url = add_query_arg( array( 'page' => Dashboard::PAGE_SLUG, 'tab' => 'ajax-monitor' ), admin_url( 'admin.php' ) );
 
 		$filters = array(
-			'all'  => __( 'All',  'tahhan-conflict-detective' ),
-			'ajax' => __( 'AJAX', 'tahhan-conflict-detective' ),
-			'rest' => __( 'REST', 'tahhan-conflict-detective' ),
-			'slow' => __( 'Slow', 'tahhan-conflict-detective' ),
+			'all'  => __( 'All',        'tahhan-conflict-detective' ),
+			'ajax' => __( 'AJAX',       'tahhan-conflict-detective' ),
+			'rest' => __( 'REST',       'tahhan-conflict-detective' ),
+			'slow' => __( 'Slow (>500ms)', 'tahhan-conflict-detective' ),
 		);
 
 		echo '<div class="pcd-filter-bar" role="toolbar">';
@@ -334,12 +334,12 @@ final class Ajax_Monitor {
 		echo '<table class="tahcd-ajax-log-table">';
 		echo '<thead><tr>';
 		foreach ( array(
-			__( 'Type',         'tahhan-conflict-detective' ),
+			__( 'Time',          'tahhan-conflict-detective' ),
+			__( 'Type',          'tahhan-conflict-detective' ),
 			__( 'Action / Route', 'tahhan-conflict-detective' ),
 			__( 'Duration (ms)', 'tahhan-conflict-detective' ),
-			__( 'Status',       'tahhan-conflict-detective' ),
-			__( 'User',         'tahhan-conflict-detective' ),
-			__( 'Date',         'tahhan-conflict-detective' ),
+			__( 'Status Code',   'tahhan-conflict-detective' ),
+			__( 'User',          'tahhan-conflict-detective' ),
 		) as $heading ) {
 			echo '<th>' . esc_html( $heading ) . '</th>';
 		}
@@ -353,20 +353,20 @@ final class Ajax_Monitor {
 
 			printf(
 				'<tr>
+					<td class="pcd-time">%s</td>
 					<td><span class="pcd-badge %s">%s</span></td>
 					<td class="tahcd-ajax-action">%s</td>
 					<td class="tahcd-ajax-duration">%s</td>
 					<td>%s</td>
 					<td>%s</td>
-					<td class="pcd-time">%s</td>
 				</tr>',
+				esc_html( date_i18n( 'd-m-Y H:i:s', strtotime( (string) $entry->created_at ) ) ),
 				esc_attr( $badge_class ),
 				$type,
 				esc_html( (string) $entry->action ),
 				esc_html( number_format( (float) $entry->duration_ms ) ),
 				esc_html( (string) $entry->status_code ),
-				esc_html( $user_name ),
-				esc_html( date_i18n( 'd-m-Y H:i:s', strtotime( (string) $entry->created_at ) ) )
+				esc_html( $user_name )
 			);
 		}
 

@@ -2,7 +2,7 @@
 Contributors: mustafatahhan
 Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
-Tested up to: 7.0
+Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 2.6.0-beta.1
 License: GPL-2.0-or-later
@@ -85,6 +85,17 @@ The plugin monitors the current site only. It is not a network-wide tool in this
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.6.0-beta.1 =
+* New: Performance Monitor tab — tracks per-plugin load time, memory delta, and DB query count during page load; color-coded Fast / Slow / Heavy badges; Refresh Data button.
+* New: Cron Monitor tab — lists all scheduled WP-Cron events with next run time and overdue detection; "Run Now" button per event; overdue count summary badge at top.
+* New: AJAX / REST Monitor tab — logs slow AJAX and REST API calls (>500 ms) to a dedicated DB table; filter bar for All / AJAX / REST / Slow views.
+* New: Plugin Interaction Map tab — visualises plugin dependency clusters (WooCommerce, Elementor, Yoast, Jetpack, ACF, etc.) and standalone plugins with active/inactive state.
+* Security: cron "Run Now" AJAX handler now validates the hook against the live WP-Cron schedule before execution.
+* Security: AJAX monitor REST timing now reads from `$_SERVER` directly (was using non-standard `$GLOBALS['_SERVER']`).
+* Security: AJAX log `get_entries()` now selects only required columns instead of `SELECT *`.
+* Fix: `Tested up to` corrected to 6.7 (was incorrectly set to 7.0).
+* DB: new `{prefix}cd_ajax_log` table (schema version 3).
 
 = 2.5.1 =
 * Fixed: uninstall routine now correctly deletes `tahcd_prev_version_*` options (was using the stale `pcd_prev_version_` prefix, leaving orphaned rows in wp_options).
