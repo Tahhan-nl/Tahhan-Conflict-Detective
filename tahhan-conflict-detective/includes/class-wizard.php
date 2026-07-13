@@ -27,16 +27,34 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Wizard {
 
-	/** Supported symptom slugs and their labels. */
+	/** Supported symptom slugs (keys only — labels are returned by symptoms() for i18n). */
 	const SYMPTOMS = array(
-		'white-screen'   => 'White screen / blank page',
-		'login-issue'    => 'Cannot log in to WordPress',
-		'woocommerce'    => 'WooCommerce not working',
-		'slow-site'      => 'Site is very slow',
-		'admin-broken'   => 'WordPress admin is broken',
-		'frontend-error' => 'Errors showing on the front end',
-		'other'          => 'Something else',
+		'white-screen',
+		'login-issue',
+		'woocommerce',
+		'slow-site',
+		'admin-broken',
+		'frontend-error',
+		'other',
 	);
+
+	/**
+	 * Returns the translated symptom label map.
+	 * Using a method instead of a constant so strings pass through __().
+	 *
+	 * @return array<string,string>
+	 */
+	private static function symptoms(): array {
+		return array(
+			'white-screen'   => __( 'White screen / blank page',      'tahhan-conflict-detective' ),
+			'login-issue'    => __( 'Cannot log in to WordPress',      'tahhan-conflict-detective' ),
+			'woocommerce'    => __( 'WooCommerce not working',         'tahhan-conflict-detective' ),
+			'slow-site'      => __( 'Site is very slow',               'tahhan-conflict-detective' ),
+			'admin-broken'   => __( 'WordPress admin is broken',       'tahhan-conflict-detective' ),
+			'frontend-error' => __( 'Errors showing on the front end', 'tahhan-conflict-detective' ),
+			'other'          => __( 'Something else',                  'tahhan-conflict-detective' ),
+		);
+	}
 
 	// -------------------------------------------------------------------------
 	// Render entry point
@@ -54,7 +72,7 @@ final class Wizard {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$symptom = isset( $_GET['symptom'] ) ? sanitize_key( $_GET['symptom'] ) : '';
 
-		if ( ! array_key_exists( $symptom, self::SYMPTOMS ) ) {
+		if ( ! array_key_exists( $symptom, self::symptoms() ) ) {
 			$symptom = '';
 		}
 
@@ -98,7 +116,7 @@ final class Wizard {
 			'other'          => 'dashicons-editor-help',
 		);
 
-		foreach ( self::SYMPTOMS as $slug => $label ) {
+		foreach ( self::symptoms() as $slug => $label ) {
 			$url = add_query_arg( array(
 				'page'        => Dashboard::PAGE_SLUG,
 				'tab'         => 'wizard',
@@ -125,7 +143,7 @@ final class Wizard {
 		printf(
 			'<h2 class="pcd-wizard__heading">%s: <em>%s</em></h2>',
 			esc_html__( 'Analysing', 'tahhan-conflict-detective' ),
-			esc_html( self::SYMPTOMS[ $symptom ] ?? $symptom )
+			esc_html( self::symptoms()[ $symptom ] ?? $symptom )
 		);
 
 		$suspects = Conflict_Scanner::analyse( 5 );

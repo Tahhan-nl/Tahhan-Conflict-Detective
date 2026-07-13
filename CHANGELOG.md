@@ -11,6 +11,26 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.2] — 2026-06-16
+
+### Security
+- `Safe_Mode::ajax_toggle_plugin()` — input now sanitized with `plugin_basename()` instead of `sanitize_text_field()`, preventing path traversal attempts before the `get_plugins()` whitelist check.
+- `Ajax_Monitor` — AJAX action name now read from `$_POST` instead of `$_REQUEST`, preventing a crafted cookie named `action` from affecting log entries.
+- All early-exit `wp_send_json_error()` calls in `Safe_Mode` AJAX handlers now followed by explicit `return` statements.
+
+### Fixed
+- `Dashboard::enqueue_assets()` — `filemtime()` calls for CSS/JS assets wrapped in `file_exists()` guard; falls back to `TAHCD_VERSION` to prevent PHP warnings on incomplete deployments.
+- `Dashboard` Change History table — DB result properties accessed via null-coalescing (`?? ''`) to prevent PHP notices on corrupt or mid-migration rows.
+- `Error_Log::get_plugin_for_file()` — replaced stateful `strtok()` with stateless `explode()` to prevent token state leaking into other callers.
+- `Health_Scan::run()` — issue-count map callback now guards against non-array scan section returns (`is_array()` check).
+
+### Changed
+- `Wizard` — symptom labels moved from a class constant to a `symptoms()` static method so all seven user-visible strings pass through `__()` and are translatable.
+- `Dashboard` Error Log Viewer — `'Plugin:'` label is now translatable via `esc_html__()`.
+- `Ajax_Monitor::trim_table()` — added `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` phpcs:ignore with justification comment (`$table` is a controlled constant).
+
+---
+
 ## [2.6.1] — 2026-06-16
 
 ### Changed
@@ -206,7 +226,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.1...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.2...HEAD
+[2.6.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.1...v2.6.2
 [2.6.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.2...v2.6.0
 [2.5.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.1...v2.5.2

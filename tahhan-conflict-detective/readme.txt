@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.1
+Stable tag: 2.6.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,17 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.6.2 =
+* Security: plugin path in Safe Mode now validated with `plugin_basename()` to prevent path traversal.
+* Security: AJAX monitor now reads from `$_POST` instead of `$_REQUEST`.
+* Fix: all early-exit AJAX error responses now include `return` for clarity.
+* Fix: `filemtime()` calls for CSS/JS assets now guarded with `file_exists()`.
+* Fix: Change History table uses null-coalescing guards on DB result properties.
+* Fix: `strtok()` replaced with stateless `explode()` in Error Log file attribution.
+* Fix: Health Scan issue count now guards against non-array scan section returns.
+* Code: Wizard symptom labels moved to a `symptoms()` method so they are translatable.
+* Code: Hardcoded "Plugin:" label in Error Log Viewer is now translatable.
 
 = 2.6.1 =
 * Updated: Tested up to WordPress 7.0.

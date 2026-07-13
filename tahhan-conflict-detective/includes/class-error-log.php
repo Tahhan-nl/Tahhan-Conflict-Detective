@@ -247,7 +247,9 @@ final class Error_Log {
 		}
 
 		$relative = substr( $file, strlen( $plugins_dir ) + 1 );
-		$slug     = strtok( $relative, '/' );
+		// Use explode() instead of strtok() — strtok() is stateful and can
+		// interfere with other callers if the token sequence is not exhausted.
+		$slug     = explode( '/', $relative )[0];
 
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';

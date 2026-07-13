@@ -152,18 +152,21 @@ final class Dashboard {
 			return;
 		}
 
+		$css_file = TAHCD_PLUGIN_DIR . 'admin/css/admin.css';
+		$js_file  = TAHCD_PLUGIN_DIR . 'admin/js/admin.js';
+
 		wp_enqueue_style(
 			'tahcd-admin',
 			TAHCD_PLUGIN_URL . 'admin/css/admin.css',
 			array(),
-			(string) filemtime( TAHCD_PLUGIN_DIR . 'admin/css/admin.css' )
+			file_exists( $css_file ) ? (string) filemtime( $css_file ) : TAHCD_VERSION
 		);
 
 		wp_enqueue_script(
 			'tahcd-admin',
 			TAHCD_PLUGIN_URL . 'admin/js/admin.js',
 			array( 'jquery' ),
-			(string) filemtime( TAHCD_PLUGIN_DIR . 'admin/js/admin.js' ),
+			file_exists( $js_file ) ? (string) filemtime( $js_file ) : TAHCD_VERSION,
 			true
 		);
 
@@ -492,7 +495,7 @@ final class Dashboard {
 					esc_attr( $entry['type'] ),
 					esc_html( strtoupper( $entry['type'] ) ),
 					esc_html( wp_trim_words( $entry['message'], 15 ) ),
-					$entry['plugin_name'] ? '<div class="pcd-error__plugin">Plugin: ' . esc_html( $entry['plugin_name'] ) . '</div>' : ''
+					$entry['plugin_name'] ? '<div class="pcd-error__plugin">' . esc_html__( 'Plugin:', 'tahhan-conflict-detective' ) . ' ' . esc_html( $entry['plugin_name'] ) . '</div>' : ''
 				);
 			}
 			echo '</ul>';
@@ -866,9 +869,13 @@ final class Dashboard {
 		echo '</tr></thead><tbody>';
 
 		foreach ( $changes as $change ) {
-			$version_cell = ( $change->action === 'updated' && $change->previous_version )
-				? esc_html( $change->previous_version ) . ' &rarr; ' . esc_html( $change->plugin_version )
-				: esc_html( $change->plugin_version );
+			$action           = isset( $change->action )           ? $change->action           : '';
+			$prev_version     = isset( $change->previous_version ) ? $change->previous_version : '';
+			$plugin_version   = isset( $change->plugin_version )   ? $change->plugin_version   : '';
+
+			$version_cell = ( 'updated' === $action && $prev_version )
+				? esc_html( $prev_version ) . ' &rarr; ' . esc_html( $plugin_version )
+				: esc_html( $plugin_version );
 
 			printf(
 				'<tr>
@@ -877,10 +884,10 @@ final class Dashboard {
 					<td><span class="pcd-badge pcd-badge--action-%s">%s</span></td>
 					<td>%s</td>
 				</tr>',
-				esc_html( date_i18n( 'd-m-Y H:i:s', strtotime( $change->changed_at ) ) ),
-				esc_html( $change->plugin_name ),
-				esc_attr( $change->action ),
-				esc_html( self::action_label( $change->action ) ),
+				esc_html( date_i18n( 'd-m-Y H:i:s', strtotime( isset( $change->changed_at ) ? $change->changed_at : '' ) ) ),
+				esc_html( isset( $change->plugin_name ) ? $change->plugin_name : '' ),
+				esc_attr( $action ),
+				esc_html( self::action_label( $action ) ),
 				wp_kses_post( $version_cell )
 			);
 		}

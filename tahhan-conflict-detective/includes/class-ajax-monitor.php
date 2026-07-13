@@ -93,8 +93,10 @@ final class Ajax_Monitor {
 			return;
 		}
 
-		$action = isset( $_REQUEST['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only monitoring
-			? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) )
+		// Use $_POST (not $_REQUEST) so a crafted cookie named 'action' cannot
+		// affect what gets logged. AJAX requests always send action via POST.
+		$action = isset( $_POST['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only monitoring, no state change
+			? sanitize_text_field( wp_unslash( $_POST['action'] ) )
 			: substr( $current, strlen( 'wp_ajax_' ) );
 
 		self::$ajax_start  = microtime( true );
@@ -228,7 +230,7 @@ final class Ajax_Monitor {
 
 		$table = $wpdb->prefix . self::TABLE_SUFFIX;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- maintenance trim, no cache needed
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a controlled constant (prefix + TABLE_SUFFIX), not user input; maintenance trim does not need caching.
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM `{$table}` WHERE id NOT IN (

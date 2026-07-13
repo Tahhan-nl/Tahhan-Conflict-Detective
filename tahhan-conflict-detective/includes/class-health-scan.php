@@ -86,7 +86,7 @@ final class Health_Scan {
 		);
 
 		$issue_count = array_sum( array_map(
-			static fn( $section ) => count( $section['issues'] ?? array() ),
+			static fn( $section ) => is_array( $section ) ? count( $section['issues'] ?? array() ) : 0,
 			$results
 		) );
 

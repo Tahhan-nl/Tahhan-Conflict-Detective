@@ -225,15 +225,23 @@ final class Safe_Mode {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+			return;
 		}
 
 		if ( ! self::is_active() ) {
 			wp_send_json_error( array( 'message' => __( 'Safe Mode is not active.', 'tahhan-conflict-detective' ) ) );
+			return;
 		}
 
-		$plugin_file = isset( $_POST['plugin'] ) ? sanitize_text_field( wp_unslash( $_POST['plugin'] ) ) : '';
+		// plugin_basename() normalises separators and removes traversal sequences.
+		// The get_plugins() whitelist check below is the definitive security gate.
+		$plugin_file = isset( $_POST['plugin'] )
+			? plugin_basename( sanitize_text_field( wp_unslash( $_POST['plugin'] ) ) )
+			: '';
+
 		if ( empty( $plugin_file ) ) {
 			wp_send_json_error( array( 'message' => 'Invalid plugin.' ) );
+			return;
 		}
 
 		// Validate the supplied slug against the actual list of installed plugins
@@ -243,6 +251,7 @@ final class Safe_Mode {
 		}
 		if ( ! array_key_exists( $plugin_file, get_plugins() ) ) {
 			wp_send_json_error( array( 'message' => 'Unknown plugin.' ) );
+			return;
 		}
 
 		$now_disabled = self::toggle_plugin( $plugin_file );
@@ -276,6 +285,7 @@ final class Safe_Mode {
 			)
 		);
 		// Also set in the superglobal so is_active() works in the same request.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- intentional direct write; token is our own freshly-generated hex value, not user input.
 		$_COOKIE[ self::COOKIE_NAME ] = $token;
 	}
 

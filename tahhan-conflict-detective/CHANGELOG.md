@@ -5,6 +5,25 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.6.2] — 2026-06-16
+
+### Security
+- Safe Mode plugin path now validated with `plugin_basename()` (was `sanitize_text_field()`) — prevents path traversal before the `get_plugins()` whitelist check.
+- AJAX monitor reads action from `$_POST` instead of `$_REQUEST` — prevents a crafted cookie from affecting log entries.
+- All early-exit AJAX error responses now include explicit `return` statements.
+
+### Fixed
+- `filemtime()` for CSS/JS assets wrapped in `file_exists()` guard.
+- Change History DB row properties use null-coalescing to prevent PHP notices.
+- `strtok()` replaced with stateless `explode()` in Error Log file attribution.
+- Health Scan issue count guards against non-array scan section returns.
+
+### Changed
+- Wizard symptom labels are now translatable (moved to `symptoms()` method).
+- "Plugin:" label in Error Log Viewer is now translatable.
+
+---
+
 ## [2.6.1] — 2026-06-16
 
 ### Changed
