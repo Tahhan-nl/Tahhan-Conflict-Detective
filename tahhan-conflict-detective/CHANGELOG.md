@@ -5,6 +5,32 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.6.3] — 2026-08-03
+
+### Fixed
+- `Health_Scan::scan_plugins()` — `get_site_transient('update_plugins')` return value now guarded with `is_object()` before property access, preventing a PHP 8.x warning when the transient is not yet populated.
+- `Dashboard::ajax_clear_log()` — `WP_Filesystem()` return value checked before calling `put_contents()`; returns a JSON error on FTP/SSH filesystem environments instead of a fatal error.
+- `Ajax_Monitor::insert_log()` — `created_at` now stored as UTC via `current_time('mysql', true)`; was using local WordPress time, causing time-correlation errors on non-UTC sites.
+- `Safe_Mode::verify_token()` — result cached with a static variable to prevent a duplicate DB query when both `maybe_filter_active_plugins()` and `is_active()` run in the same request.
+- `Change_History::on_delete()` — now reads plugin name and version before deletion (`delete_plugin` fires before files are removed); was incorrectly falling back to `basename()` with a wrong comment.
+- `Change_History::read_plugin_data()` — path is validated via `realpath()` to ensure it remains within `WP_PLUGIN_DIR`; prevents path-traversal on plugins with unusual relative paths.
+- `Error_Log::attribute_to_plugin()` — `get_plugins()` call cached with a static variable; eliminates N+1 calls when the method is invoked once per log entry.
+- `Conflict_Scanner::score_plugin()` — `strtotime()` return value validated; an invalid timestamp now returns zero confidence instead of polluting the score with epoch-based arithmetic.
+- `Conflict_Scanner::build_reason()` — `strtotime()` call guarded with `?: 0` fallback.
+- `Ajax_Monitor::on_ajax_shutdown()` — `$ajax_start` reset to `null` after logging to prevent a duplicate entry if the shutdown function fires more than once.
+- `Database::maybe_upgrade()` — `SHOW TABLES` existence check cached with a 1-hour transient, eliminating a raw DB query on every page load during normal operation.
+- `uninstall.php` — multisite installations now iterate all sub-sites via `switch_to_blog()` / `restore_current_blog()` so tables on sub-sites are also removed on plugin delete.
+- `Cron_Monitor::get_events()` — `$schedules[$key]['display']` access guarded with `isset()` to handle custom schedules that omit the `display` key.
+- `Interaction_Map::slug_from_basename()` — `str_replace('.php', …)` replaced with a trailing-extension-only removal to handle plugin filenames that contain `.php` mid-name.
+- `Wizard::render_step2()` — `usort` comparator now uses `<=>` spaceship operator instead of integer subtraction, preventing overflow on 32-bit PHP.
+
+### Security
+- `Wizard::get_advice()` — plugin name interpolated into HTML advice string now escaped with `esc_html()` before `sprintf()`.
+- All AJAX handlers — hard-coded `'Forbidden'`, `'Invalid plugin.'`, `'Unknown plugin.'` error strings now passed through `__()` for consistency and translatability.
+- All AJAX capability-check guards — explicit `return` added after `wp_send_json_error()` for code-flow clarity.
+
+---
+
 ## [2.6.2] — 2026-06-16
 
 ### Security

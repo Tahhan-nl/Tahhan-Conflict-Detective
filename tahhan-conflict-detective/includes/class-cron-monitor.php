@@ -74,7 +74,7 @@ final class Cron_Monitor {
 					$interval     = isset( $event['interval'] ) ? (int) $event['interval'] : 0;
 
 					// Resolve a readable label.
-					if ( $schedule_key && isset( $schedules[ $schedule_key ] ) ) {
+					if ( $schedule_key && isset( $schedules[ $schedule_key ]['display'] ) ) {
 						$schedule_label = $schedules[ $schedule_key ]['display'];
 					} elseif ( $schedule_key ) {
 						$schedule_label = $schedule_key;
@@ -138,13 +138,15 @@ final class Cron_Monitor {
 		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Forbidden', 'tahhan-conflict-detective' ) ), 403 );
+			return;
 		}
 
 		$hook = isset( $_POST['hook'] ) ? sanitize_text_field( wp_unslash( $_POST['hook'] ) ) : '';
 
 		if ( '' === $hook ) {
 			wp_send_json_error( array( 'message' => __( 'No hook specified.', 'tahhan-conflict-detective' ) ) );
+			return;
 		}
 
 		// Validate the hook exists in the WP-Cron schedule to prevent arbitrary

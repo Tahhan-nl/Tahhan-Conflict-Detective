@@ -199,7 +199,7 @@ final class Wizard {
 					'time'  => $e['time'],
 				);
 			}
-			usort( $timeline, static function ( $a, $b ) { return $b['ts'] - $a['ts']; } );
+			usort( $timeline, static function ( $a, $b ) { return $b['ts'] <=> $a['ts']; } );
 
 			foreach ( array_slice( $timeline, 0, 10 ) as $event ) {
 				printf(
@@ -436,7 +436,7 @@ final class Wizard {
 			$advice[] = sprintf(
 				/* translators: plugin name */
 				__( '<strong>Start with "%s"</strong> — it has the highest confidence score. Use Safe Mode (next step) to disable it and check if the problem disappears.', 'tahhan-conflict-detective' ),
-				$top['plugin_name']
+				esc_html( $top['plugin_name'] )
 			);
 		}
 

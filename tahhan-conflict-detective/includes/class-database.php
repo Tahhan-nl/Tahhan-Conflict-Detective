@@ -127,6 +127,9 @@ final class Database {
 		}
 
 		update_option( self::OPTION_KEY, self::SCHEMA_VERSION );
+
+		// Bust the SHOW TABLES cache so maybe_upgrade() re-checks on next request.
+		delete_transient( 'tahcd_main_table_exists' );
 	}
 
 	/**
@@ -215,16 +218,23 @@ final class Database {
 		}
 
 		// Also install when the main table is physically missing.
-		// This handles FTP deployments where the activation hook never fires,
-		// or database restores that wiped the tables but kept wp_options intact.
-		// Uses esc_like() + prepare() to safely escape the table name in the LIKE clause.
-		$table  = $wpdb->prefix . 'cd_plugin_changes';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; no transient API equivalent.
-		$exists = $wpdb->get_var(
-			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
-		);
+		// Cache the SHOW TABLES result for 1 hour so it is not fired on every
+		// page load during normal operation (schema-current, tables present).
+		$cache_key = 'tahcd_main_table_exists';
+		$cached    = get_transient( $cache_key );
 
-		if ( null === $exists ) {
+		if ( false === $cached ) {
+			$table = $wpdb->prefix . 'cd_plugin_changes';
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; result is cached in a transient above.
+			$exists = $wpdb->get_var(
+				$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
+			);
+			$cached = null === $exists ? '0' : '1';
+			set_transient( $cache_key, $cached, HOUR_IN_SECONDS );
+		}
+
+		if ( '0' === $cached ) {
+			delete_transient( $cache_key );
 			self::install();
 		}
 	}

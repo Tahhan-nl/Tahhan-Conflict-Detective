@@ -211,7 +211,8 @@ final class Interaction_Map {
 		if ( strpos( $basename, '/' ) !== false ) {
 			return explode( '/', $basename )[0];
 		}
-		return str_replace( '.php', '', $basename );
+		// Remove only the trailing .php extension, not any mid-name .php occurrence.
+		return substr( $basename, -4 ) === '.php' ? substr( $basename, 0, -4 ) : $basename;
 	}
 
 	// -------------------------------------------------------------------------

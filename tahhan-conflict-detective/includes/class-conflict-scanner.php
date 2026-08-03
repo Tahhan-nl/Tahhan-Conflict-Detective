@@ -124,7 +124,19 @@ final class Conflict_Scanner {
 	 * @return array<string, mixed>
 	 */
 	private static function score_plugin( string $slug, object $change, array $errors ): array {
-		$change_ts     = strtotime( $change->changed_at );
+		$change_ts = strtotime( $change->changed_at );
+		if ( false === $change_ts || 0 === $change_ts ) {
+			return array(
+				'plugin_name'    => $change->plugin_name,
+				'plugin_slug'    => $slug,
+				'action'         => $change->action,
+				'changed_at'     => $change->changed_at,
+				'error_count'    => 0,
+				'first_error_at' => '',
+				'confidence'     => 0,
+				'reason'         => '',
+			);
+		}
 		$action_weight = self::ACTION_WEIGHTS[ $change->action ] ?? 0.5;
 
 		// Errors attributed to this plugin that occurred AFTER the change.
@@ -211,7 +223,7 @@ final class Conflict_Scanner {
 			__( '%1$s "%2$s" on %3$s.', 'tahhan-conflict-detective' ),
 			ucfirst( $change->action ),
 			$change->plugin_name,
-			date_i18n( 'd-m-Y H:i', strtotime( $change->changed_at ) )
+			date_i18n( 'd-m-Y H:i', strtotime( $change->changed_at ) ?: 0 )
 		);
 
 		$parts[] = sprintf(

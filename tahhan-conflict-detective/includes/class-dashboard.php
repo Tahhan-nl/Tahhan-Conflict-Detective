@@ -216,7 +216,8 @@ final class Dashboard {
 		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Forbidden', 'tahhan-conflict-detective' ) ), 403 );
+			return;
 		}
 
 		$results    = Health_Scan::run();
@@ -232,7 +233,8 @@ final class Dashboard {
 		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Forbidden', 'tahhan-conflict-detective' ) ), 403 );
+			return;
 		}
 
 		$log_file = WP_CONTENT_DIR . '/debug.log';
@@ -245,8 +247,11 @@ final class Dashboard {
 		if ( ! function_exists( 'WP_Filesystem' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
-		WP_Filesystem();
 		global $wp_filesystem;
+		if ( ! WP_Filesystem() || null === $wp_filesystem ) {
+			wp_send_json_error( array( 'message' => __( 'Could not initialise filesystem.', 'tahhan-conflict-detective' ) ) );
+			return;
+		}
 		if ( ! $wp_filesystem->put_contents( $log_file, '', FS_CHMOD_FILE ) ) {
 			wp_send_json_error( array( 'message' => __( 'Could not clear log file (permission denied).', 'tahhan-conflict-detective' ) ) );
 		}

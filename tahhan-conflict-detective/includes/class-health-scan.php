@@ -259,7 +259,9 @@ final class Health_Scan {
 		// ---- Outdated plugins (no update in > 2 years) -----------------------
 		$update_data = get_site_transient( 'update_plugins' );
 		foreach ( $active_plugins as $plugin_file ) {
-			$no_update = $update_data->no_update[ $plugin_file ] ?? null;
+			$no_update = ( is_object( $update_data ) && isset( $update_data->no_update[ $plugin_file ] ) )
+				? $update_data->no_update[ $plugin_file ]
+				: null;
 			if ( $no_update && ! empty( $no_update->last_updated ) ) {
 				if ( strtotime( $no_update->last_updated ) < strtotime( '-2 years' ) ) {
 					$name     = $all_plugins[ $plugin_file ]['Name'] ?? $plugin_file;

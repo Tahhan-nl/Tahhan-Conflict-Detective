@@ -255,7 +255,13 @@ final class Error_Log {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
-		foreach ( get_plugins() as $plugin_file => $plugin_data ) {
+		// Cache for the lifetime of this request — called once per log entry.
+		static $all_plugins = null;
+		if ( null === $all_plugins ) {
+			$all_plugins = get_plugins();
+		}
+
+		foreach ( $all_plugins as $plugin_file => $plugin_data ) {
 			if ( strpos( $plugin_file, $slug . '/' ) === 0 ) {
 				return array( 'slug' => $slug, 'name' => $plugin_data['Name'] );
 			}

@@ -11,6 +11,31 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.3] — 2026-08-03
+
+### Fixed
+- `Health_Scan::scan_plugins()` — `get_site_transient('update_plugins')` return value now guarded with `is_object()` before property access, preventing a PHP 8.x warning when the transient is not yet populated.
+- `Dashboard::ajax_clear_log()` — `WP_Filesystem()` return value checked before calling `put_contents()`; returns a JSON error on FTP/SSH filesystem environments instead of a fatal error.
+- `Ajax_Monitor::insert_log()` — `created_at` now stored as UTC (`current_time('mysql', true)`); was using local WordPress time, causing time-correlation errors on non-UTC sites.
+- `Safe_Mode::verify_token()` — result cached with a static variable; eliminates a duplicate DB query per request when Safe Mode is active.
+- `Change_History::on_delete()` — now reads plugin name and version before deletion (`delete_plugin` fires before files are removed).
+- `Change_History::read_plugin_data()` — path validated with `realpath()` to stay within `WP_PLUGIN_DIR`; path-traversal hardening.
+- `Error_Log::attribute_to_plugin()` — `get_plugins()` cached with a static variable; eliminates N+1 calls when attributing each log entry.
+- `Conflict_Scanner::score_plugin()` — `strtotime()` return value validated; invalid timestamps now return zero confidence.
+- `Ajax_Monitor::on_ajax_shutdown()` — `$ajax_start` reset after logging to prevent duplicate entries.
+- `Database::maybe_upgrade()` — `SHOW TABLES` existence check cached with a 1-hour transient; eliminates a raw DB query on every page load.
+- `uninstall.php` — multisite installations now iterate all sub-sites so tables on sub-sites are removed on plugin delete.
+- `Cron_Monitor::get_events()` — `$schedules[$key]['display']` access guarded with `isset()`.
+- `Interaction_Map::slug_from_basename()` — trailing-extension-only `.php` removal (no mid-name replacement).
+- `Wizard::render_step2()` — `usort` comparator uses `<=>` to prevent integer overflow on 32-bit PHP.
+
+### Security
+- `Wizard::get_advice()` — plugin name escaped with `esc_html()` before interpolation into HTML advice string.
+- All AJAX handlers — `'Forbidden'`, `'Invalid plugin.'`, `'Unknown plugin.'` error messages now translatable via `__()`.
+- All AJAX capability-check guards — explicit `return` added after `wp_send_json_error()` for clarity.
+
+---
+
 ## [2.6.2] — 2026-06-16
 
 ### Security
@@ -226,7 +251,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.2...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.3...HEAD
+[2.6.3]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.2...v2.6.3
 [2.6.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.1...v2.6.2
 [2.6.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.5.2...v2.6.0

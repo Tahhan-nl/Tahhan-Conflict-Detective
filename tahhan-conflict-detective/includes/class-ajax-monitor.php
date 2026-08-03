@@ -129,6 +129,9 @@ final class Ajax_Monitor {
 			'duration_ms' => $elapsed_ms,
 			'status_code' => 200,
 		) );
+
+		// Reset so a second shutdown call (unlikely but possible) is a no-op.
+		self::$ajax_start = null;
 	}
 
 	// -------------------------------------------------------------------------
@@ -212,7 +215,7 @@ final class Ajax_Monitor {
 				'duration_ms' => (int) ( $data['duration_ms'] ?? 0 ),
 				'status_code' => (int) ( $data['status_code'] ?? 200 ),
 				'user_id'     => (int) get_current_user_id(),
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%d', '%d', '%d', '%s' )
 		);

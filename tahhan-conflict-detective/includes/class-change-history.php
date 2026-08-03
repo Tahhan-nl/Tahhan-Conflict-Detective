@@ -97,9 +97,10 @@ final class Change_History {
 	 * @return void
 	 */
 	public static function on_delete( string $plugin ): void {
-		// Plugin files are already gone by the time this hook fires; fall back to slug.
-		$name = basename( dirname( $plugin ) );
-		self::write( $plugin, $name, 'deleted' );
+		// 'delete_plugin' fires BEFORE the files are removed, so we can still read
+		// the plugin header. Fall back to the directory basename if the file is gone.
+		$data = self::read_plugin_data( $plugin );
+		self::write( $plugin, $data['Name'], 'deleted', $data['Version'] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -135,13 +136,16 @@ final class Change_History {
 	 * @return array{Name: string, Version: string}
 	 */
 	private static function read_plugin_data( string $plugin_relative_path ): array {
-		$full_path = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $plugin_relative_path;
+		$full_path  = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $plugin_relative_path;
+		$real_path  = realpath( $full_path );
+		$plugin_dir = realpath( WP_PLUGIN_DIR );
 
-		if ( file_exists( $full_path ) ) {
+		// Guard against path-traversal: reject any path that escapes WP_PLUGIN_DIR.
+		if ( $real_path && $plugin_dir && 0 === strpos( $real_path, $plugin_dir . DIRECTORY_SEPARATOR ) ) {
 			if ( ! function_exists( 'get_plugin_data' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
-			$data = get_plugin_data( $full_path, false, false );
+			$data = get_plugin_data( $real_path, false, false );
 			return array(
 				'Name'    => $data['Name']    ?? $plugin_relative_path,
 				'Version' => $data['Version'] ?? '',

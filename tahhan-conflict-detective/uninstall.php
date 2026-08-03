@@ -13,4 +13,13 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 require_once __DIR__ . '/includes/class-database.php';
 
-TahhanConflictDetective\Database::drop_tables();
+if ( is_multisite() ) {
+	$blog_ids = get_sites( array( 'fields' => 'ids', 'number' => 0 ) );
+	foreach ( $blog_ids as $blog_id ) {
+		switch_to_blog( $blog_id );
+		TahhanConflictDetective\Database::drop_tables();
+		restore_current_blog();
+	}
+} else {
+	TahhanConflictDetective\Database::drop_tables();
+}

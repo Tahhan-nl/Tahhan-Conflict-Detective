@@ -254,7 +254,8 @@ final class Performance {
 		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Forbidden', 'tahhan-conflict-detective' ) ), 403 );
+			return;
 		}
 
 		$data = self::refresh();

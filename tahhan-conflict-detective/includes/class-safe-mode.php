@@ -208,7 +208,8 @@ final class Safe_Mode {
 		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Forbidden', 'tahhan-conflict-detective' ) ), 403 );
+			return;
 		}
 
 		if ( self::is_active() ) {
@@ -240,7 +241,7 @@ final class Safe_Mode {
 			: '';
 
 		if ( empty( $plugin_file ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid plugin.' ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid plugin.', 'tahhan-conflict-detective' ) ) );
 			return;
 		}
 
@@ -250,7 +251,7 @@ final class Safe_Mode {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 		if ( ! array_key_exists( $plugin_file, get_plugins() ) ) {
-			wp_send_json_error( array( 'message' => 'Unknown plugin.' ) );
+			wp_send_json_error( array( 'message' => __( 'Unknown plugin.', 'tahhan-conflict-detective' ) ) );
 			return;
 		}
 
@@ -313,6 +314,13 @@ final class Safe_Mode {
 			return 0;
 		}
 
+		// Static cache: verify_token() can be called more than once per request
+		// (maybe_filter_active_plugins + is_active). Avoid repeat DB queries.
+		static $cache = array();
+		if ( isset( $cache[ $token ] ) ) {
+			return $cache[ $token ];
+		}
+
 		// We need user meta lookup. get_users() is available at pre_option stage.
 		$users = get_users( array(
 			'meta_key'   => self::META_TOKEN,  // phpcs:ignore WordPress.DB.SlowDBQuery
@@ -321,10 +329,8 @@ final class Safe_Mode {
 			'fields'     => 'ID',
 		) );
 
-		if ( empty( $users ) ) {
-			return 0;
-		}
-
-		return (int) $users[0];
+		$result          = empty( $users ) ? 0 : (int) $users[0];
+		$cache[ $token ] = $result;
+		return $result;
 	}
 }

@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.2
+Stable tag: 2.6.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,25 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.6.3 =
+* Fix: `get_site_transient('update_plugins')` return value guarded with `is_object()` before property access — prevents PHP 8.x warning on fresh installs.
+* Fix: `WP_Filesystem()` return value checked before calling `put_contents()` — prevents fatal on FTP/SSH filesystem environments.
+* Fix: AJAX log timestamps stored as UTC (`current_time('mysql', true)`) instead of local WordPress time — fixes time-correlation bugs on non-UTC sites.
+* Fix: `verify_token()` result cached with a static variable — prevents a duplicate DB query per request when Safe Mode is active.
+* Fix: `on_delete` hook now correctly reads plugin data before deletion (fires on `delete_plugin`, not `deleted_plugin`).
+* Fix: `read_plugin_data()` validates path stays within `WP_PLUGIN_DIR` via `realpath()` — path-traversal hardening.
+* Fix: `get_plugins()` cached with a static variable in `attribute_to_plugin()` — eliminates N+1 calls when attributing log entries.
+* Fix: `strtotime()` return value validated in `score_plugin()` — avoids incorrect confidence scores from invalid timestamps.
+* Fix: `usort` comparator in Wizard timeline uses `<=>` instead of integer subtraction — prevents overflow on 32-bit PHP.
+* Fix: Plugin name in Wizard advice string escaped with `esc_html()` before interpolation.
+* Fix: `str_replace('.php', …)` in Interaction Map now only removes the trailing extension, not mid-name occurrences.
+* Fix: Missing `return` after `wp_send_json_error()` added to all AJAX capability-check guards.
+* Fix: Hard-coded 'Forbidden', 'Invalid plugin.', 'Unknown plugin.' strings now passed through `__()`.
+* Fix: Cron Monitor `display` key access guarded with `isset()`.
+* Fix: SHOW TABLES query in `maybe_upgrade()` cached with a 1-hour transient — eliminates a raw DB query on every page load.
+* Fix: Multisite uninstall now iterates all sub-sites via `switch_to_blog()` / `restore_current_blog()`.
+* Fix: `$ajax_start` static property reset to `null` after logging to prevent duplicate entries.
 
 = 2.6.2 =
 * Security: plugin path in Safe Mode now validated with `plugin_basename()` to prevent path traversal.
