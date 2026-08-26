@@ -11,6 +11,24 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.4] — 2026-08-26
+
+### Fixed
+- `Database::install()` — `cd_ajax_log.created_at` schema now includes `DEFAULT CURRENT_TIMESTAMP`; prevents INSERT failure under MySQL strict mode.
+- `Database::install()` — `cd_conflicts.changed_at` changed from `NOT NULL` to `DEFAULT NULL`; prevents strict-mode INSERT failure when the column is omitted.
+- `Database::drop_tables()` — now also deletes `tahcd_main_table_exists` transient on uninstall; no orphaned wp_options row.
+- `Database::tables_exist()` — now checks both `cd_plugin_changes` (schema v1) and `cd_ajax_log` (schema v3); a partial install was previously undetected.
+- `Health_Scan::run()` — `$wpdb->insert()` return value now checked; sets `db_error` flag in result on failure.
+- `Health_Scan::run()` — `scanned_at` in returned array now matches the UTC timestamp stored in the database (was returning local time while the DB held UTC).
+- `Health_Scan::scan_theme()` — `get_site_transient('update_themes')` guarded with `is_object()` before property access.
+- `Health_Scan::scan_server()` — `get_site_transient('update_core')` guarded with `is_object()` before property access.
+- `Change_History::get_recent()` — returns empty array on DB error instead of propagating `null`.
+- `Change_History::on_update()` — option key for previous-version tracking now uses `md5($plugin)` instead of `sanitize_key($plugin)`; `sanitize_key()` strips `/` and `.`, causing different plugin paths to collide on the same option key.
+- `Change_History::write()` — now returns `bool`; callers can detect DB insert failures.
+- `Change_History::on_update()` — version baseline (`update_option`) only advanced when the audit-log write succeeded.
+
+---
+
 ## [2.6.3] — 2026-08-03
 
 ### Fixed
@@ -251,7 +269,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.3...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.4...HEAD
+[2.6.4]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.3...v2.6.4
 [2.6.3]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.2...v2.6.3
 [2.6.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.1...v2.6.2
 [2.6.1]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.0...v2.6.1

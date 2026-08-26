@@ -95,7 +95,7 @@ final class Database {
 				plugin_slug   VARCHAR(255) NOT NULL,
 				plugin_name   VARCHAR(255) NOT NULL,
 				action        VARCHAR(50)  NOT NULL,
-				changed_at    DATETIME     NOT NULL,
+				changed_at    DATETIME              DEFAULT NULL,
 				error_count   INT(11)      UNSIGNED DEFAULT 0,
 				confidence    TINYINT(3)   UNSIGNED DEFAULT 0,
 				reason        TEXT                  DEFAULT '',
@@ -114,7 +114,7 @@ final class Database {
 				duration_ms INT(11)      NOT NULL DEFAULT 0,
 				status_code SMALLINT(6)  NOT NULL DEFAULT 200,
 				user_id     BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
-				created_at  DATETIME     NOT NULL,
+				created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY (id),
 				KEY type_created (type, created_at)
 			) $collate;",
@@ -165,8 +165,9 @@ final class Database {
 
 		delete_option( self::OPTION_KEY );
 
-		// Remove Phase 3 transient (Performance Monitor snapshot).
+		// Remove transients created by this plugin.
 		delete_transient( 'tahcd_perf_snapshot' );
+		delete_transient( 'tahcd_main_table_exists' );
 
 		// Remove Safe Mode user meta from all users.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk user meta cleanup on uninstall; delete_metadata() requires a user ID.
@@ -247,10 +248,14 @@ final class Database {
 	 */
 	public static function tables_exist(): bool {
 		global $wpdb;
-		$table  = $wpdb->prefix . 'cd_plugin_changes';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; no transient API equivalent.
-		return null !== $wpdb->get_var(
-			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
-		);
+		// Check both the first (v1) and last (v3) tables so a partial install is detected.
+		foreach ( array( 'cd_plugin_changes', 'cd_ajax_log' ) as $suffix ) {
+			$table = $wpdb->prefix . $suffix;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema existence check; no transient API equivalent.
+			if ( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

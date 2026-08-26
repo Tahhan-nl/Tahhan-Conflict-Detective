@@ -91,19 +91,24 @@ final class Health_Scan {
 		) );
 
 		global $wpdb;
+		$now = current_time( 'mysql', true );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log insert; caching not applicable.
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'cd_scans',
 			array(
 				'scan_type'    => 'health',
 				'result'       => wp_json_encode( $results ),
 				'issues_found' => $issue_count,
-				'scanned_at'   => current_time( 'mysql', true ),
+				'scanned_at'   => $now,
 			),
 			array( '%s', '%s', '%d', '%s' )
 		);
 
-		$results['scanned_at']   = current_time( 'mysql' );
+		if ( false === $inserted ) {
+			$results['db_error'] = true;
+		}
+
+		$results['scanned_at']   = $now;
 		$results['issues_found'] = $issue_count;
 
 		return $results;
@@ -334,7 +339,7 @@ final class Health_Scan {
 
 		// Pending theme update.
 		$updates = get_site_transient( 'update_themes' );
-		if ( $updates && isset( $updates->response[ get_template() ] ) ) {
+		if ( is_object( $updates ) && isset( $updates->response[ get_template() ] ) ) {
 			$issues[] = array(
 				'type'    => 'update-available',
 				'message' => sprintf(
@@ -421,7 +426,7 @@ final class Health_Scan {
 
 		// WordPress core update available.
 		$core_updates = get_site_transient( 'update_core' );
-		if ( $core_updates && ! empty( $core_updates->updates ) ) {
+		if ( is_object( $core_updates ) && ! empty( $core_updates->updates ) ) {
 			$latest = $core_updates->updates[0];
 			if ( isset( $latest->version ) && version_compare( $wp_version, $latest->version, '<' ) ) {
 				$issues[] = array(

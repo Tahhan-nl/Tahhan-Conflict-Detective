@@ -4,7 +4,7 @@
 
 **Target audience:** Website owners · Web designers · Freelancers · Hosting companies · WordPress agencies
 
-**Current stable version:** 2.6.0 — released 2026-06-16  
+**Current stable version:** 2.6.4 — released 2026-08-26  
 **WordPress.org slug:** `tahhan-conflict-detective`  
 **GitHub:** https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
 
@@ -164,35 +164,64 @@ Also reads the `Requires Plugins` header (WordPress 6.5+) for explicit declared 
 
 ## Phase 4 — Agency Edition 🔲 Planned
 
-### Multi-site Dashboard
-Single overview for all managed sites:
+> **Goal:** Let web agencies and freelancers monitor many client sites from a single dashboard — without logging into each WP admin separately.
+
+### 4.1 — Multi-site Dashboard
+
+Central overview for all managed sites, built on a lightweight REST API:
 
 ```
-site1.nl  — 2 issues detected
-site2.nl  — All clear
-site3.nl  — 1 conflict pending
-site4.nl  — All clear
+site1.nl  — 2 issues detected        (last check: 5 min ago)
+site2.nl  — All clear                 (last check: 3 min ago)
+site3.nl  — 1 conflict pending        (last check: 8 min ago)
+site4.nl  — Unreachable ⚠             (last check: 12 min ago)
 ```
 
-Remote health data fetched via a lightweight REST endpoint on each site.
+**Implementation plan:**
+- Each site exposes a read-only REST endpoint: `GET /wp-json/tahhan-cd/v1/status`
+- Endpoint returns: conflict count, health-scan issues, last error, last change, plugin version
+- Central dashboard (installed on the agency's own WP or as a standalone PHP app) polls all registered sites
+- Sites are registered by URL + API key (stored in wp_options on the central site)
+- Polling interval: configurable (5 / 15 / 60 minutes)
+- Results cached locally so the dashboard loads instantly
 
-### Email Alerts
-Triggered automatically on:
-- Fatal error detected
-- Plugin update caused new errors (confidence > 50 %)
-- Site unreachable (down)
+### 4.2 — Email Alerts
 
-Configurable recipients and thresholds. Digest mode (daily/weekly) available.
+Automatic email notifications triggered by:
+- New fatal error detected in the error log
+- Conflict Scanner confidence > 50 % for a new conflict
+- Health Scan finds a new critical issue (PHP version, memory, missing theme file)
+- Site becomes unreachable (HTTP 5xx or timeout)
 
-### PDF Reporting
-Auto-generated report per site containing:
-- Site health summary
-- Detected conflicts with confidence scores
-- Performance issues per plugin
-- Recommended actions
-- Change history over the report period
+**Settings:**
+- Per-site recipient list (agency email + optional client email)
+- Severity threshold (all / high only / critical only)
+- Digest mode: immediate · daily summary · weekly summary
+- Opt-out link in every email (one-click for clients)
 
-White-label branding option for agencies.
+### 4.3 — PDF Reporting
+
+Auto-generated report per site, schedulable (weekly / monthly):
+
+| Section | Content |
+|---------|---------|
+| Executive summary | Overall health score, open issues |
+| Detected conflicts | List with confidence scores and timestamps |
+| Performance overview | Slow / Heavy plugins with load times |
+| Change history | All plugin activations/updates/deletions in the report period |
+| Recommendations | Prioritised action list |
+
+**Options:**
+- White-label branding: agency logo, colours, footer
+- Delivery: email PDF attachment or download from dashboard
+- Format: A4 PDF, generated server-side with a PHP PDF library (no external services)
+
+### 4.4 — API Key Management
+
+- Each site generates a signed API key (256-bit, stored in wp_options)
+- Key rotation with configurable expiry (30/90/365 days or never)
+- Key scoped to read-only: cannot trigger actions remotely
+- Revoke key from the central dashboard instantly
 
 ---
 
@@ -262,6 +291,10 @@ Tables are preserved on deactivation and removed cleanly on uninstall.
 | 2.4.0 | 2026-06-04 | Rename | → Tahhan Conflict Detective, new namespace/slug |
 | 2.5.x | 2026-06-04–11 | Polish | `tahcd_` prefix, Plugin Check compliance, uninstall fixes |
 | 2.6.0 | 2026-06-16 | Phase 3 | Performance Monitor, Cron Monitor, AJAX Monitor, Interaction Map |
+| 2.6.1 | 2026-06-16 | Fix | Tested up to WordPress 7.0 |
+| 2.6.2 | 2026-06-16 | Security | `plugin_basename()` path validation, `$_POST` for AJAX monitor, `WP_Filesystem` guard |
+| 2.6.3 | 2026-08-03 | Audit | Full audit: 16 correctness, security, performance, and quality fixes |
+| 2.6.4 | 2026-08-26 | Fix | Schema defaults, `tables_exist()` partial-install detection, DB error propagation, `md5()` option keys |
 
 ---
 

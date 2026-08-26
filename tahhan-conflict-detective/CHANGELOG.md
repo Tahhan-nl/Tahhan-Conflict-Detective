@@ -5,6 +5,24 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.6.4] — 2026-08-26
+
+### Fixed
+- `Database::install()` — `cd_ajax_log.created_at` schema now includes `DEFAULT CURRENT_TIMESTAMP`; a raw INSERT without an explicit timestamp value no longer fails under MySQL strict mode.
+- `Database::install()` — `cd_conflicts.changed_at` changed from `NOT NULL` to `DEFAULT NULL`; prevents strict-mode INSERT failure when the column is omitted.
+- `Database::drop_tables()` — now also deletes the `tahcd_main_table_exists` transient on uninstall, removing the orphaned option row that would otherwise linger in `wp_options`.
+- `Database::tables_exist()` — now checks both `cd_plugin_changes` (schema v1) and `cd_ajax_log` (schema v3); previously only `cd_plugin_changes` was checked so a partial install where Phase 3 tables were missing went undetected.
+- `Health_Scan::run()` — `$wpdb->insert()` return value is now checked; a `db_error` flag is set in the returned result array on failure instead of silently discarding the error.
+- `Health_Scan::run()` — `scanned_at` in the returned result array now uses the same UTC timestamp written to the database; previously it used `current_time('mysql')` (local time) while the DB row held UTC, causing a timezone mismatch when callers compared the returned timestamp to stored records.
+- `Health_Scan::scan_theme()` — `get_site_transient('update_themes')` return value now guarded with `is_object()` before property access, preventing a PHP warning when the transient is corrupt or not yet populated.
+- `Health_Scan::scan_server()` — `get_site_transient('update_core')` return value now guarded with `is_object()` before property access.
+- `Change_History::get_recent()` — returns an empty array instead of `null` when `$wpdb->get_results()` fails; prevents type errors in callers that iterate the result.
+- `Change_History::on_update()` — option key for the previous-version baseline now uses `md5($plugin)` instead of `sanitize_key($plugin)`; `sanitize_key()` strips `/` and `.` from the plugin path, causing two different plugins to map to the same option key and corrupt each other's baseline.
+- `Change_History::write()` — now returns `bool` (was `void`) so callers can check whether the DB insert actually succeeded.
+- `Change_History::on_update()` — `update_option()` for the version baseline is now called only when `write()` returns `true`; previously the baseline was advanced even when the audit-log insert failed, leading to a missing record with an incorrect "previous version" on the next update.
+
+---
+
 ## [2.6.3] — 2026-08-03
 
 ### Fixed

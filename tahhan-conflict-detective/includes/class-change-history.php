@@ -82,13 +82,17 @@ final class Change_History {
 
 		foreach ( (array) $options['plugins'] as $plugin ) {
 			$data     = self::read_plugin_data( $plugin );
-			$prev_key = self::PREV_VERSION_PREFIX . sanitize_key( $plugin );
+			// md5() avoids key collisions that sanitize_key() can cause by stripping
+			// path separators (e.g. "a/b.php" and "ab/php" would map to the same key).
+			$prev_key = self::PREV_VERSION_PREFIX . md5( $plugin );
 			$previous = (string) get_option( $prev_key, '' );
 
-			self::write( $plugin, $data['Name'], 'updated', $data['Version'], $previous );
+			$written = self::write( $plugin, $data['Name'], 'updated', $data['Version'], $previous );
 
-			// Store the *new* version so the next update has an accurate baseline.
-			update_option( $prev_key, $data['Version'], false );
+			// Only advance the baseline when the DB write succeeded.
+			if ( $written ) {
+				update_option( $prev_key, $data['Version'], false );
+			}
 		}
 	}
 
@@ -117,12 +121,13 @@ final class Change_History {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must always be fresh.
-		return $wpdb->get_results(
+		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes` ORDER BY changed_at DESC LIMIT %d",
 				$limit
 			)
 		);
+		return is_array( $results ) ? $results : array();
 	}
 
 	// -------------------------------------------------------------------------
@@ -171,11 +176,11 @@ final class Change_History {
 		string $action,
 		string $version = '',
 		string $previous_version = ''
-	): void {
+	): bool {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log insert; caching not applicable.
-		$wpdb->insert(
+		$result = $wpdb->insert(
 			$wpdb->prefix . 'cd_plugin_changes',
 			array(
 				'plugin_slug'      => $slug,
@@ -187,5 +192,6 @@ final class Change_History {
 			),
 			array( '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
+		return false !== $result;
 	}
 }

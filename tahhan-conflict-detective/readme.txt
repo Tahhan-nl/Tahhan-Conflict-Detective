@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.3
+Stable tag: 2.6.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,20 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.6.4 =
+* Fix: `cd_ajax_log.created_at` schema now includes `DEFAULT CURRENT_TIMESTAMP` — prevents INSERT failure under MySQL strict mode.
+* Fix: `cd_conflicts.changed_at` schema changed to `DEFAULT NULL` — prevents INSERT failure if the column is omitted in strict mode.
+* Fix: `drop_tables()` now also deletes the `tahcd_main_table_exists` transient on uninstall — no orphaned wp_options row.
+* Fix: `tables_exist()` now checks both `cd_plugin_changes` (v1) and `cd_ajax_log` (v3) — a partial install is correctly detected.
+* Fix: `Health_Scan::run()` checks `$wpdb->insert()` return value and sets `db_error` flag in result on failure.
+* Fix: `Health_Scan::run()` `scanned_at` in the returned array now uses the same UTC timestamp stored in the database — was returning local time while the DB row held UTC.
+* Fix: `scan_theme()` guards `get_site_transient('update_themes')` with `is_object()` before property access.
+* Fix: `scan_server()` guards `get_site_transient('update_core')` with `is_object()` before property access.
+* Fix: `Change_History::get_recent()` returns an empty array on DB error instead of propagating `null` (which violated the declared `array` return type).
+* Fix: `Change_History::on_update()` option key for previous-version tracking now uses `md5()` instead of `sanitize_key()` — `sanitize_key()` strips `/` and `.`, causing path collisions between plugins with similar names.
+* Fix: `Change_History::write()` now returns `bool` so callers can check whether the DB insert succeeded.
+* Fix: `Change_History::on_update()` only advances the previous-version baseline (`update_option`) when the audit-log write actually succeeded.
 
 = 2.6.3 =
 * Fix: `get_site_transient('update_plugins')` return value guarded with `is_object()` before property access — prevents PHP 8.x warning on fresh installs.
