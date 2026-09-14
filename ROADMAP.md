@@ -4,7 +4,7 @@
 
 **Target audience:** Website owners · Web designers · Freelancers · Hosting companies · WordPress agencies
 
-**Current stable version:** 2.6.4 — released 2026-08-26  
+**Current stable version:** 2.6.5 — released 2026-09-14  
 **WordPress.org slug:** `tahhan-conflict-detective`  
 **GitHub:** https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
 
@@ -295,6 +295,7 @@ Tables are preserved on deactivation and removed cleanly on uninstall.
 | 2.6.2 | 2026-06-16 | Security | `plugin_basename()` path validation, `$_POST` for AJAX monitor, `WP_Filesystem` guard |
 | 2.6.3 | 2026-08-03 | Audit | Full audit: 16 correctness, security, performance, and quality fixes |
 | 2.6.4 | 2026-08-26 | Fix | Schema defaults, `tables_exist()` partial-install detection, DB error propagation, `md5()` option keys |
+| 2.6.5 | 2026-09-14 | Fix | Missing `return` after error responses in 3 AJAX handlers, untranslated 'Forbidden' string |
 
 ---
 

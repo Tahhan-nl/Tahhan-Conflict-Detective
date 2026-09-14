@@ -154,6 +154,7 @@ final class Cron_Monitor {
 		$valid_hooks = array_column( self::get_events(), 'hook' );
 		if ( ! in_array( $hook, $valid_hooks, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Unknown cron hook.', 'tahhan-conflict-detective' ) ), 400 );
+			return;
 		}
 
 		$elapsed = self::run_event( $hook );
