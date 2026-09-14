@@ -11,6 +11,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.5] — 2026-09-14
+
+### Fixed
+- `Safe_Mode::ajax_toggle_plugin()` — hardcoded `'Forbidden'` string now wrapped in `__()` for translatability; missed in the v2.6.3 audit.
+- `Dashboard::ajax_clear_log()` — missing `return` after `wp_send_json_error()` when log file does not exist; execution fell through to `wp_send_json_success()`.
+- `Dashboard::ajax_clear_log()` — missing `return` after `wp_send_json_error()` when `put_contents()` fails.
+- `Cron_Monitor::ajax_run_cron_event()` — missing `return` after `wp_send_json_error()` on unknown-hook validation; `run_event()` would fire even after the error response was sent.
+
+---
+
 ## [2.6.4] — 2026-08-26
 
 ### Fixed

@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.4
+Stable tag: 2.6.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,12 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.6.5 =
+* Fix: `Safe_Mode::ajax_toggle_plugin()` — hardcoded 'Forbidden' string now translatable via `__()`.
+* Fix: `Dashboard::ajax_clear_log()` — missing `return` after error response when log file does not exist.
+* Fix: `Dashboard::ajax_clear_log()` — missing `return` after error response when `put_contents()` fails.
+* Fix: `Cron_Monitor::ajax_run_cron_event()` — missing `return` after error response for unknown-hook validation; `run_event()` would execute despite the error already being sent.
 
 = 2.6.4 =
 * Fix: `cd_ajax_log.created_at` schema now includes `DEFAULT CURRENT_TIMESTAMP` — prevents INSERT failure under MySQL strict mode.

@@ -5,6 +5,16 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.6.5] — 2026-09-14
+
+### Fixed
+- `Safe_Mode::ajax_toggle_plugin()` — hardcoded `'Forbidden'` string now wrapped in `__()` for translatability; was missed in the v2.6.3 audit.
+- `Dashboard::ajax_clear_log()` — added missing `return` after `wp_send_json_error()` when the log file does not exist; execution would otherwise fall through to `wp_send_json_success()`.
+- `Dashboard::ajax_clear_log()` — added missing `return` after `wp_send_json_error()` when `put_contents()` fails.
+- `Cron_Monitor::ajax_run_cron_event()` — added missing `return` after `wp_send_json_error()` for the unknown-hook validation path; without it `run_event()` would execute despite the error response already being sent.
+
+---
+
 ## [2.6.4] — 2026-08-26
 
 ### Fixed

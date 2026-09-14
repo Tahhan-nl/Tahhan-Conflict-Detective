@@ -241,6 +241,7 @@ final class Dashboard {
 
 		if ( ! file_exists( $log_file ) ) {
 			wp_send_json_error( array( 'message' => __( 'Log file not found.', 'tahhan-conflict-detective' ) ) );
+			return;
 		}
 
 		// Use WP_Filesystem to write the file, as required by WordPress.org guidelines.
@@ -254,6 +255,7 @@ final class Dashboard {
 		}
 		if ( ! $wp_filesystem->put_contents( $log_file, '', FS_CHMOD_FILE ) ) {
 			wp_send_json_error( array( 'message' => __( 'Could not clear log file (permission denied).', 'tahhan-conflict-detective' ) ) );
+			return;
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Log cleared.', 'tahhan-conflict-detective' ) ) );
