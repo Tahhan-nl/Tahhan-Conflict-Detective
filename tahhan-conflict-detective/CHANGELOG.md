@@ -5,6 +5,19 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.6.6] — 2026-10-14
+
+### Fixed
+- `Error_Log::tail()` — `fread()` return value now checked; previously a read error returned `false`, which PHP coerced to the string `"false"` and prepended to the buffer, injecting garbage into parsed log entries.
+- `Conflict_Scanner::get_recent_changes()` — `$wpdb->get_results()` can return `null` on DB failure; the `array` strict return type would throw a `TypeError`. Now guarded with `is_array() ?: array()`.
+- `Dashboard::render_dashboard()` — `strtotime( $culprit['changed_at'] )` now guarded with `?: 0`; a corrupt timestamp would previously cause `date_i18n()` to display the Unix epoch date "01-01-1970".
+- `Dashboard::render_scanner()` — same `strtotime()` false-guard added for `$suspect['changed_at']`.
+
+### Performance
+- `Dashboard::render_dashboard()` — `Error_Log::get_entries()` and `Change_History::get_recent()` were each called twice (once for 5 entries to display, once for 500 to count). Both are now called once for 500 entries; the first 5 are sliced for display. Eliminates one log-file parse and one DB query on every dashboard load.
+
+---
+
 ## [2.6.5] — 2026-09-14
 
 ### Fixed

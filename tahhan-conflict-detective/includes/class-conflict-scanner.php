@@ -261,7 +261,7 @@ final class Conflict_Scanner {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Audit log read; data must always be fresh.
-		return $wpdb->get_results(
+		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM `{$wpdb->prefix}cd_plugin_changes`
 				 WHERE changed_at >= %s
@@ -270,5 +270,6 @@ final class Conflict_Scanner {
 				gmdate( 'Y-m-d H:i:s', strtotime( '-' . self::CHANGE_WINDOW_DAYS . ' days' ) )
 			)
 		);
+		return is_array( $results ) ? $results : array();
 	}
 }

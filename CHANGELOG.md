@@ -11,6 +11,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.6.6] — 2026-10-14
+
+### Fixed
+- `Error_Log::tail()` — `fread()` return value now checked; a read error returned `false`, which PHP coerced to the string `"false"` and prepended to the buffer, injecting garbage into parsed log entries.
+- `Conflict_Scanner::get_recent_changes()` — `$wpdb->get_results()` can return `null` on DB failure; the declared `array` strict return type would throw a `TypeError`. Now guarded with `is_array() ?: array()`.
+- `Dashboard::render_dashboard()` — `strtotime( $culprit['changed_at'] )` now guarded with `?: 0`; a corrupt or missing timestamp would cause `date_i18n()` to show the Unix epoch date "01-01-1970".
+- `Dashboard::render_scanner()` — same `strtotime()` false-guard applied to `$suspect['changed_at']`.
+
+### Performance
+- `Dashboard::render_dashboard()` — `Error_Log::get_entries()` and `Change_History::get_recent()` were each called twice (once for 5 display rows, once for 500 to count). Both now called once; first 5 sliced for display. Eliminates one redundant log-file parse and one extra DB query on every dashboard load.
+
+---
+
 ## [2.6.5] — 2026-09-14
 
 ### Fixed

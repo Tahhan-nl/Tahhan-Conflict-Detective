@@ -300,7 +300,8 @@ final class Error_Log {
 			$pos    -= $read;
 			fseek( $fp, $pos );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- WP_Filesystem does not expose fseek/ftell needed for memory-efficient reverse scan.
-			$buffer = fread( $fp, $read ) . $buffer;
+			$chunk  = fread( $fp, $read );
+			$buffer = ( false !== $chunk ? $chunk : '' ) . $buffer;
 		}
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem does not expose fseek/ftell needed for memory-efficient reverse scan.
