@@ -352,14 +352,16 @@ final class Dashboard {
 		$all_plugins     = get_plugins();
 		$active_plugins  = (array) get_option( 'active_plugins', array() );
 		$theme           = wp_get_theme();
-		$recent_changes  = Change_History::get_recent( 5 );
-		$error_entries   = Error_Log::get_entries( 5 );
+		$all_changes     = Change_History::get_recent( 500 );
+		$all_errors      = Error_Log::get_entries( 500 );
+		$recent_changes  = array_slice( $all_changes, 0, 5 );
+		$error_entries   = array_slice( $all_errors, 0, 5 );
 		$culprit         = Health_Scan::get_likely_culprit();
 		$last_scan       = Health_Scan::get_last_scan();
 
 		// --- Stats bar -------------------------------------------------------
-		$total_errors   = count( Error_Log::get_entries( 500 ) );
-		$total_changes  = count( Change_History::get_recent( 500 ) );
+		$total_errors   = count( $all_errors );
+		$total_changes  = count( $all_changes );
 		$total_issues   = $last_scan ? (int) $last_scan['issues_found'] : 0;
 
 		echo '<div class="pcd-stats-bar">';
@@ -408,7 +410,7 @@ final class Dashboard {
 				esc_html__( 'Last action:', 'tahhan-conflict-detective' ),
 				esc_html( self::action_label( $culprit['action'] ) ),
 				esc_html__( 'at', 'tahhan-conflict-detective' ),
-				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $culprit['changed_at'] ) ) ),
+				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $culprit['changed_at'] ) ?: 0 ) ),
 				esc_html__( 'Most likely cause of recent errors.', 'tahhan-conflict-detective' )
 			);
 		}
@@ -692,7 +694,7 @@ final class Dashboard {
 				esc_html( $suspect['reason'] ),
 				esc_html__( 'Action', 'tahhan-conflict-detective' ),
 				esc_html( self::action_label( $suspect['action'] ) ),
-				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $suspect['changed_at'] ) ) ),
+				esc_html( date_i18n( 'd-m-Y H:i', strtotime( $suspect['changed_at'] ) ?: 0 ) ),
 				$suspect['error_count'] > 0
 					? '<span>' . esc_html( sprintf(
 						/* translators: %d: number of errors */

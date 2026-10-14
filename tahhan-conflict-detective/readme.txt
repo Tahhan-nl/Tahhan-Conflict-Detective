@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.5
+Stable tag: 2.6.6
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,13 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.6.6 =
+* Fix: `Error_Log::tail()` — `fread()` return now checked; read errors no longer inject the word "false" into parsed log entries.
+* Fix: `Conflict_Scanner::get_recent_changes()` — `$wpdb->get_results()` null return now guarded; prevents TypeError on DB failure.
+* Fix: `Dashboard::render_dashboard()` — `strtotime()` false guard on culprit banner timestamp; corrupt dates no longer show "01-01-1970".
+* Fix: `Dashboard::render_scanner()` — same false guard applied to suspect card timestamps.
+* Performance: `Dashboard::render_dashboard()` — eliminated one redundant log-file parse and one extra DB query; both data sources now fetched once.
 
 = 2.6.5 =
 * Fix: `Safe_Mode::ajax_toggle_plugin()` — hardcoded 'Forbidden' string now translatable via `__()`.
