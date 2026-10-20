@@ -28,6 +28,19 @@ final class Dashboard {
 
 	const PAGE_SLUG = 'tahhan-conflict-detective';
 
+	/** Tabs that expose network-wide data or outbound actions (see sensitive_cap()). */
+	const SENSITIVE_TABS = array( 'errors', 'agency' );
+
+	/**
+	 * Capability for features that touch shared resources. On multisite the
+	 * debug/error logs are shared by every site, and the agency hub makes
+	 * outbound requests and sends email from the network's server — so a
+	 * single-site admin must not reach them.
+	 */
+	public static function sensitive_cap(): string {
+		return is_multisite() ? 'manage_network_options' : 'manage_options';
+	}
+
 	// -------------------------------------------------------------------------
 	// Boot
 	// -------------------------------------------------------------------------
@@ -78,7 +91,7 @@ final class Dashboard {
 			self::PAGE_SLUG,
 			__( 'Error Log', 'tahhan-conflict-detective' ),
 			__( 'Error Log', 'tahhan-conflict-detective' ),
-			'manage_options',
+			self::sensitive_cap(),
 			self::PAGE_SLUG . '&tab=errors',
 			array( __CLASS__, 'render_page' )
 		);
@@ -145,6 +158,15 @@ final class Dashboard {
 			self::PAGE_SLUG . '&tab=interaction-map',
 			array( __CLASS__, 'render_page' )
 		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Agency', 'tahhan-conflict-detective' ),
+			__( 'Agency', 'tahhan-conflict-detective' ),
+			self::sensitive_cap(),
+			self::PAGE_SLUG . '&tab=agency',
+			array( __CLASS__, 'render_page' )
+		);
 	}
 
 	public static function enqueue_assets( string $hook ): void {
@@ -195,6 +217,12 @@ final class Dashboard {
 			'runNow'            => __( 'Run Now',             'tahhan-conflict-detective' ),
 			'cronRunError'      => __( 'Failed to run cron event.', 'tahhan-conflict-detective' ),
 			'perfRefreshError'  => __( 'Failed to refresh performance data.', 'tahhan-conflict-detective' ),
+			// Phase 4.
+			'working'           => __( 'Working…',            'tahhan-conflict-detective' ),
+			'copied'            => __( 'Copied!',             'tahhan-conflict-detective' ),
+			'confirmRemoveSite' => __( 'Remove this site from monitoring? Its stored API key will be deleted.', 'tahhan-conflict-detective' ),
+			'copyFailed'        => __( 'Copy failed — select the key and copy it manually.', 'tahhan-conflict-detective' ),
+			'copy'              => __( 'Copy',                'tahhan-conflict-detective' ),
 		) );
 	}
 
@@ -232,7 +260,7 @@ final class Dashboard {
 	public static function ajax_clear_log(): void {
 		check_ajax_referer( 'tahcd_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( self::sensitive_cap() ) ) {
 			wp_send_json_error( array( 'message' => __( 'Forbidden', 'tahhan-conflict-detective' ) ), 403 );
 			return;
 		}
@@ -286,7 +314,12 @@ final class Dashboard {
 			'cron'            => array( 'label' => __( 'Cron Monitor',    'tahhan-conflict-detective' ), 'icon' => 'dashicons-clock' ),
 			'ajax-monitor'    => array( 'label' => __( 'AJAX Monitor',    'tahhan-conflict-detective' ), 'icon' => 'dashicons-rest-api' ),
 			'interaction-map' => array( 'label' => __( 'Interaction Map', 'tahhan-conflict-detective' ), 'icon' => 'dashicons-networking' ),
+			'agency'          => array( 'label' => __( 'Agency',          'tahhan-conflict-detective' ), 'icon' => 'dashicons-admin-multisite' ),
 		);
+
+		if ( ! current_user_can( self::sensitive_cap() ) ) {
+			$tabs = array_diff_key( $tabs, array_flip( self::SENSITIVE_TABS ) );
+		}
 
 		if ( ! array_key_exists( $tab, $tabs ) ) {
 			$tab = 'dashboard';
@@ -324,6 +357,7 @@ final class Dashboard {
 			case 'cron':            Cron_Monitor::render();         break;
 			case 'ajax-monitor':    Ajax_Monitor::render();         break;
 			case 'interaction-map': Interaction_Map::render();      break;
+			case 'agency':          Agency::render();               break;
 			default:                self::render_dashboard();
 		}
 		echo '</div></div>';
@@ -352,8 +386,9 @@ final class Dashboard {
 		$all_plugins     = get_plugins();
 		$active_plugins  = (array) get_option( 'active_plugins', array() );
 		$theme           = wp_get_theme();
+		$can_view_logs   = current_user_can( self::sensitive_cap() );
 		$all_changes     = Change_History::get_recent( 500 );
-		$all_errors      = Error_Log::get_entries( 500 );
+		$all_errors      = $can_view_logs ? Error_Log::get_entries( 500 ) : array();
 		$recent_changes  = array_slice( $all_changes, 0, 5 );
 		$error_entries   = array_slice( $all_errors, 0, 5 );
 		$culprit         = Health_Scan::get_likely_culprit();
@@ -490,7 +525,9 @@ final class Dashboard {
 		// Recent errors
 		echo '<div class="pcd-card">';
 		echo '<h2 class="pcd-card__title">' . esc_html__( 'Recent Errors', 'tahhan-conflict-detective' ) . '</h2>';
-		if ( empty( $error_entries ) ) {
+		if ( ! $can_view_logs ) {
+			echo '<p class="pcd-empty">' . esc_html__( 'On a multisite network the error log is shared by all sites, so it is only shown to network administrators.', 'tahhan-conflict-detective' ) . '</p>';
+		} elseif ( empty( $error_entries ) ) {
 			echo '<p class="pcd-empty">' . esc_html__( 'No errors found in the log file.', 'tahhan-conflict-detective' ) . '</p>';
 		} else {
 			echo '<ul class="pcd-error-list">';
@@ -509,11 +546,13 @@ final class Dashboard {
 			}
 			echo '</ul>';
 		}
-		printf(
-			'<a href="%s" class="pcd-link">%s &#8594;</a>',
-			esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'errors' ), admin_url( 'admin.php' ) ) ),
-			esc_html__( 'View all errors', 'tahhan-conflict-detective' )
-		);
+		if ( $can_view_logs ) {
+			printf(
+				'<a href="%s" class="pcd-link">%s &#8594;</a>',
+				esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'errors' ), admin_url( 'admin.php' ) ) ),
+				esc_html__( 'View all errors', 'tahhan-conflict-detective' )
+			);
+		}
 		echo '</div>';
 
 		echo '</div>'; // .pcd-dash-grid

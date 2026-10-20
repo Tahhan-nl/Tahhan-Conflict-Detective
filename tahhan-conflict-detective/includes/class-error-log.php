@@ -107,22 +107,22 @@ final class Error_Log {
 	}
 
 	/**
+	 * Maximum bytes read from the end of a log. tail() reads backwards, so
+	 * file size does not matter — this only bounds memory when the last lines
+	 * are extremely long. Huge logs must still be read: skipping them would let
+	 * an attacker blind the error log and alerts by flooding it.
+	 */
+	private const MAX_TAIL_BYTES = 2097152; // 2 MB
+
+	/**
 	 * Tails a log file and returns parsed entries.
 	 *
 	 * @param  string $path   Absolute path to the log file.
 	 * @param  string $source Label for the 'source' field (e.g. 'debug.log').
 	 * @return array<int, array<string, string>>
 	 */
-	/** Maximum file size (bytes) we will attempt to tail. 50 MB guard. */
-	private const MAX_FILE_SIZE = 52428800; // 50 MB
-
 	private static function parse_file( string $path, string $source ): array {
 		if ( ! file_exists( $path ) || ! is_readable( $path ) ) {
-			return array();
-		}
-
-		// Skip files that are unreasonably large to protect memory and execution time.
-		if ( filesize( $path ) > self::MAX_FILE_SIZE ) {
 			return array();
 		}
 
@@ -295,7 +295,7 @@ final class Error_Log {
 		fseek( $fp, 0, SEEK_END );
 		$pos = ftell( $fp );
 
-		while ( $pos > 0 && substr_count( $buffer, "\n" ) < $lines ) {
+		while ( $pos > 0 && substr_count( $buffer, "\n" ) < $lines && strlen( $buffer ) < self::MAX_TAIL_BYTES ) {
 			$read    = min( $chunk_size, $pos );
 			$pos    -= $read;
 			fseek( $fp, $pos );
@@ -308,6 +308,10 @@ final class Error_Log {
 		fclose( $fp );
 
 		$all = explode( "\n", $buffer );
+		// When the read stopped mid-file, the first line is a fragment.
+		if ( $pos > 0 ) {
+			array_shift( $all );
+		}
 		return array_slice( $all, -$lines );
 	}
 }

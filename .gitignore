@@ -13,7 +13,7 @@ Desktop.ini
 *.sublime-project
 *.sublime-workspace
 
-# ── Claude Code (local AI assistant config — never commit) ───────────────────
+# ── Local editor/assistant config (never commit) ─────────────────────────────
 .claude/
 .claude
 

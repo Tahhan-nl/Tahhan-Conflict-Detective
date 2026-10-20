@@ -132,14 +132,33 @@ final class Database {
 		delete_transient( 'tahcd_main_table_exists' );
 	}
 
+	/** Cron hooks scheduled by this plugin (Alerts, Agency). */
+	const CRON_HOOKS = array( 'tahcd_alerts_check', 'tahcd_agency_poll' );
+
 	/**
-	 * Called on plugin deactivation.
-	 * Intentionally a no-op — we keep data so the admin can reactivate without
-	 * losing history.  Actual cleanup happens in uninstall.php.
+	 * Called on plugin deactivation. Data is kept so the admin can reactivate
+	 * without losing history; only scheduled jobs are removed. Alerts and Agency
+	 * reschedule themselves on the next request after reactivation.
 	 *
 	 * @return void
 	 */
-	public static function on_deactivate(): void {}
+	public static function on_deactivate( $network_wide = false ): void {
+		if ( $network_wide && is_multisite() ) {
+			foreach ( get_sites( array( 'fields' => 'ids', 'number' => 0 ) ) as $blog_id ) {
+				switch_to_blog( (int) $blog_id );
+				self::clear_cron();
+				restore_current_blog();
+			}
+			return;
+		}
+		self::clear_cron();
+	}
+
+	private static function clear_cron(): void {
+		foreach ( self::CRON_HOOKS as $hook ) {
+			wp_clear_scheduled_hook( $hook );
+		}
+	}
 
 	/**
 	 * Drops all plugin tables and removes associated options.
@@ -165,9 +184,27 @@ final class Database {
 
 		delete_option( self::OPTION_KEY );
 
+		foreach ( array( 'tahcd_api_key', 'tahcd_api_key_last_used', 'tahcd_alert_settings', 'tahcd_alert_state', 'tahcd_remote_sites', 'tahcd_remote_status', 'tahcd_agency_settings' ) as $option ) {
+			delete_option( $option );
+		}
+
+		self::clear_cron();
+
 		// Remove transients created by this plugin.
 		delete_transient( 'tahcd_perf_snapshot' );
 		delete_transient( 'tahcd_main_table_exists' );
+		delete_transient( 'tahcd_status_cache' );
+		delete_transient( 'tahcd_alert_test_sent' );
+
+		// REST rate-limit counters: tahcd_rl_{md5(ip)}.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk transient cleanup on uninstall.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM `{$wpdb->options}` WHERE `option_name` LIKE %s OR `option_name` LIKE %s",
+				$wpdb->esc_like( '_transient_tahcd_rl_' ) . '%',
+				$wpdb->esc_like( '_transient_timeout_tahcd_rl_' ) . '%'
+			)
+		);
 
 		// Remove Safe Mode user meta from all users.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk user meta cleanup on uninstall; delete_metadata() requires a user ID.

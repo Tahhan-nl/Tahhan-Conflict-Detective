@@ -11,6 +11,32 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.7.0] — 2026-10-20
+
+Phase 4 — Agency Edition (4.1 Multi-site Dashboard, 4.2 Email Alerts, 4.4 API Key Management).
+
+### Added
+- `Api_Keys` — one read-only API key per site: `tahcd_` + 64 hex chars from `random_bytes(32)`. Only the SHA-256 hash is stored (`tahcd_api_key`, autoload off); the plaintext is shown once. Expiry of 30/90/365 days or never, rotation and revocation. `last_used` lives in a separate option so a verification can never rewrite (and thereby resurrect) a revoked or rotated key.
+- `Rest_Api` — `GET /wp-json/tahhan-cd/v1/status`. The key is accepted only in the `X-Tahcd-Key` header. Returns counts and plugin names only (conflicts, fatal errors in 24 h, health issues, last change, versions); no paths or log text. Cached 60 s, `Cache-Control: no-store`. Failed attempts are throttled per IP (per /64 for IPv6) in a fixed 15-minute window; a valid key is always accepted, so a shared proxy IP cannot lock out the hub. "No key configured" and "wrong key" both return 401.
+- `Agency` — hub for up to 50 remote sites with a new **Agency** tab. Polls every 5/15/60 minutes (`tahcd_agency_poll`) or on demand; status, conflicts, fatal errors, health issues and last check per site.
+- `Alerts` — hourly digest emails (`tahcd_alerts_check`) for new fatal errors, conflicts ≥ 50 % and critical health issues; severity levels critical/high/all; up to 10 recipients; test email.
+- `Health_Scan::CRITICAL_TYPES` / `count_critical()` and `Conflict_Scanner::CONFLICT_THRESHOLD` / `CRITICAL_THRESHOLD` as single sources of truth.
+
+### Security
+- SSRF hardening for the hub: every A and AAAA record is resolved and the host is refused if any address is loopback, private, link-local (incl. 169.254.169.254 cloud metadata), CGNAT, reserved, multicast or IPv4-mapped/6to4/NAT64. The connection is pinned to the vetted IP with `CURLOPT_RESOLVE` (no DNS-rebinding window) and restricted to HTTPS; requests that do not go through cURL fail closed. HTTPS on port 443 only, no redirects, 64 KB response cap, re-validated on every poll.
+- Remote API keys encrypted at rest with libsodium `secretbox` (key derived from the AUTH salt). No plaintext fallback.
+- Remote responses reduced to a fixed, typed, length-limited structure before storage and escaped again on output.
+- Email: recipients validated, control characters stripped, links in log excerpts defanged, test email throttled to one per 5 minutes.
+- Multisite: the shared error log (tab, dashboard card, Wizard timeline, clear action), email alerts and the agency hub require `manage_network_options`.
+- Hub requests fail closed while an outbound HTTP proxy is configured (the proxy would resolve DNS, bypassing the IP pin). Remote sites need an IPv4 (A) record.
+
+### Fixed
+- Activation/deactivation hooks were registered inside `plugins_loaded`, which has already fired during an activation request, so `Database::install()` never ran on activation (tables were only created on the next request by `maybe_upgrade()`). Both hooks are now registered at file load.
+- `Error_Log` skipped log files larger than 50 MB entirely, so a flooded log hid all new errors. `tail()` reads from the end anyway; the size check is replaced by a 2 MB read cap.
+- `Database::on_deactivate()` now clears the plugin's cron events (on every site for network deactivation); they are restored on the next admin request after reactivation. `drop_tables()` removes all new options, transients and cron events.
+
+---
+
 ## [2.6.6] — 2026-10-14
 
 ### Fixed
@@ -292,7 +318,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.4...HEAD
+[Unreleased]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.6...v2.7.0
+[2.6.6]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.5...v2.6.6
+[2.6.5]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.4...v2.6.5
 [2.6.4]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.3...v2.6.4
 [2.6.3]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.2...v2.6.3
 [2.6.2]: https://github.com/Tahhan-nl/Tahhan-Conflict-Detective/compare/v2.6.1...v2.6.2

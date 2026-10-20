@@ -65,6 +65,26 @@ final class Health_Scan {
 		),
 	);
 
+	/** Issue types that indicate a broken or unsafe site (vs. advisory ones like pending updates). */
+	const CRITICAL_TYPES = array( 'php-version', 'memory-low', 'missing-file', 'missing-parent', 'incompatible' );
+
+	/**
+	 * Counts critical issues in a scan result.
+	 *
+	 * @param array<string, mixed> $scan Result of run() or get_last_scan().
+	 */
+	public static function count_critical( array $scan ): int {
+		$count = 0;
+		foreach ( array( 'plugins', 'theme', 'server' ) as $section ) {
+			foreach ( $scan[ $section ]['issues'] ?? array() as $issue ) {
+				if ( in_array( $issue['type'] ?? '', self::CRITICAL_TYPES, true ) ) {
+					$count++;
+				}
+			}
+		}
+		return $count;
+	}
+
 	/** Minimum recommended PHP version (non-EOL). */
 	private const PHP_MINIMUM     = '7.4';
 	private const PHP_RECOMMENDED = '8.2';

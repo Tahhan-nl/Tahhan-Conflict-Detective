@@ -148,7 +148,8 @@ final class Wizard {
 
 		$suspects = Conflict_Scanner::analyse( 5 );
 		$changes  = Change_History::get_recent( 5 );
-		$errors   = Error_Log::get_entries( 10 );
+		// On multisite the log is shared by all sites; see Dashboard::sensitive_cap().
+		$errors   = current_user_can( Dashboard::sensitive_cap() ) ? Error_Log::get_entries( 10 ) : array();
 
 		// ---- Top suspects --------------------------------------------------
 		if ( ! empty( $suspects ) ) {

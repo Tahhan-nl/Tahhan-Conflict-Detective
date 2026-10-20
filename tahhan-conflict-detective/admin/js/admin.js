@@ -193,6 +193,163 @@
 			});
 		});
 
+		// ── Phase 4: Agency tab ──────────────────────────────────────────────
+		function agencyNotice(type, msg) {
+			var $box = $('#tahcd-agency-notice');
+			$box.empty().append(
+				$('<div>').addClass('pcd-notice pcd-notice--' + type).text(msg || tahcdData.unknownError)
+			);
+			$('html, body').animate({ scrollTop: $box.offset().top - 60 }, 150);
+		}
+
+		// Posts an Agency action. onSuccess(data) runs on success; failures show a notice.
+		// If onSuccess returns false the control stays disabled (e.g. one-time actions).
+		function agencyPost(action, payload, $btn, onSuccess) {
+			var origText = $btn ? $btn.text() : '';
+			var keepDisabled = false;
+			if ($btn) {
+				$btn.prop('disabled', true);
+				if ($btn.is('button')) { $btn.text(tahcdData.working); }
+			}
+
+			return $.post(tahcdData.ajaxUrl, $.extend({ action: action, nonce: tahcdData.nonce }, payload))
+				.done(function (response) {
+					var data = (response && response.data) || {};
+					if (response && response.success) {
+						keepDisabled = onSuccess(data) === false;
+					} else {
+						agencyNotice('error', data.message);
+					}
+				})
+				.fail(function () { agencyNotice('error', tahcdData.requestFailed); })
+				.always(function () {
+					if ($btn) {
+						if (! keepDisabled) { $btn.prop('disabled', false); }
+						if ($btn.is('button')) { $btn.text(origText); }
+					}
+				});
+		}
+
+		function reloadSoon() { setTimeout(function () { window.location.reload(); }, 900); }
+
+		function confirmed($btn) {
+			var msg = $btn.data('confirm');
+			return ! msg || window.confirm(msg);
+		}
+
+		$('#tahcd-key-generate').on('click', function () {
+			var $btn = $(this);
+			if (! confirmed($btn)) { return; }
+			agencyPost('tahcd_agency_generate_key', { expiry: $('#tahcd-key-expiry').val() }, $btn, function (data) {
+				$('#tahcd-key-value').val(data.key);
+				$('#tahcd-key-output').prop('hidden', false);
+				$('#tahcd-key-revoke, #tahcd-key-expiry').prop('disabled', true);
+				agencyNotice('success', data.message);
+				// A second click would silently rotate the key the user is copying.
+				return false;
+			});
+		});
+
+		$('#tahcd-key-copy').on('click', function () {
+			var $btn   = $(this);
+			var $input = $('#tahcd-key-value');
+			var report = function (ok) {
+				$btn.text(ok ? tahcdData.copied : tahcdData.copyFailed);
+				setTimeout(function () { $btn.text(tahcdData.copy); }, 2000);
+			};
+			var legacy = function () {
+				$input.trigger('focus').trigger('select');
+				var ok = false;
+				try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+				report(ok);
+			};
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText($input.val()).then(function () { report(true); }, legacy);
+			} else {
+				legacy();
+			}
+		});
+
+		$('#tahcd-key-done').on('click', function () {
+			$('#tahcd-key-value').val('');
+			window.location.reload();
+		});
+
+		$('#tahcd-key-revoke').on('click', function () {
+			var $btn = $(this);
+			if (! confirmed($btn)) { return; }
+			agencyPost('tahcd_agency_revoke_key', {}, $btn, function (data) {
+				agencyNotice('success', data.message);
+				reloadSoon();
+			});
+		});
+
+		$('#tahcd-agency-add').on('submit', function (e) {
+			e.preventDefault();
+			var $form = $(this);
+			agencyPost('tahcd_agency_add_site', {
+				label: $form.find('[name=label]').val(),
+				url:   $form.find('[name=url]').val(),
+				key:   $form.find('[name=key]').val()
+			}, $form.find('button[type=submit]'), function (data) {
+				$form.find('[name=key]').val('');
+				agencyNotice('success', data.message);
+				reloadSoon();
+			});
+		});
+
+		$(document).on('click', '.tahcd-agency-poll', function () {
+			var $btn = $(this);
+			agencyPost('tahcd_agency_poll_site', { id: $btn.data('id') }, $btn, function (data) {
+				agencyNotice('success', data.message);
+				reloadSoon();
+			});
+		});
+
+		$(document).on('click', '.tahcd-agency-remove', function () {
+			var $btn = $(this);
+			if (! window.confirm(tahcdData.confirmRemoveSite)) { return; }
+			agencyPost('tahcd_agency_remove_site', { id: $btn.data('id') }, $btn, function (data) {
+				agencyNotice('success', data.message);
+				if (data.empty) {
+					reloadSoon();
+				} else {
+					$btn.closest('tr').remove();
+				}
+			});
+		});
+
+		var $interval = $('#tahcd-agency-interval');
+		$interval.data('saved', $interval.val());
+		$interval.on('change', function () {
+			agencyPost('tahcd_agency_save_settings', { interval: $interval.val() }, $interval, function (data) {
+				$interval.data('saved', $interval.val());
+				agencyNotice('success', data.message);
+			}).fail(function () {
+				$interval.val($interval.data('saved'));
+			}).done(function (response) {
+				if (! response || ! response.success) { $interval.val($interval.data('saved')); }
+			});
+		});
+
+		$('#tahcd-alerts-form').on('submit', function (e) {
+			e.preventDefault();
+			var $form = $(this);
+			agencyPost('tahcd_alerts_save', {
+				enabled:    $form.find('[name=enabled]').is(':checked') ? '1' : '0',
+				recipients: $form.find('[name=recipients]').val(),
+				severity:   $form.find('[name=severity]').val()
+			}, $form.find('button[type=submit]'), function (data) {
+				agencyNotice('success', data.message);
+			});
+		});
+
+		$('#tahcd-alerts-test').on('click', function () {
+			agencyPost('tahcd_alerts_test', {}, $(this), function (data) {
+				agencyNotice('success', data.message);
+			});
+		});
+
 		// ── Clear debug.log ──────────────────────────────────────────────────
 		$('#pcd-clear-log').on('click', function () {
 			if ( ! window.confirm( tahcdData.confirmClear ) ) {

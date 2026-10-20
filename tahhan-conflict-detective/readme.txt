@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.6
+Stable tag: 2.7.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,18 +58,29 @@ Automatically logs slow AJAX and REST API calls (those taking more than 500 ms) 
 **Plugin Interaction Map** *(new in 2.6.0)*
 Visualises your plugins grouped into known ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, and more). Highlights declared plugin dependencies and shows active/inactive state at a glance. Plugins that don't belong to a known ecosystem are listed separately as Standalone Plugins.
 
+= Agency Edition (new in 2.7.0) =
+
+**Multi-site monitoring dashboard**
+Monitor up to 50 client sites from one WordPress install. Each row shows the site's status (All clear / Warning / Critical), open conflicts with the top suspect, fatal errors in the last 24 hours, critical health issues and when it was last checked. Sites are polled automatically every 5, 15 or 60 minutes, or on demand.
+
+**Read-only API keys**
+Each monitored site generates its own key under **Agency → Remote Access**. Keys are shown once, stored only as a SHA-256 hash, can expire after 30/90/365 days, and can be rotated or revoked instantly. A key can only read status counts — it cannot change anything.
+
+**Email alerts**
+An hourly digest email when something *new* happens: fatal errors, conflicts with 50 %+ confidence, or critical health issues. Choose the severity (critical / high / everything) and up to 10 recipients. The same conflict or issue is never emailed twice, and switching alerts on does not email the existing backlog.
+
 == Installation ==
 
 1. Upload the `tahhan-conflict-detective` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the **Plugins** menu in WordPress.
 3. Navigate to **Conflict Detective** in the WordPress admin sidebar.
 
-No configuration is required. All scanning is done on demand inside the admin area — zero front-end overhead.
+No configuration is required for the diagnostic tools — all scanning is done on demand inside the admin area. The optional Agency features (remote monitoring, email alerts) are off until you enable them under **Conflict Detective → Agency**.
 
 == Frequently Asked Questions ==
 
 = Does this plugin slow down my site? =
-No. All analysis runs on demand inside the WordPress admin. There is zero front-end overhead.
+No. All analysis runs on demand inside the WordPress admin. The Performance Monitor records a few timestamps while plugins load, and the slow-request monitor only writes to the database when a request takes longer than 500 ms. Agency features run in WP-Cron and only when you enable them.
 
 = What log files does it read? =
 `wp-content/debug.log` and the server PHP `error_log` path returned by `ini_get('error_log')`.
@@ -84,7 +95,7 @@ Never. Safe Testing Mode uses a session cookie that is only present for your adm
 The plugin detects missing database tables on every request and recreates them automatically — no activation hook required.
 
 = Is this plugin compatible with Multisite? =
-The plugin monitors the current site only. It is not a network-wide tool in this version.
+Yes, per site. Because the PHP error log is shared by every site on a network, the Error Log, email alerts and the Agency hub are only available to network (super) administrators. Site administrators keep access to the other tools.
 
 = How does the Performance Monitor work? =
 Performance Monitor hooks into WordPress's `plugin_loaded` action, which fires once for every plugin that loads. It records a snapshot of the PHP execution time, memory usage, and database query count immediately before and after each plugin loads, then computes the delta. The results are stored in a 5-minute transient and can be refreshed on demand. Because measurements happen at request time, values vary between requests — treat them as estimates rather than precise benchmarks.
@@ -98,6 +109,28 @@ Yes. Go to **Conflict Detective → Cron Monitor** and click the "Run Now" butto
 = What is the Plugin Interaction Map? =
 The Interaction Map groups your installed plugins into known ecosystem clusters (WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, Contact Form 7, WPML, LearnDash, Divi, WP Rocket, and more). Plugins within the same ecosystem are more likely to interact and potentially conflict with each other. The map also reads the `Requires Plugins` header introduced in WordPress 6.5 to show explicit declared dependencies.
 
+= What does the remote status endpoint expose? =
+`GET /wp-json/tahhan-cd/v1/status` returns counts only: number of open conflicts and the top suspect's plugin name and confidence, total and last-24h fatal errors, health-scan issue counts, the last plugin change, the site name, and the WordPress, PHP and Conflict Detective versions. No file paths, log messages or personal data. It only answers requests that send a valid key in the `X-Tahcd-Key` header — never in the URL. It is disabled until you generate a key.
+
+= How are API keys protected? =
+On the monitored site only a SHA-256 hash of the key is stored. On the agency site, keys of remote sites are encrypted with libsodium using a key derived from your `AUTH_KEY` salt — if you change your salts, re-add the remote sites. After 10 failed attempts in 15 minutes an IP is throttled; a request with a valid key is always accepted.
+
+= Why is HTTPS required for remote sites? =
+The API key travels in a request header. Remote URLs must use HTTPS on port 443; local, private-network, link-local and reserved addresses are refused to prevent server-side request forgery. Developers can allow plain HTTP on a test network with the `tahcd_allow_insecure_remote` filter. Known limitations: remote sites must have an IPv4 (A) record, and monitoring is disabled while an outbound HTTP proxy (`WP_PROXY_HOST`) is configured, because the destination could then not be verified.
+
+= My site is behind Cloudflare or a reverse proxy. Does throttling still work? =
+Yes. A valid key is never throttled. If you want throttling to use the real visitor IP, map it with the `tahcd_rest_client_ip` filter from a header your proxy sets.
+
+= Do email alerts need a real cron job? =
+Alerts and remote polling run through WP-Cron, which runs when your site receives traffic. On low-traffic sites, configure a system cron that calls `wp-cron.php` for timely alerts.
+
+== External services ==
+
+Conflict Detective does not contact the plugin author or any third-party service. Two optional features, both off by default and configured by an administrator, send data elsewhere:
+
+* **Agency hub** — when you add a remote site under Agency → Monitored Sites, this site sends an HTTPS GET request to that site's `/wp-json/tahhan-cd/v1/status` endpoint at the interval you choose. The request contains the remote site's API key (in the `X-Tahcd-Key` header) and the user agent `TahhanConflictDetective/<version>`. Only sites you add are contacted; their own terms and privacy policies apply.
+* **Email alerts** — when enabled, digest emails are sent through your site's `wp_mail()` configuration to the recipients you enter. They contain error-log excerpts, plugin names and health-scan messages from this site.
+
 == Screenshots ==
 
 1. Dashboard — live system overview: active plugins, stat cards, recent changes and the likely conflict culprit widget.
@@ -109,6 +142,17 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.7.0 =
+* New: Agency hub — monitor up to 50 Conflict Detective sites from one dashboard, polled every 5/15/60 minutes or on demand.
+* New: Read-only REST endpoint `GET /wp-json/tahhan-cd/v1/status`, protected by a per-site API key (hash-only storage, expiry, rotation, revocation, per-IP throttling of failed attempts).
+* New: Email alerts — hourly digest of new fatal errors, conflicts and critical health issues, with severity levels, deduplication and a test button.
+* Security: Outbound requests resolve every A/AAAA record, refuse private/link-local/reserved/CGNAT addresses, pin the connection to the vetted IP, allow HTTPS on port 443 only and follow no redirects.
+* Security: Remote sites' API keys are encrypted at rest with libsodium.
+* Security: On multisite the shared error log (Error Log tab, dashboard card, Conflict Wizard timeline), email alerts and agency hub are restricted to network administrators.
+* Fix: The activation hook was registered too late (inside `plugins_loaded`) and never ran on activation; tables were only created on the next request.
+* Fix: Error logs larger than 50 MB were skipped entirely; the newest entries are now always read (memory is bounded at 2 MB).
+* Uninstall now also removes the new options, cron events and transients on every site.
 
 = 2.6.6 =
 * Fix: `Error_Log::tail()` — `fread()` return now checked; read errors no longer inject the word "false" into parsed log entries.
@@ -231,6 +275,9 @@ The Interaction Map groups your installed plugins into known ecosystem clusters 
 * Initial release — Dashboard, Error Log Viewer, Plugin Change History, Health Scan
 
 == Upgrade Notice ==
+
+= 2.7.0 =
+Agency Edition: multi-site monitoring, read-only API keys and email alerts. All new features are off until you enable them.
 
 = 2.1.1 =
 Security and quality patch. Upgrade recommended for all users on 2.1.0.

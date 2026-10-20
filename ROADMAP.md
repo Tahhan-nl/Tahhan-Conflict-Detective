@@ -4,7 +4,7 @@
 
 **Target audience:** Website owners · Web designers · Freelancers · Hosting companies · WordPress agencies
 
-**Current stable version:** 2.6.6 — released 2026-10-14  
+**Current stable version:** 2.7.0 — released 2026-10-20  
 **WordPress.org slug:** `tahhan-conflict-detective`  
 **GitHub:** https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
 
@@ -162,66 +162,75 @@ Also reads the `Requires Plugins` header (WordPress 6.5+) for explicit declared 
 
 ---
 
-## Phase 4 — Agency Edition 🔲 Planned
+## Phase 4 — Agency Edition 🚧 In progress (v2.7.0 → v2.9.0)
 
 > **Goal:** Let web agencies and freelancers monitor many client sites from a single dashboard — without logging into each WP admin separately.
 
-### 4.1 — Multi-site Dashboard
+**Design decision (v2.7.0):** the hub is built into the plugin itself (Agency tab) instead of a separate standalone app. Every install can be a monitored site, a hub, or both. No external service, no account, nothing leaves the network except requests the admin configures.
 
-Central overview for all managed sites, built on a lightweight REST API:
+### 4.1 — Multi-site Dashboard ✅ v2.7.0
 
-```
-site1.nl  — 2 issues detected        (last check: 5 min ago)
-site2.nl  — All clear                 (last check: 3 min ago)
-site3.nl  — 1 conflict pending        (last check: 8 min ago)
-site4.nl  — Unreachable ⚠             (last check: 12 min ago)
-```
+- Read-only endpoint `GET /wp-json/tahhan-cd/v1/status` — status (ok/warning/critical), conflict count + top suspect, fatal errors last 24 h, health issues (total + critical), last plugin change, WP/PHP/plugin versions. No paths or log text.
+- Hub: up to 50 sites, URL + API key, polled every 5 / 15 / 60 min via WP-Cron or with **Check now**; results cached in `tahcd_remote_status`.
+- SSRF-hardened outbound requests (all A/AAAA public, IP pinned, HTTPS/443, no redirects), remote keys encrypted with libsodium.
+- Per-site result saved immediately; run time bounded below `max_execution_time`.
 
-**Implementation plan:**
-- Each site exposes a read-only REST endpoint: `GET /wp-json/tahhan-cd/v1/status`
-- Endpoint returns: conflict count, health-scan issues, last error, last change, plugin version
-- Central dashboard (installed on the agency's own WP or as a standalone PHP app) polls all registered sites
-- Sites are registered by URL + API key (stored in wp_options on the central site)
-- Polling interval: configurable (5 / 15 / 60 minutes)
-- Results cached locally so the dashboard loads instantly
+**Still open (v2.8.0):**
+- Overview stat bar on the Agency tab (sites critical / warning / unreachable).
+- Sort and filter the site table; "last seen OK" timestamp.
+- Bulk import/export of the site list (keys excluded from export).
 
-### 4.2 — Email Alerts
+### 4.2 — Email Alerts ✅ v2.7.0 (local site) · 🔲 hub alerts v2.8.0
 
-Automatic email notifications triggered by:
-- New fatal error detected in the error log
-- Conflict Scanner confidence > 50 % for a new conflict
-- Health Scan finds a new critical issue (PHP version, memory, missing theme file)
-- Site becomes unreachable (HTTP 5xx or timeout)
+Done:
+- Hourly digest for new fatal errors, conflicts ≥ 50 %, critical health issues (severity: critical / high / all).
+- Up to 10 recipients, deduplicated per conflict and per health issue, no backlog mail on enable, throttled test email.
 
-**Settings:**
-- Per-site recipient list (agency email + optional client email)
-- Severity threshold (all / high only / critical only)
-- Digest mode: immediate · daily summary · weekly summary
-- Opt-out link in every email (one-click for clients)
+Next:
+- **Hub alerts** — email when a monitored site turns *critical* or *unreachable* for two consecutive polls (and a recovery mail).
+- Digest mode: immediate · daily · weekly.
+- Per-recipient one-click unsubscribe link (signed token) for client addresses.
+- Optional webhook (Slack/Teams-compatible JSON) as an alternative to email.
 
-### 4.3 — PDF Reporting
-
-Auto-generated report per site, schedulable (weekly / monthly):
+### 4.3 — PDF / Printable Reporting 🔲 v2.9.0
 
 | Section | Content |
 |---------|---------|
-| Executive summary | Overall health score, open issues |
+| Executive summary | Status, open issues, trend vs. previous period |
 | Detected conflicts | List with confidence scores and timestamps |
 | Performance overview | Slow / Heavy plugins with load times |
-| Change history | All plugin activations/updates/deletions in the report period |
+| Change history | All plugin changes in the report period |
 | Recommendations | Prioritised action list |
 
-**Options:**
-- White-label branding: agency logo, colours, footer
-- Delivery: email PDF attachment or download from dashboard
-- Format: A4 PDF, generated server-side with a PHP PDF library (no external services)
+**Approach (revised):** step 1 is a print-optimised HTML report (`@media print`, browser "Save as PDF") — zero dependencies, fully WP.org-compliant. A bundled PHP PDF library is only considered afterwards, because it adds ~2 MB and a third-party licence to review. White-label: agency name, logo (media library) and accent colour.
 
-### 4.4 — API Key Management
+### 4.4 — API Key Management ✅ v2.7.0
 
-- Each site generates a signed API key (256-bit, stored in wp_options)
-- Key rotation with configurable expiry (30/90/365 days or never)
-- Key scoped to read-only: cannot trigger actions remotely
-- Revoke key from the central dashboard instantly
+- 256-bit key, shown once, SHA-256 hash only, `hash_equals` verification.
+- Expiry 30 / 90 / 365 days or never; rotation and instant revocation; "last used" timestamp.
+- Read-only scope by design (the endpoint has no write actions).
+- Failed attempts throttled per IP (/64 for IPv6); a valid key is never throttled.
+
+**Still open:** expiry warning on the hub ("key expires in 7 days") and an expiry reminder email on the monitored site.
+
+### Release plan
+
+| Version | Scope |
+|---------|-------|
+| 2.7.0 ✅ | 4.1 hub + endpoint, 4.2 local alerts, 4.4 API keys, SSRF/crypto hardening, multisite restrictions |
+| 2.8.0 | Hub alerts (critical/unreachable/recovery), digest modes, unsubscribe link, webhook, Agency overview bar, key-expiry warnings |
+| 2.9.0 | Printable HTML report + white-label, scheduled report email |
+| 3.0.0 | Phase 5 (below) |
+
+---
+
+## Phase 5 — Deeper Diagnosis 🔲 Idea backlog
+
+- **Automatic bisection in Safe Mode** — disable half of the suspect plugins, ask "is the problem gone?", repeat: finds the culprit in log₂(n) steps.
+- **Front-end JavaScript error capture** (opt-in, admin sessions only) to attribute JS errors to plugin assets.
+- **Update guard** — snapshot error rate before/after each plugin update and flag regressions within the first hour.
+- **WP-CLI commands** — `wp tahcd scan`, `wp tahcd status --format=json` for agencies using CLI tooling.
+- **Automated test suite** — PHPUnit with the WordPress test library in CI (the v2.7.0 logic is currently covered by an out-of-tree harness).
 
 ---
 
@@ -236,6 +245,20 @@ Auto-generated report per site, schedulable (weekly / monthly):
 | `{prefix}cd_scans` | Serialised health-scan results | v1.0.0 |
 | `{prefix}cd_conflicts` | Detected conflict records with confidence scores | v2.0.0 |
 | `{prefix}cd_ajax_log` | Slow AJAX/REST call log (> 500 ms) | v2.6.0 |
+
+### Options (Agency Edition, v2.7.0)
+
+| Option | Purpose | Autoload |
+|--------|---------|----------|
+| `tahcd_api_key` | Hash, hint, created, expiry of this site's API key | no |
+| `tahcd_api_key_last_used` | Last successful key use (separate to avoid write races) | no |
+| `tahcd_remote_sites` | Hub: remote sites (label, URL, encrypted key) | no |
+| `tahcd_remote_status` | Hub: last poll result per site | no |
+| `tahcd_agency_settings` | Hub: polling interval | no |
+| `tahcd_alert_settings` | Alerts: enabled, recipients, severity | yes |
+| `tahcd_alert_state` | Alerts: last check + signatures already reported | no |
+
+Cron events: `tahcd_agency_poll` (5/15/60 min), `tahcd_alerts_check` (hourly). Both are removed on deactivation and restored on the next admin request after reactivation.
 
 Schema is managed by `Database::maybe_upgrade()` at priority 0 on `plugins_loaded`.  
 Current `SCHEMA_VERSION = 3`.  
@@ -256,10 +279,14 @@ Tables are preserved on deactivation and removed cleanly on uninstall.
 | `admin_menu` | Dashboard | Register top-level admin menu |
 | `admin_enqueue_scripts` | Dashboard | Enqueue CSS/JS assets |
 | `wp_ajax_tahcd_*` | Multiple | All AJAX handlers (nonce-protected) |
+| `rest_api_init` | Rest_Api | Register `tahhan-cd/v1/status` |
+| `cron_schedules` | Agency | `tahcd_5min`, `tahcd_15min` intervals |
+| `http_api_curl` | Agency | Pin outbound hub requests to the vetted IP (only during a poll) |
+| `admin_init` | Alerts, Agency | Keep cron events in sync with settings |
 
 ### File scanning targets
-- `wp-content/debug.log` (max 50 MB — larger files are skipped to prevent OOM)
-- Server `error_log` path from `ini_get('error_log')` (same 50 MB guard)
+- `wp-content/debug.log` — read backwards from the end, last 500 lines, at most 2 MB (any file size)
+- Server `error_log` path from `ini_get('error_log')` (same limits)
 - `wp-content/plugins/` (plugin discovery)
 - `wp-content/themes/` (theme health checks)
 
@@ -297,6 +324,7 @@ Tables are preserved on deactivation and removed cleanly on uninstall.
 | 2.6.4 | 2026-08-26 | Fix | Schema defaults, `tables_exist()` partial-install detection, DB error propagation, `md5()` option keys |
 | 2.6.5 | 2026-09-14 | Fix | Missing `return` after error responses in 3 AJAX handlers, untranslated 'Forbidden' string |
 | 2.6.6 | 2026-10-14 | Fix | `fread()` false guard in tail(), null guard in get_recent_changes(), strtotime false guards, dashboard double-call eliminated |
+| 2.7.0 | 2026-10-20 | Phase 4 | Agency hub, REST status endpoint, API keys, email alerts; SSRF/crypto hardening; activation-hook fix |
 
 ---
 

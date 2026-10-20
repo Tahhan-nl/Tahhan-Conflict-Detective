@@ -31,6 +31,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Conflict_Scanner {
 
+	/** Confidence at which a suspect counts as an open conflict (alerts, remote status). */
+	const CONFLICT_THRESHOLD = 50;
+
+	/** Confidence at which a conflict is considered critical. */
+	const CRITICAL_THRESHOLD = 70;
+
 	/** Look-back window for plugin changes. */
 	private const CHANGE_WINDOW_DAYS = 30;
 

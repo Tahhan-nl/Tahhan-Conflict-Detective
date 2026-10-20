@@ -3,7 +3,7 @@
  * Plugin Name:       Tahhan Conflict Detective
  * Plugin URI:        https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
  * Description:       Automatically detects which plugin, theme, or update broke your WordPress site — without manual trial and error.
- * Version:           2.6.6
+ * Version:           2.7.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Tahhan
@@ -29,7 +29,7 @@ if ( defined( 'TAHCD_VERSION' ) ) {
 	return;
 }
 
-define( 'TAHCD_VERSION',     '2.6.6' );
+define( 'TAHCD_VERSION',     '2.7.0' );
 define( 'TAHCD_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'TAHCD_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'TAHCD_PLUGIN_FILE', __FILE__ );
@@ -68,6 +68,10 @@ require_once TAHCD_PLUGIN_DIR . 'includes/class-performance.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-cron-monitor.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-ajax-monitor.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-interaction-map.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-api-keys.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-rest-api.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-alerts.php';
+require_once TAHCD_PLUGIN_DIR . 'includes/class-agency.php';
 require_once TAHCD_PLUGIN_DIR . 'includes/class-dashboard.php';
 
 /**
@@ -107,8 +111,14 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init(): void {
-		register_activation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'install' ) );
-		register_deactivation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'on_deactivate' ) );
+		Rest_Api::init();
+		Alerts::init();
+		Agency::init();
+
+		// Restores cron events after a deactivate/reactivate cycle and keeps
+		// them in sync with settings; admin-only so the front end pays nothing.
+		add_action( 'admin_init', array( 'TahhanConflictDetective\Alerts', 'sync_schedule' ) );
+		add_action( 'admin_init', array( 'TahhanConflictDetective\Agency', 'sync_schedule' ) );
 
 		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Change_History',  'init' ) );
 		add_action( 'plugins_loaded', array( 'TahhanConflictDetective\Ajax_Monitor',    'init' ) );
@@ -118,6 +128,15 @@ final class Plugin {
 		add_action( 'admin_enqueue_scripts', array( 'TahhanConflictDetective\Dashboard', 'enqueue_assets' ) );
 	}
 }
+
+// Lifecycle hooks must be registered at file-load time: during an activation
+// request plugins_loaded has already fired, so registering them later is a no-op.
+register_activation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'install' ) );
+register_deactivation_hook( TAHCD_PLUGIN_FILE, array( 'TahhanConflictDetective\Database', 'on_deactivate' ) );
+
+// Custom cron intervals must exist in every request that may schedule or run
+// events, including the activation request where plugins_loaded never fires.
+add_filter( 'cron_schedules', array( 'TahhanConflictDetective\Agency', 'add_schedules' ) );
 
 // Safe Mode MUST init before plugins_loaded fires so its pre_option filter
 // and AJAX handlers are registered immediately when the plugin file loads.
