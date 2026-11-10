@@ -4,7 +4,7 @@ Tags: conflict, debug, plugins, errors, health
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.0
+Stable tag: 2.8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,8 +66,14 @@ Monitor up to 50 client sites from one WordPress install. Each row shows the sit
 **Read-only API keys**
 Each monitored site generates its own key under **Agency → Remote Access**. Keys are shown once, stored only as a SHA-256 hash, can expire after 30/90/365 days, and can be rotated or revoked instantly. A key can only read status counts — it cannot change anything.
 
-**Email alerts**
-An hourly digest email when something *new* happens: fatal errors, conflicts with 50 %+ confidence, or critical health issues. Choose the severity (critical / high / everything) and up to 10 recipients. The same conflict or issue is never emailed twice, and switching alerts on does not email the existing backlog.
+**Alerts by email and webhook** *(extended in 2.8.0)*
+Get notified when something *new* happens: fatal errors, conflicts with 50 %+ confidence, or critical health issues. Choose the severity (critical / high / everything), immediate delivery or a daily/weekly digest, up to 10 email recipients and/or a Slack, Discord, Microsoft Teams or generic JSON webhook. The same conflict or issue is never sent twice, and switching alerts on does not send the existing backlog.
+
+**Hub alerts** *(new in 2.8.0)*
+The agency site is alerted when a monitored site is critical or unreachable for two checks in a row, when it recovers, and two weeks before a site's API key expires. Hub alerts are always sent immediately.
+
+**Private, one-click unsubscribe** *(new in 2.8.0)*
+Every recipient gets an individual email — recipients never see each other's addresses — with a personal unsubscribe link and one-click unsubscribe support in Gmail, Outlook and Apple Mail.
 
 == Installation ==
 
@@ -121,15 +127,26 @@ The API key travels in a request header. Remote URLs must use HTTPS on port 443;
 = My site is behind Cloudflare or a reverse proxy. Does throttling still work? =
 Yes. A valid key is never throttled. If you want throttling to use the real visitor IP, map it with the `tahcd_rest_client_ip` filter from a header your proxy sets.
 
+= How does unsubscribing work? =
+Every alert email contains a personal link. Opening it shows a confirmation button (so mail-security scanners that follow links cannot unsubscribe anyone); clicking it removes only that address. Mail clients that support one-click unsubscribe (RFC 8058) remove the address directly. The link contains a random token, never the email address. Tokens do not expire; changing your site's security salts invalidates all of them.
+
+= Which webhook services are supported? =
+Slack and Mattermost incoming webhooks, Discord webhooks, Microsoft Teams Workflows ("When a Teams webhook request is received"), and a generic JSON format for your own endpoint. The webhook URL is stored encrypted and is never shown again after saving. Mentions such as `@everyone` or `<!channel>` in log text are neutralised.
+
 = Do email alerts need a real cron job? =
 Alerts and remote polling run through WP-Cron, which runs when your site receives traffic. On low-traffic sites, configure a system cron that calls `wp-cron.php` for timely alerts.
 
 == External services ==
 
-Conflict Detective does not contact the plugin author or any third-party service. Two optional features, both off by default and configured by an administrator, send data elsewhere:
+Conflict Detective does not contact the plugin author, and it sends nothing anywhere until an administrator enables one of these three optional features, all off by default:
 
 * **Agency hub** — when you add a remote site under Agency → Monitored Sites, this site sends an HTTPS GET request to that site's `/wp-json/tahhan-cd/v1/status` endpoint at the interval you choose. The request contains the remote site's API key (in the `X-Tahcd-Key` header) and the user agent `TahhanConflictDetective/<version>`. Only sites you add are contacted; their own terms and privacy policies apply.
-* **Email alerts** — when enabled, digest emails are sent through your site's `wp_mail()` configuration to the recipients you enter. They contain error-log excerpts, plugin names and health-scan messages from this site.
+* **Email alerts** — when enabled, alert emails are sent through your site's `wp_mail()` configuration to the recipients you enter. They contain error-log excerpts, plugin names and health-scan messages from this site, and the names, URLs and status of monitored sites.
+* **Alert webhooks** — when you enter a webhook URL under Agency → Alerts, the same alert content (subject, site URL, error-log excerpts, plugin names, health-scan messages, monitored-site status) is sent as an HTTPS POST to that URL whenever an alert is delivered, and once when you press "Send test". Depending on the URL you enter, the data is processed by:
+  * Slack — [Terms of Service](https://slack.com/terms-of-service), [Privacy Policy](https://slack.com/trust/privacy/privacy-policy)
+  * Discord — [Terms of Service](https://discord.com/terms), [Privacy Policy](https://discord.com/privacy)
+  * Microsoft Teams / Power Automate — [Microsoft Services Agreement](https://www.microsoft.com/servicesagreement), [Privacy Statement](https://privacy.microsoft.com/privacystatement)
+  * any other endpoint you configure (its own terms apply).
 
 == Screenshots ==
 
@@ -142,6 +159,20 @@ Conflict Detective does not contact the plugin author or any third-party service
 7. Health Scan — on-demand scan for duplicate functionality, outdated plugins, incompatibilities and server configuration issues.
 
 == Changelog ==
+
+= 2.8.0 =
+* New: Hub alerts — email/webhook when a monitored site is critical or unreachable for two consecutive checks, when it recovers, and before its API key expires.
+* New: Daily and weekly digest mode for alerts (hub alerts stay immediate).
+* New: Webhook channel for Slack/Mattermost, Discord, Microsoft Teams (Workflows) and generic JSON; URL stored encrypted, mentions neutralised.
+* New: Personal unsubscribe link in every alert email, with RFC 8058 one-click unsubscribe headers.
+* New: Agency overview bar (critical / unreachable / warning / all clear), sites sorted by severity, critical-health column, API-key expiry warnings on both sides.
+* Privacy fix: alert emails were sent with all recipients in one To: line, so clients could see each other's addresses. Each recipient now gets an individual email.
+* Fix: the status endpoint's 60-second cache is cleared when the API key is rotated or revoked.
+* Fix: bare domain names in log excerpts are now defanged in alerts (mail clients auto-link them).
+* Security: hub alerts are flood-proof — one problem alert per site per 6 hours, recovery only after two good checks, key-expiry warning at most weekly per site, and at most 6 hub alerts per hour overall (skipped ones are summarised in the next message).
+* Security: `@channel`/`@all` mentions are neutralised for Slack, Mattermost and Teams; Discord mentions are disabled; text reported by monitored sites is labelled and its links are broken.
+* Fix: after updating from 2.7.0, sites that were already down do not trigger an alert burst; switching alerts off and on again no longer sends an old digest.
+* Internal: outbound-request protection and encryption moved into shared helpers (Safe_Http, Secret_Box) used by both the hub and webhooks; keys stored by 2.7.0 keep working.
 
 = 2.7.0 =
 * New: Agency hub — monitor up to 50 Conflict Detective sites from one dashboard, polled every 5/15/60 minutes or on demand.
@@ -275,6 +306,9 @@ Conflict Detective does not contact the plugin author or any third-party service
 * Initial release — Dashboard, Error Log Viewer, Plugin Change History, Health Scan
 
 == Upgrade Notice ==
+
+= 2.8.0 =
+Hub alerts, daily/weekly digests, Slack/Discord/Teams webhooks and one-click unsubscribe. Privacy fix: alert recipients no longer see each other's addresses.
 
 = 2.7.0 =
 Agency Edition: multi-site monitoring, read-only API keys and email alerts. All new features are off until you enable them.

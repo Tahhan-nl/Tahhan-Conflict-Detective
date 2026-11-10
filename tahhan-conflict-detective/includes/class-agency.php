@@ -20,17 +20,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Security notes
  * --------------
- * - SSRF: core's wp_http_validate_url() misses link-local (cloud metadata),
- *   CGNAT and IPv6 internal ranges and resolves IPv4 only. We therefore resolve
- *   A + AAAA ourselves, reject the host if ANY address is non-public, and pin
- *   cURL to the vetted address (CURLOPT_RESOLVE) so DNS rebinding between check
- *   and connect is impossible. Requests that do not go through cURL fail closed.
- * - No redirects are followed, so the key header never reaches another host.
- * - HTTPS only (protocol and port 443) unless explicitly allowed via filter.
- * - Remote keys are encrypted at rest with libsodium secretbox, key derived from
- *   the AUTH salt. There is no plaintext fallback.
+ * - Every request goes through Safe_Http (public-IP check, DNS pinning,
+ *   HTTPS/443, no redirects, fail closed) so the key never reaches another host.
+ * - Remote keys are encrypted at rest with Secret_Box. No plaintext fallback.
  * - Remote responses are untrusted: every field is type-cast, whitelisted and
  *   length-limited before storage, and escaped again on output.
+ *
+ * Hub alerts: a site that is critical or unreachable for ALERT_AFTER_POLLS
+ * consecutive polls triggers one alert; a recovery triggers one more.
  *
  * @since 2.7.0
  */
@@ -43,25 +40,25 @@ final class Agency {
 	const MAX_SITES       = 50;
 	const INTERVALS       = array( 5 => 'tahcd_5min', 15 => 'tahcd_15min', 60 => 'hourly' );
 
-	private const REQUEST_TIMEOUT    = 6;
+	/** Consecutive bad polls before a hub alert (filters out one-off blips). */
+	const ALERT_AFTER_POLLS = 2;
+	/** Consecutive good polls before a recovery is announced. */
+	const RECOVER_AFTER_POLLS = 2;
+	/** Minimum gap between two problem alerts for the same site (anti-flapping). */
+	const ALERT_COOLDOWN    = 6 * HOUR_IN_SECONDS;
+	/** Warn this many days before a remote site's API key expires. */
+	const KEY_WARN_DAYS     = 14;
+	/** A key-expiry warning is repeated at most this often per site. */
+	const KEY_WARN_REPEAT   = 7 * DAY_IN_SECONDS;
+	/** Context for Secret_Box; unchanged since 2.7.0 so stored keys still decrypt. */
+	private const CRYPTO_CONTEXT = 'tahcd-remote-keys';
+
+	private const REQUEST_TIMEOUT    = Safe_Http::TIMEOUT;
 	private const MAX_RESPONSE_BYTES = 65536;
 	/** Upper bound for one cron run; lowered further to fit max_execution_time. */
 	private const POLL_TIME_BUDGET   = 25;
 	/** Minimum seconds between manual "Check now" requests for one site. */
 	private const MANUAL_POLL_GAP    = 15;
-
-	private const BLOCKED_V4 = array(
-		'0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8', '169.254.0.0/16', '172.16.0.0/12',
-		'192.0.0.0/24', '192.0.2.0/24', '192.168.0.0/16', '198.18.0.0/15', '198.51.100.0/24',
-		'203.0.113.0/24', '224.0.0.0/4', '240.0.0.0/4',
-	);
-	private const BLOCKED_V6 = array(
-		'::/96', '::ffff:0:0/96', '64:ff9b::/96', '100::/64', '2001::/32', '2001:db8::/32',
-		'2002::/16', 'fc00::/7', 'fe80::/10', 'fec0::/10', 'ff00::/8',
-	);
-
-	/** @var array{host: string, port: int, ip: string, applied: bool}|null Active DNS pin. */
-	private static $pin = null;
 
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'poll_all' ) );
@@ -134,13 +131,99 @@ final class Agency {
 	}
 
 	/**
-	 * Writes one site's status, merging with the latest stored statuses so a
-	 * concurrent cron run and a manual check never overwrite each other.
+	 * ok | warning | critical | unknown | unreachable for a poll result.
+	 *
+	 * @param array<string, mixed>|null $status
 	 */
-	private static function save_status( string $id, array $status ): void {
-		$statuses        = self::get_statuses();
-		$statuses[ $id ] = $status;
+	public static function state_of( ?array $status ): string {
+		if ( null === $status ) {
+			return 'pending';
+		}
+		if ( empty( $status['ok'] ) ) {
+			return 'unreachable';
+		}
+		$state = (string) ( $status['data']['status'] ?? '' );
+		return in_array( $state, array( 'ok', 'warning', 'critical' ), true ) ? $state : 'unknown';
+	}
+
+	/**
+	 * Stores one poll result and works out whether it should raise a hub
+	 * alert. Re-reads the stored statuses first so a concurrent cron run and
+	 * a manual check never overwrite each other.
+	 *
+	 * @param  array{label: string, url: string, key: string, added: int} $site
+	 * @param  array<string, mixed>                                       $result Output of fetch().
+	 * @return array<int, array<string, mixed>> Hub alert events (possibly empty).
+	 */
+	private static function record( string $id, array $site, array $result ): array {
+		$statuses = self::get_statuses();
+		$prev     = $statuses[ $id ] ?? array();
+		$state    = self::state_of( $result );
+		$now      = time();
+		$streak   = ( (string) ( $prev['state'] ?? '' ) === $state ) ? (int) ( $prev['streak'] ?? 0 ) + 1 : 1;
+		$alerted  = (string) ( $prev['alerted'] ?? '' );
+		$alert_at = (int) ( $prev['alert_at'] ?? 0 );
+		$warned   = (int) ( $prev['key_warned_at'] ?? 0 );
+		$events   = array();
+		$base     = array( 'label' => $site['label'], 'url' => $site['url'] );
+		$bad      = in_array( $state, array( 'critical', 'unreachable' ), true );
+
+		if ( ! isset( $prev['state'] ) ) {
+			// First poll with hub-alert tracking (fresh site, or upgrade from 2.7):
+			// a problem that already existed is the baseline, not news.
+			if ( $bad && ! empty( $prev ) ) {
+				$alerted  = $state;
+				$alert_at = $now;
+			}
+		} elseif ( $bad ) {
+			// Cooldown: a site flapping between states cannot flood the inbox.
+			if ( $streak >= self::ALERT_AFTER_POLLS && $alerted !== $state && $now - $alert_at >= self::ALERT_COOLDOWN ) {
+				$events[] = $base + array(
+					'type'   => $state,
+					'detail' => 'unreachable' === $state ? (string) $result['error'] : self::critical_detail( $result['data'] ),
+				);
+				$alerted  = $state;
+				$alert_at = $now;
+			}
+		} elseif ( in_array( $state, array( 'ok', 'warning' ), true ) && '' !== $alerted && $streak >= self::RECOVER_AFTER_POLLS ) {
+			$events[] = $base + array( 'type' => 'recovered', 'detail' => $state );
+			$alerted  = '';
+		}
+
+		// The remote site controls key.expires, so the warning is rate-limited by
+		// time (not by value change) and ignores dates that already passed.
+		$expires = (int) ( $result['data']['key_expires'] ?? 0 );
+		if ( $expires > $now && $expires - $now < self::KEY_WARN_DAYS * DAY_IN_SECONDS && $now - $warned >= self::KEY_WARN_REPEAT ) {
+			$events[] = $base + array( 'type' => 'key_expiring', 'detail' => (string) $expires );
+			$warned   = $now;
+		}
+
+		$statuses[ $id ] = $result + array(
+			'state'         => $state,
+			'streak'        => $streak,
+			'alerted'       => $alerted,
+			'alert_at'      => $alert_at,
+			'key_warned_at' => $warned,
+		);
 		update_option( self::STATUS_OPTION, array_intersect_key( $statuses, self::get_sites() ), false );
+
+		return $events;
+	}
+
+	/**
+	 * @param array<string, mixed> $data Sanitised remote payload.
+	 */
+	private static function critical_detail( array $data ): string {
+		$parts = array();
+		if ( ! empty( $data['fatal_24h'] ) ) {
+			/* translators: %d: number of fatal errors */
+			$parts[] = sprintf( _n( '%d fatal error in the last 24 hours', '%d fatal errors in the last 24 hours', (int) $data['fatal_24h'], 'tahhan-conflict-detective' ), (int) $data['fatal_24h'] );
+		}
+		if ( '' !== (string) ( $data['top_plugin'] ?? '' ) ) {
+			/* translators: 1: plugin name as reported by the remote site, 2: confidence percentage */
+			$parts[] = sprintf( __( 'top suspect reported by the site: "%1$s" (%2$d%%)', 'tahhan-conflict-detective' ), (string) $data['top_plugin'], (int) ( $data['top_confidence'] ?? 0 ) );
+		}
+		return implode( '; ', $parts );
 	}
 
 	/**
@@ -169,141 +252,20 @@ final class Agency {
 	// Validation (SSRF guard)
 	// -------------------------------------------------------------------------
 
-	private static function insecure_allowed( string $url ): bool {
-		return (bool) apply_filters( 'tahcd_allow_insecure_remote', false, $url );
-	}
-
 	/**
-	 * Normalises and validates a remote site URL.
+	 * Normalises and validates a remote site URL (see Safe_Http::check_url()).
 	 *
 	 * @return string|\WP_Error Normalised base URL with trailing slash.
 	 */
 	public static function validate_url( string $input ) {
-		$url   = esc_url_raw( trim( $input ), array( 'https', 'http' ) );
-		$parts = '' !== $url ? wp_parse_url( $url ) : false;
-
-		if ( ! is_array( $parts ) || empty( $parts['host'] ) || empty( $parts['scheme'] ) ) {
-			return new \WP_Error( 'tahcd_bad_url', __( 'Enter a valid site URL, e.g. https://example.com', 'tahhan-conflict-detective' ) );
+		$checked = Safe_Http::check_url( $input );
+		if ( is_wp_error( $checked ) ) {
+			return $checked;
 		}
-
-		$scheme = strtolower( $parts['scheme'] );
-		if ( 'https' !== $scheme && ! self::insecure_allowed( $url ) ) {
-			return new \WP_Error( 'tahcd_https_required', __( 'HTTPS is required — the API key would otherwise be sent in plain text.', 'tahhan-conflict-detective' ) );
-		}
-
-		$host = strtolower( rtrim( $parts['host'], '.' ) );
-		$port = isset( $parts['port'] ) ? (int) $parts['port'] : ( 'https' === $scheme ? 443 : 80 );
-
-		$allowed_ports = array_map( 'intval', (array) apply_filters( 'tahcd_remote_allowed_ports', self::insecure_allowed( $url ) ? array( 443, 80 ) : array( 443 ) ) );
-		if ( ! in_array( $port, $allowed_ports, true ) ) {
-			return new \WP_Error( 'tahcd_port_blocked', __( 'Only the standard HTTPS port (443) is allowed.', 'tahhan-conflict-detective' ) );
-		}
-
-		$normalised = $scheme . '://' . $host
-			. ( isset( $parts['port'] ) ? ':' . $port : '' )
-			. trailingslashit( $parts['path'] ?? '/' );
-
-		$ip = self::resolve_public_ip( $host );
-		if ( is_wp_error( $ip ) ) {
-			return $ip;
-		}
-
-		return $normalised;
-	}
-
-	/**
-	 * Resolves A and AAAA records and returns one address to pin, but only if
-	 * EVERY address is public — a single internal record rejects the host.
-	 *
-	 * @return string|\WP_Error
-	 */
-	private static function resolve_public_ip( string $host ) {
-		if ( false !== filter_var( $host, FILTER_VALIDATE_IP ) ) {
-			$ips = array( $host );
-		} else {
-			$ips = gethostbynamel( $host ) ?: array();
-			if ( function_exists( 'dns_get_record' ) ) {
-				$records = @dns_get_record( $host, DNS_AAAA ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- emits a warning on NXDOMAIN; failure is handled below.
-				foreach ( is_array( $records ) ? $records : array() as $record ) {
-					if ( ! empty( $record['ipv6'] ) ) {
-						$ips[] = (string) $record['ipv6'];
-					}
-				}
-			}
-		}
-
-		if ( empty( $ips ) ) {
-			return new \WP_Error( 'tahcd_dns', __( 'The host name could not be resolved.', 'tahhan-conflict-detective' ) );
-		}
-
-		foreach ( $ips as $ip ) {
-			if ( ! self::is_public_ip( $ip ) ) {
-				return new \WP_Error( 'tahcd_url_blocked', __( 'This address is not allowed: local, private-network, link-local and reserved addresses are blocked.', 'tahhan-conflict-detective' ) );
-			}
-		}
-
-		// Prefer IPv4 for the pin; it is the most widely supported by cURL builds.
-		foreach ( $ips as $ip ) {
-			if ( false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
-				return $ip;
-			}
-		}
-		return $ips[0];
-	}
-
-	public static function is_public_ip( string $ip ): bool {
-		if ( false === filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			return false;
-		}
-		$list = false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ? self::BLOCKED_V4 : self::BLOCKED_V6;
-		foreach ( $list as $cidr ) {
-			if ( self::ip_in_cidr( $ip, $cidr ) ) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static function ip_in_cidr( string $ip, string $cidr ): bool {
-		list( $subnet, $bits ) = explode( '/', $cidr );
-		$ip_bin  = inet_pton( $ip );
-		$sub_bin = inet_pton( $subnet );
-		if ( false === $ip_bin || false === $sub_bin || strlen( $ip_bin ) !== strlen( $sub_bin ) ) {
-			return false;
-		}
-		$bits  = (int) $bits;
-		$bytes = intdiv( $bits, 8 );
-		$rem   = $bits % 8;
-		if ( substr( $ip_bin, 0, $bytes ) !== substr( $sub_bin, 0, $bytes ) ) {
-			return false;
-		}
-		if ( 0 === $rem ) {
-			return true;
-		}
-		$mask = chr( ( 0xFF << ( 8 - $rem ) ) & 0xFF );
-		return ( $ip_bin[ $bytes ] & $mask ) === ( $sub_bin[ $bytes ] & $mask );
-	}
-
-	/**
-	 * http_api_curl callback: pins the connection to the vetted IP and restricts
-	 * the protocol. Only active for the duration of one fetch().
-	 *
-	 * @param resource|\CurlHandle $handle cURL handle.
-	 * @param array                $args   Request arguments (unused).
-	 * @param string               $url    Request URL.
-	 */
-	public static function apply_pin( $handle, $args, $url ): void {
-		if ( null === self::$pin || strtolower( rtrim( (string) wp_parse_url( (string) $url, PHP_URL_HOST ), '.' ) ) !== self::$pin['host'] ) {
-			return;
-		}
-		$ip = self::$pin['ip'];
-		$ip = false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ? '[' . $ip . ']' : $ip;
-
-		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_setopt -- WP exposes no API to pin DNS; this is the documented http_api_curl extension point.
-		curl_setopt( $handle, CURLOPT_RESOLVE, array( self::$pin['host'] . ':' . self::$pin['port'] . ':' . $ip ) );
-		curl_setopt( $handle, CURLOPT_PROTOCOLS, self::insecure_allowed( (string) $url ) ? ( CURLPROTO_HTTPS | CURLPROTO_HTTP ) : CURLPROTO_HTTPS );
-		// phpcs:enable
-		self::$pin['applied'] = true;
+		$default_port = 'https' === $checked['scheme'] ? 443 : 80;
+		return $checked['scheme'] . '://' . $checked['host']
+			. ( $checked['port'] !== $default_port ? ':' . $checked['port'] : '' )
+			. trailingslashit( $checked['path'] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -326,6 +288,7 @@ final class Agency {
 		} );
 
 		$polled = 0;
+		$events = array();
 		foreach ( $sites as $id => $site ) {
 			// Always poll at least one site, even on hosts with a tiny time limit.
 			if ( $polled > 0 && microtime( true ) - $start + $per_site > $budget ) {
@@ -333,8 +296,10 @@ final class Agency {
 			}
 			$polled++;
 			// Saved per site: if PHP is killed mid-run, completed results survive.
-			self::save_status( $id, self::fetch( $site ) );
+			$events = array_merge( $events, self::record( $id, $site, self::fetch( $site ) ) );
 		}
+
+		Alerts::notify_hub( $events, $polled );
 	}
 
 	public static function poll_one( string $id ): ?array {
@@ -343,7 +308,7 @@ final class Agency {
 			return null;
 		}
 		$status = self::fetch( $sites[ $id ] );
-		self::save_status( $id, $status );
+		Alerts::notify_hub( self::record( $id, $sites[ $id ], $status ), 1 );
 		return $status;
 	}
 
@@ -354,45 +319,15 @@ final class Agency {
 	private static function fetch( array $site ): array {
 		$result = array( 'checked_at' => time(), 'ok' => false, 'error' => '', 'data' => array() );
 
-		if ( ! function_exists( 'curl_init' ) ) {
-			$result['error'] = __( 'The PHP cURL extension is required for remote monitoring.', 'tahhan-conflict-detective' );
-			return $result;
-		}
-
-		// Through an HTTP proxy the proxy resolves the host, so the IP pin would
-		// not protect against DNS rebinding. Fail closed.
-		$proxy = new \WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $site['url'] ) ) {
-			$result['error'] = __( 'Remote monitoring is not available while an outbound HTTP proxy (WP_PROXY_HOST) is configured.', 'tahhan-conflict-detective' );
-			return $result;
-		}
-
 		$key = self::decrypt( $site['key'] );
 		if ( null === $key ) {
 			$result['error'] = __( 'Stored API key could not be decrypted (security salts changed?). Remove and re-add this site.', 'tahhan-conflict-detective' );
 			return $result;
 		}
 
-		// Re-validate at request time: DNS may have changed since the site was added.
-		$parts = wp_parse_url( $site['url'] );
-		$host  = is_array( $parts ) ? strtolower( rtrim( (string) ( $parts['host'] ?? '' ), '.' ) ) : '';
-		$ip    = '' !== $host ? self::resolve_public_ip( $host ) : new \WP_Error( 'tahcd_bad_url', '' );
-		if ( is_wp_error( $ip ) ) {
-			$result['error'] = '' !== $ip->get_error_message() ? $ip->get_error_message() : __( 'Invalid stored URL.', 'tahhan-conflict-detective' );
-			return $result;
-		}
-
-		$scheme    = strtolower( (string) ( $parts['scheme'] ?? 'https' ) );
-		self::$pin = array(
-			'host'    => $host,
-			'port'    => isset( $parts['port'] ) ? (int) $parts['port'] : ( 'https' === $scheme ? 443 : 80 ),
-			'ip'      => $ip,
-			'applied' => false,
-		);
-
 		$args = array(
+			'method'              => 'GET',
 			'timeout'             => self::REQUEST_TIMEOUT,
-			'redirection'         => 0,
 			'limit_response_size' => self::MAX_RESPONSE_BYTES,
 			'user-agent'          => 'TahhanConflictDetective/' . TAHCD_VERSION,
 			'headers'             => array(
@@ -401,36 +336,25 @@ final class Agency {
 			),
 		);
 
-		add_action( 'http_api_curl', array( __CLASS__, 'apply_pin' ), 10, 3 );
-		try {
-			$base     = trailingslashit( $site['url'] );
-			$response = wp_safe_remote_get( $base . 'wp-json/' . Rest_Api::NAMESPACE_V1 . Rest_Api::ROUTE, $args );
+		$base     = trailingslashit( $site['url'] );
+		$response = Safe_Http::request( $base . 'wp-json/' . Rest_Api::NAMESPACE_V1 . Rest_Api::ROUTE, $args );
 
-			// Sites without pretty permalinks only answer on ?rest_route=.
-			if ( ! is_wp_error( $response ) && 404 === (int) wp_remote_retrieve_response_code( $response ) ) {
-				$response = wp_safe_remote_get(
-					add_query_arg( 'rest_route', '/' . Rest_Api::NAMESPACE_V1 . Rest_Api::ROUTE, $base ),
-					$args
-				);
-			}
-			$pinned = self::$pin['applied'];
-		} finally {
-			remove_action( 'http_api_curl', array( __CLASS__, 'apply_pin' ), 10 );
-			self::$pin = null;
-		}
-
-		// Fail closed: without the pin the request may have bypassed the IP check.
-		if ( ! $pinned ) {
-			$result['error'] = __( 'Request was not sent through cURL, so its destination could not be verified.', 'tahhan-conflict-detective' );
-			return $result;
+		// Sites without pretty permalinks only answer on ?rest_route=.
+		if ( ! is_wp_error( $response ) && 404 === (int) wp_remote_retrieve_response_code( $response ) ) {
+			$response = Safe_Http::request(
+				add_query_arg( 'rest_route', '/' . Rest_Api::NAMESPACE_V1 . Rest_Api::ROUTE, $base ),
+				$args
+			);
 		}
 
 		if ( is_wp_error( $response ) ) {
-			$result['error'] = sprintf(
-				/* translators: %s: transport error message */
-				__( 'Unreachable: %s', 'tahhan-conflict-detective' ),
-				self::str( $response->get_error_message(), 150 )
-			);
+			$result['error'] = Safe_Http::is_guard_error( $response )
+				? $response->get_error_message()
+				: sprintf(
+					/* translators: %s: transport error message */
+					__( 'Unreachable: %s', 'tahhan-conflict-detective' ),
+					self::str( $response->get_error_message(), 150 )
+				);
 			return $result;
 		}
 
@@ -489,6 +413,7 @@ final class Agency {
 		$env       = $sub( 'environment' );
 		$site      = $sub( 'site' );
 		$change    = $sub( 'last_change' );
+		$key       = $sub( 'key' );
 		$status    = isset( $body['status'] ) && is_string( $body['status'] ) ? $body['status'] : '';
 
 		$change_text = '';
@@ -508,6 +433,8 @@ final class Agency {
 			'errors_total'   => self::count_val( $errors['total'] ?? 0 ),
 			'fatal_24h'      => self::count_val( $errors['fatal_24h'] ?? 0 ),
 			'health_issues'  => self::count_val( $health['issues'] ?? 0 ),
+			'health_crit'    => self::count_val( $health['critical'] ?? 0 ),
+			'key_expires'    => isset( $key['expires'] ) && is_numeric( $key['expires'] ) ? (int) max( 0.0, min( 4102444800.0, (float) $key['expires'] ) ) : 0,
 			'last_change'    => $change_text,
 		);
 	}
@@ -534,42 +461,13 @@ final class Agency {
 	// Encryption at rest for remote keys
 	// -------------------------------------------------------------------------
 
-	private static function sodium_ready(): bool {
-		if ( ! function_exists( 'sodium_crypto_secretbox' ) && file_exists( ABSPATH . WPINC . '/sodium_compat/autoload.php' ) ) {
-			require_once ABSPATH . WPINC . '/sodium_compat/autoload.php';
-		}
-		return function_exists( 'sodium_crypto_secretbox' ) && function_exists( 'sodium_crypto_generichash' );
-	}
-
-	private static function crypto_key(): string {
-		return sodium_crypto_generichash( wp_salt( 'auth' ) . '|tahcd-remote-keys', '', 32 );
-	}
-
-	/**
-	 * @return string|null Null when encryption is unavailable — the caller must refuse to store the key.
-	 */
 	private static function encrypt( string $plain ): ?string {
-		if ( ! self::sodium_ready() ) {
-			return null;
-		}
-		$nonce = random_bytes( 24 );
-		return 'v1:' . base64_encode( $nonce . sodium_crypto_secretbox( $plain, $nonce, self::crypto_key() ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- binary ciphertext encoding for option storage.
+		return Secret_Box::encrypt( $plain, self::CRYPTO_CONTEXT );
 	}
 
 	private static function decrypt( string $stored ): ?string {
-		if ( strlen( $stored ) < 4 || 0 !== strpos( $stored, 'v1:' ) || ! self::sodium_ready() ) {
-			return null;
-		}
-		$payload = base64_decode( substr( $stored, 3 ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- binary ciphertext decoding.
-		if ( false === $payload || strlen( $payload ) <= 24 ) {
-			return null;
-		}
-		try {
-			$plain = sodium_crypto_secretbox_open( substr( $payload, 24 ), substr( $payload, 0, 24 ), self::crypto_key() );
-		} catch ( \Throwable $e ) {
-			return null;
-		}
-		return is_string( $plain ) && 1 === preg_match( Api_Keys::PATTERN, $plain ) ? $plain : null;
+		$plain = Secret_Box::decrypt( $stored, self::CRYPTO_CONTEXT );
+		return null !== $plain && 1 === preg_match( Api_Keys::PATTERN, $plain ) ? $plain : null;
 	}
 
 	// -------------------------------------------------------------------------
@@ -737,7 +635,7 @@ final class Agency {
 		echo '<div id="tahcd-agency-notice" aria-live="polite"></div>';
 		self::render_sites_card();
 		self::render_key_card();
-		self::render_alerts_card();
+		Alerts::render_card();
 		echo '</div>';
 	}
 
@@ -768,13 +666,23 @@ final class Agency {
 		if ( empty( $sites ) ) {
 			echo '<p class="pcd-empty">' . esc_html__( 'No sites added yet.', 'tahhan-conflict-detective' ) . '</p>';
 		} else {
+			self::render_overview( $sites, $statuses );
+
+			// Most urgent first, then alphabetical.
+			$rank = array( 'critical' => 0, 'unreachable' => 0, 'warning' => 1, 'unknown' => 2, 'pending' => 3, 'ok' => 4 );
+			uksort( $sites, static function ( $a, $b ) use ( $sites, $statuses, $rank ) {
+				$ra = $rank[ self::state_of( $statuses[ $a ] ?? null ) ];
+				$rb = $rank[ self::state_of( $statuses[ $b ] ?? null ) ];
+				return $ra <=> $rb ?: strcasecmp( $sites[ $a ]['label'], $sites[ $b ]['label'] );
+			} );
+
 			echo '<div class="tahcd-table-scroll"><table class="pcd-table tahcd-agency-table"><thead><tr>';
 			foreach ( array(
 				__( 'Site', 'tahhan-conflict-detective' ),
 				__( 'Status', 'tahhan-conflict-detective' ),
 				__( 'Conflicts', 'tahhan-conflict-detective' ),
 				__( 'Fatal (24h)', 'tahhan-conflict-detective' ),
-				__( 'Health issues', 'tahhan-conflict-detective' ),
+				__( 'Critical health', 'tahhan-conflict-detective' ),
 				__( 'Last check', 'tahhan-conflict-detective' ),
 				__( 'Actions', 'tahhan-conflict-detective' ),
 			) as $heading ) {
@@ -807,6 +715,29 @@ final class Agency {
 		printf( '<button type="submit" class="button button-primary">%s</button>', esc_html__( 'Add site', 'tahhan-conflict-detective' ) );
 		echo '</form>';
 
+		echo '</div>';
+	}
+
+	/**
+	 * Stat cards: how many sites are in each state.
+	 *
+	 * @param array<string, array<string, mixed>> $sites
+	 * @param array<string, array<string, mixed>> $statuses
+	 */
+	private static function render_overview( array $sites, array $statuses ): void {
+		$counts = array( 'critical' => 0, 'unreachable' => 0, 'warning' => 0, 'ok' => 0, 'other' => 0 );
+		foreach ( array_keys( $sites ) as $id ) {
+			$state = self::state_of( $statuses[ $id ] ?? null );
+			$counts[ isset( $counts[ $state ] ) ? $state : 'other' ]++;
+		}
+		echo '<div class="pcd-stats-bar">';
+		Dashboard::stat_card( (string) $counts['critical'], __( 'Critical', 'tahhan-conflict-detective' ), 'error', $counts['critical'] > 0 ? 'danger' : 'ok' );
+		Dashboard::stat_card( (string) $counts['unreachable'], __( 'Unreachable', 'tahhan-conflict-detective' ), 'site', $counts['unreachable'] > 0 ? 'danger' : 'ok' );
+		Dashboard::stat_card( (string) $counts['warning'], __( 'Warning', 'tahhan-conflict-detective' ), 'scan', $counts['warning'] > 0 ? 'warning' : 'ok' );
+		Dashboard::stat_card( (string) $counts['ok'], __( 'All clear', 'tahhan-conflict-detective' ), 'plugin', 'ok' );
+		if ( $counts['other'] > 0 ) {
+			Dashboard::stat_card( (string) $counts['other'], __( 'Pending / unknown', 'tahhan-conflict-detective' ), 'history', 'neutral' );
+		}
 		echo '</div>';
 	}
 
@@ -861,10 +792,16 @@ final class Agency {
 		if ( $status && empty( $status['ok'] ) && '' !== (string) ( $status['error'] ?? '' ) ) {
 			echo '<br><span class="tahcd-site-error">' . esc_html( (string) $status['error'] ) . '</span>';
 		}
+		$expires = (int) ( $data['key_expires'] ?? 0 );
+		if ( $expires > 0 && $expires - time() < self::KEY_WARN_DAYS * DAY_IN_SECONDS ) {
+			$days = max( 0, (int) floor( ( $expires - time() ) / DAY_IN_SECONDS ) );
+			/* translators: %d: number of days */
+			echo '<br><span class="tahcd-site-error">' . esc_html( sprintf( _n( 'API key expires in %d day', 'API key expires in %d days', $days, 'tahhan-conflict-detective' ), $days ) ) . '</span>';
+		}
 		echo '</td>';
 		echo '<td>' . esc_html( $conflicts ) . '</td>';
 		echo '<td>' . esc_html( $data ? $get( 'fatal_24h' ) : '—' ) . '</td>';
-		echo '<td>' . esc_html( $data ? $get( 'health_issues' ) : '—' ) . '</td>';
+		echo '<td>' . esc_html( $data ? $get( 'health_crit' ) . ' / ' . $get( 'health_issues' ) : '—' ) . '</td>';
 		echo '<td class="pcd-time">' . esc_html( $checked ) . '</td>';
 		echo '<td class="tahcd-actions">';
 		echo '<button type="button" class="button button-small tahcd-agency-poll" data-id="' . esc_attr( $id ) . '">' . esc_html__( 'Check now', 'tahhan-conflict-detective' ) . '</button> ';
@@ -887,6 +824,9 @@ final class Agency {
 			echo '<span class="pcd-badge pcd-badge--info">' . esc_html__( 'Disabled — no key', 'tahhan-conflict-detective' ) . '</span>';
 		} elseif ( $info['expired'] ) {
 			echo '<span class="pcd-badge pcd-badge--error">' . esc_html__( 'Expired', 'tahhan-conflict-detective' ) . '</span>';
+		} elseif ( null !== Api_Keys::days_left() && Api_Keys::days_left() < self::KEY_WARN_DAYS ) {
+			/* translators: %d: number of days */
+			echo '<span class="pcd-badge pcd-badge--warning">' . esc_html( sprintf( _n( 'Expires in %d day — rotate it soon', 'Expires in %d days — rotate it soon', (int) Api_Keys::days_left(), 'tahhan-conflict-detective' ), (int) Api_Keys::days_left() ) ) . '</span>';
 		} else {
 			echo '<span class="pcd-badge pcd-badge--ok">' . esc_html__( 'Active', 'tahhan-conflict-detective' ) . '</span>';
 		}
@@ -934,44 +874,6 @@ final class Agency {
 		printf( '<button type="button" id="tahcd-key-copy" class="button">%s</button>', esc_html__( 'Copy', 'tahhan-conflict-detective' ) );
 		printf( '<button type="button" id="tahcd-key-done" class="button">%s</button>', esc_html__( 'I have copied it', 'tahhan-conflict-detective' ) );
 		echo '</div></div>';
-
-		echo '</div>';
-	}
-
-	private static function render_alerts_card(): void {
-		$settings = Alerts::get_settings();
-
-		echo '<div class="pcd-card pcd-card--full">';
-		echo '<h2 class="pcd-card__title">' . esc_html__( 'Email Alerts', 'tahhan-conflict-detective' ) . '</h2>';
-		echo '<p class="pcd-scanner-intro">' . esc_html__( 'Checked hourly via WP-Cron. One digest email is sent only when something new appears — the same conflict or health issue is never emailed twice. Log excerpts are included as plain text.', 'tahhan-conflict-detective' ) . '</p>';
-
-		echo '<form id="tahcd-alerts-form" class="tahcd-form-stack">';
-		printf(
-			'<label class="tahcd-check"><input type="checkbox" name="enabled" value="1"%s> %s</label>',
-			checked( $settings['enabled'], true, false ),
-			esc_html__( 'Enable email alerts', 'tahhan-conflict-detective' )
-		);
-		printf(
-			'<label>%s<textarea name="recipients" rows="2" placeholder="%s">%s</textarea></label>',
-			esc_html__( 'Recipients (comma separated, max 10)', 'tahhan-conflict-detective' ),
-			esc_attr__( 'agency@example.com, client@example.com', 'tahhan-conflict-detective' ),
-			esc_textarea( implode( ', ', $settings['recipients'] ) )
-		);
-		echo '<label>' . esc_html__( 'Send alerts for', 'tahhan-conflict-detective' ) . '<select name="severity">';
-		$levels = array(
-			'critical' => __( 'Critical only — new fatal errors', 'tahhan-conflict-detective' ),
-			'high'     => __( 'High — fatal errors, conflicts, critical health issues', 'tahhan-conflict-detective' ),
-			'all'      => __( 'Everything — including PHP warnings and all health issues', 'tahhan-conflict-detective' ),
-		);
-		foreach ( $levels as $value => $label ) {
-			printf( '<option value="%s"%s>%s</option>', esc_attr( $value ), selected( $settings['severity'], $value, false ), esc_html( $label ) );
-		}
-		echo '</select></label>';
-		echo '<div class="tahcd-form-row">';
-		printf( '<button type="submit" class="button button-primary">%s</button>', esc_html__( 'Save alert settings', 'tahhan-conflict-detective' ) );
-		printf( '<button type="button" id="tahcd-alerts-test" class="button">%s</button>', esc_html__( 'Send test email', 'tahhan-conflict-detective' ) );
-		echo '</div>';
-		echo '</form>';
 
 		echo '</div>';
 	}

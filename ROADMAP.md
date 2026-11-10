@@ -4,7 +4,7 @@
 
 **Target audience:** Website owners · Web designers · Freelancers · Hosting companies · WordPress agencies
 
-**Current stable version:** 2.7.0 — released 2026-10-20  
+**Current stable version:** 2.8.0 — released 2026-11-10  
 **WordPress.org slug:** `tahhan-conflict-detective`  
 **GitHub:** https://github.com/Tahhan-nl/Tahhan-Conflict-Detective
 
@@ -162,7 +162,7 @@ Also reads the `Requires Plugins` header (WordPress 6.5+) for explicit declared 
 
 ---
 
-## Phase 4 — Agency Edition 🚧 In progress (v2.7.0 → v2.9.0)
+## Phase 4 — Agency Edition 🚧 In progress (v2.7.0 → v2.9.0) — 3 of 4 parts done
 
 > **Goal:** Let web agencies and freelancers monitor many client sites from a single dashboard — without logging into each WP admin separately.
 
@@ -175,22 +175,25 @@ Also reads the `Requires Plugins` header (WordPress 6.5+) for explicit declared 
 - SSRF-hardened outbound requests (all A/AAAA public, IP pinned, HTTPS/443, no redirects), remote keys encrypted with libsodium.
 - Per-site result saved immediately; run time bounded below `max_execution_time`.
 
-**Still open (v2.8.0):**
-- Overview stat bar on the Agency tab (sites critical / warning / unreachable).
-- Sort and filter the site table; "last seen OK" timestamp.
+**Added in v2.8.0:** overview stat bar (critical / unreachable / warning / all clear), table sorted by severity, critical-health column (critical / total), API-key expiry warning per site.
+
+**Still open (v2.9.0):**
+- Search/filter in the site table; "last seen OK" timestamp per site.
 - Bulk import/export of the site list (keys excluded from export).
 
-### 4.2 — Email Alerts ✅ v2.7.0 (local site) · 🔲 hub alerts v2.8.0
+### 4.2 — Alerts ✅ v2.7.0 + v2.8.0
 
-Done:
-- Hourly digest for new fatal errors, conflicts ≥ 50 %, critical health issues (severity: critical / high / all).
-- Up to 10 recipients, deduplicated per conflict and per health issue, no backlog mail on enable, throttled test email.
+v2.7.0:
+- Hourly check for new fatal errors, conflicts ≥ 50 %, critical health issues (severity: critical / high / all).
+- Up to 10 recipients, deduplicated per conflict and per health issue, no backlog mail on enable, throttled test.
 
-Next:
-- **Hub alerts** — email when a monitored site turns *critical* or *unreachable* for two consecutive polls (and a recovery mail).
-- Digest mode: immediate · daily · weekly.
-- Per-recipient one-click unsubscribe link (signed token) for client addresses.
-- Optional webhook (Slack/Teams-compatible JSON) as an alternative to email.
+v2.8.0:
+- **Hub alerts** — a monitored site that is *critical* or *unreachable* for two consecutive polls triggers one alert (max one per site per 6 h, max 6 hub messages per hour overall); recovery after two good polls triggers one more; a warning two weeks before a site's API key expires. Always immediate. If every site is unreachable in the same run, the alert notes that the hub's own connection may be down.
+- **Delivery** — immediate · daily digest · weekly digest (queued items capped at 50 per section).
+- **Privacy** — one email per recipient (no shared To: line), personal HMAC unsubscribe link, RFC 8058 one-click headers; GET shows a confirmation so link scanners cannot unsubscribe anyone.
+- **Webhook** — Slack/Mattermost, Discord, Teams Workflows (Adaptive Card) or generic JSON; URL encrypted at rest, same SSRF guard as the hub, mentions neutralised, last delivery status shown.
+
+**Still open:** per-recipient severity (e.g. client gets critical only, agency gets everything); quiet hours.
 
 ### 4.3 — PDF / Printable Reporting 🔲 v2.9.0
 
@@ -211,16 +214,21 @@ Next:
 - Read-only scope by design (the endpoint has no write actions).
 - Failed attempts throttled per IP (/64 for IPv6); a valid key is never throttled.
 
-**Still open:** expiry warning on the hub ("key expires in 7 days") and an expiry reminder email on the monitored site.
+**Added in v2.8.0:** expiry warning on the hub (table + one alert, 14 days ahead) and a notice on the monitored site's own admin pages; the status cache is flushed on rotation/revocation.
+
+**Still open:** an optional reminder email on the monitored site itself.
 
 ### Release plan
 
 | Version | Scope |
 |---------|-------|
 | 2.7.0 ✅ | 4.1 hub + endpoint, 4.2 local alerts, 4.4 API keys, SSRF/crypto hardening, multisite restrictions |
-| 2.8.0 | Hub alerts (critical/unreachable/recovery), digest modes, unsubscribe link, webhook, Agency overview bar, key-expiry warnings |
-| 2.9.0 | Printable HTML report + white-label, scheduled report email |
+| 2.8.0 ✅ | Hub alerts (critical/unreachable/recovery/key expiry), digest modes, unsubscribe link, webhooks, overview bar, per-recipient privacy fix; shared Safe_Http/Secret_Box helpers |
+| 2.9.0 | 4.3 printable HTML report + white-label + scheduled report email; site search/filter, "last seen OK", import/export; test suite moved into the repo with CI |
+| 2.10.0 | Per-recipient severity, quiet hours, monitored-site key reminder email |
 | 3.0.0 | Phase 5 (below) |
+
+**Quality gate for every release:** unit tests green, three security + two development review passes on new code, docs (readme, changelogs, roadmap, SECURITY.md) updated in the same commit.
 
 ---
 
@@ -230,7 +238,7 @@ Next:
 - **Front-end JavaScript error capture** (opt-in, admin sessions only) to attribute JS errors to plugin assets.
 - **Update guard** — snapshot error rate before/after each plugin update and flag regressions within the first hour.
 - **WP-CLI commands** — `wp tahcd scan`, `wp tahcd status --format=json` for agencies using CLI tooling.
-- **Automated test suite** — PHPUnit with the WordPress test library in CI (the v2.7.0 logic is currently covered by an out-of-tree harness).
+- **Automated test suite** — PHPUnit with the WordPress test library in CI. Scheduled for 2.9.0: the out-of-tree harness (87 checks covering API keys, rate limiting, SSRF filter, encryption, hub alerts and anti-flood, digests, webhooks and unsubscribe in 2.8.0) moves into `tests/` and runs on every push.
 
 ---
 
@@ -255,8 +263,8 @@ Next:
 | `tahcd_remote_sites` | Hub: remote sites (label, URL, encrypted key) | no |
 | `tahcd_remote_status` | Hub: last poll result per site | no |
 | `tahcd_agency_settings` | Hub: polling interval | no |
-| `tahcd_alert_settings` | Alerts: enabled, recipients, severity | yes |
-| `tahcd_alert_state` | Alerts: last check + signatures already reported | no |
+| `tahcd_alert_settings` | Alerts: enabled, recipients, severity, frequency, hub toggle, encrypted webhook URL + format | yes |
+| `tahcd_alert_state` | Alerts: last check, reported signatures, digest queue, next digest, last webhook result | no |
 
 Cron events: `tahcd_agency_poll` (5/15/60 min), `tahcd_alerts_check` (hourly). Both are removed on deactivation and restored on the next admin request after reactivation.
 
@@ -281,8 +289,9 @@ Tables are preserved on deactivation and removed cleanly on uninstall.
 | `wp_ajax_tahcd_*` | Multiple | All AJAX handlers (nonce-protected) |
 | `rest_api_init` | Rest_Api | Register `tahhan-cd/v1/status` |
 | `cron_schedules` | Agency | `tahcd_5min`, `tahcd_15min` intervals |
-| `http_api_curl` | Agency | Pin outbound hub requests to the vetted IP (only during a poll) |
+| `http_api_curl` | Safe_Http | Pin outbound hub/webhook requests to the vetted IP (only during a request) |
 | `admin_init` | Alerts, Agency | Keep cron events in sync with settings |
+| `admin_post(_nopriv)_tahcd_unsubscribe` | Alerts | Unsubscribe confirmation (GET) and removal (POST / one-click) |
 
 ### File scanning targets
 - `wp-content/debug.log` — read backwards from the end, last 500 lines, at most 2 MB (any file size)
@@ -325,6 +334,7 @@ Tables are preserved on deactivation and removed cleanly on uninstall.
 | 2.6.5 | 2026-09-14 | Fix | Missing `return` after error responses in 3 AJAX handlers, untranslated 'Forbidden' string |
 | 2.6.6 | 2026-10-14 | Fix | `fread()` false guard in tail(), null guard in get_recent_changes(), strtotime false guards, dashboard double-call eliminated |
 | 2.7.0 | 2026-10-20 | Phase 4 | Agency hub, REST status endpoint, API keys, email alerts; SSRF/crypto hardening; activation-hook fix |
+| 2.8.0 | 2026-11-10 | Phase 4 | Hub alerts, daily/weekly digests, webhooks, one-click unsubscribe, overview bar, key-expiry warnings; recipients no longer see each other's addresses |
 
 ---
 

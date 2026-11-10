@@ -335,12 +335,22 @@
 		$('#tahcd-alerts-form').on('submit', function (e) {
 			e.preventDefault();
 			var $form = $(this);
+			var checked = function (name) { return $form.find('[name=' + name + ']').is(':checked') ? '1' : '0'; };
 			agencyPost('tahcd_alerts_save', {
-				enabled:    $form.find('[name=enabled]').is(':checked') ? '1' : '0',
-				recipients: $form.find('[name=recipients]').val(),
-				severity:   $form.find('[name=severity]').val()
+				enabled:        checked('enabled'),
+				recipients:     $form.find('[name=recipients]').val(),
+				severity:       $form.find('[name=severity]').val(),
+				frequency:      $form.find('[name=frequency]').val(),
+				hub:            checked('hub'),
+				webhook_format: $form.find('[name=webhook_format]').val(),
+				webhook_url:    $form.find('[name=webhook_url]').val(),
+				webhook_remove: checked('webhook_remove')
 			}, $form.find('button[type=submit]'), function (data) {
 				agencyNotice('success', data.message);
+				// The webhook URL is a secret: never keep it in the page, and
+				// reload so the saved hint and "remove" option are shown.
+				$form.find('[name=webhook_url]').val('');
+				reloadSoon();
 			});
 		});
 

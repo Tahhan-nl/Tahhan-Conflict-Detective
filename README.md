@@ -5,7 +5,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-0073aa?logo=wordpress)](https://wordpress.org/plugins/tahhan-conflict-detective/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-8892be?logo=php)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.7.0-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-2.8.0-green)](CHANGELOG.md)
 [![Tested up to](https://img.shields.io/badge/Tested%20up%20to-WP%207.0-0073aa)](https://wordpress.org/plugins/tahhan-conflict-detective/)
 
 ---
@@ -115,15 +115,17 @@ Automatically logs slow AJAX and REST API calls (> 500 ms) to a dedicated databa
 **Plugin Interaction Map**  
 Groups all installed plugins into known ecosystem clusters — WooCommerce, Elementor, Yoast SEO, Jetpack, ACF, Gravity Forms, Contact Form 7, WPML, LearnDash, Divi, WP Rocket, and more. Also reads the `Requires Plugins` header (WordPress 6.5+) for explicit declared dependencies.
 
-### Phase 4 — Agency Edition 🚧 (new in v2.7.0)
+### Phase 4 — Agency Edition 🚧 (v2.7.0 – v2.8.0)
 
 **Multi-site dashboard** — monitor up to 50 client sites from one install. Status, open conflicts with top suspect, fatal errors (24h), critical health issues and last check per site; polled every 5/15/60 min or on demand.
 
 **Read-only API keys** — generated per site, shown once, stored only as a SHA-256 hash, with expiry, rotation and revocation. Endpoint: `GET /wp-json/tahhan-cd/v1/status` (key in the `X-Tahcd-Key` header).
 
-**Email alerts** — hourly digest of *new* fatal errors, conflicts and critical health issues. Deduplicated, three severity levels, up to 10 recipients.
+**Alerts** — *new* fatal errors, conflicts and critical health issues by email and/or webhook (Slack, Discord, Teams, JSON). Immediate or daily/weekly digest, three severity levels, deduplicated. Each recipient gets an individual email with a one-click unsubscribe link.
 
-PDF reporting (4.3) follows in v2.8.0.
+**Hub alerts** *(v2.8.0)* — notified when a monitored site is critical or unreachable for two checks in a row, when it recovers, and before its API key expires.
+
+Printable reporting (4.3) follows in v2.9.0.
 
 ---
 
@@ -134,7 +136,7 @@ PDF reporting (4.3) follows in v2.8.0.
 | 1 — MVP | ✅ Complete | v1.0.0 | Dashboard, Error Log, Change History, Health Scan |
 | 2 — Smart Detection | ✅ Complete | v2.0.0 | Conflict Scanner, Safe Testing Mode, Conflict Wizard |
 | 3 — Advanced Analysis | ✅ Complete | v2.6.0 | Performance Monitor, Cron Monitor, AJAX/REST Monitor, Interaction Map |
-| 4 — Agency Edition | 🚧 In progress | v2.7.0 | Multi-site dashboard ✅, API keys ✅, Email alerts ✅, PDF reporting (v2.8.0) |
+| 4 — Agency Edition | 🚧 In progress | v2.7.0–2.8.0 | Multi-site dashboard ✅, API keys ✅, Alerts + webhooks ✅, Printable reports (v2.9.0) |
 
 See [ROADMAP.md](ROADMAP.md) for the full specification.
 

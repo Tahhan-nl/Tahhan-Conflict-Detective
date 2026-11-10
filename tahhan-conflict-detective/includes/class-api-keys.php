@@ -57,6 +57,7 @@ final class Api_Keys {
 			false
 		);
 		delete_option( self::LAST_USED );
+		Rest_Api::flush_cache();
 
 		return $key;
 	}
@@ -64,6 +65,19 @@ final class Api_Keys {
 	public static function revoke(): void {
 		delete_option( self::OPTION );
 		delete_option( self::LAST_USED );
+		Rest_Api::flush_cache();
+	}
+
+	/**
+	 * Whole days until the active key expires; null when there is no key,
+	 * it never expires, or it has already expired.
+	 */
+	public static function days_left(): ?int {
+		$data = self::get_raw();
+		if ( null === $data || 0 === $data['expires'] || self::is_expired( $data ) ) {
+			return null;
+		}
+		return (int) floor( ( $data['expires'] - time() ) / DAY_IN_SECONDS );
 	}
 
 	/**

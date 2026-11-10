@@ -4,9 +4,9 @@
 
 | Version | Supported |
 |---------|-----------|
-| 2.7.x (latest) | ✅ Active support |
-| 2.6.x | ✅ Security fixes only |
-| < 2.6.0 | ❌ No longer supported |
+| 2.8.x (latest) | ✅ Active support |
+| 2.7.x | ✅ Security fixes only |
+| < 2.7.0 | ❌ No longer supported |
 
 ## Reporting a Vulnerability
 
@@ -61,6 +61,10 @@ You will be credited in the release notes (unless you prefer to remain anonymous
 - **Untrusted remote data**: reduced to a fixed, typed, length-limited structure before storage and escaped on output.
 - **Email alerts**: recipients validated with `is_email` (max 10), control characters stripped, links in log excerpts defanged, plain-text only, test email throttled.
 - **Multisite**: features that expose the shared error log or make outbound requests require `manage_network_options`.
+- **Shared helpers (2.8.0+)**: all outbound requests to admin-configured URLs (hub polling and alert webhooks) go through `Safe_Http`; all secrets at rest (remote API keys, webhook URL) go through `Secret_Box` with a separate derived key per purpose.
+- **Webhooks**: URL encrypted at rest and never sent back to the browser (only host + last 4 characters are shown). Slack `<!channel>`-style tokens are escaped and Discord mentions are disabled (`allowed_mentions`), so log text cannot ping a channel.
+- **Unsubscribe endpoint**: the only unauthenticated action besides the status endpoint. Authorised by a 128-bit HMAC token derived from the AUTH salt (the URL never contains the address); GET only shows a confirmation, removal requires POST (form or RFC 8058 one-click); it can only remove the matching address.
+- **Recipient privacy**: one email per recipient; addresses are never disclosed to each other.
 
 ### GitHub Actions
 - The deploy workflow runs with `permissions: contents: read` — minimal necessary access.

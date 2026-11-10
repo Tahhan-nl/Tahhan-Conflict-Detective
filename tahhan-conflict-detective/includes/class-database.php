@@ -184,7 +184,7 @@ final class Database {
 
 		delete_option( self::OPTION_KEY );
 
-		foreach ( array( 'tahcd_api_key', 'tahcd_api_key_last_used', 'tahcd_alert_settings', 'tahcd_alert_state', 'tahcd_remote_sites', 'tahcd_remote_status', 'tahcd_agency_settings' ) as $option ) {
+		foreach ( array( 'tahcd_api_key', 'tahcd_api_key_last_used', 'tahcd_alert_settings', 'tahcd_alert_state', 'tahcd_alert_webhook_status', 'tahcd_remote_sites', 'tahcd_remote_status', 'tahcd_agency_settings' ) as $option ) {
 			delete_option( $option );
 		}
 
@@ -195,6 +195,7 @@ final class Database {
 		delete_transient( 'tahcd_main_table_exists' );
 		delete_transient( 'tahcd_status_cache' );
 		delete_transient( 'tahcd_alert_test_sent' );
+		delete_transient( 'tahcd_hub_alert_rate' );
 
 		// REST rate-limit counters: tahcd_rl_{md5(ip)}.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk transient cleanup on uninstall.

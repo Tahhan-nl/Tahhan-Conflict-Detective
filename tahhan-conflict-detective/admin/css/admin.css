@@ -1520,3 +1520,14 @@ details[open] .tahcd-inactive-wrap .tahcd-standalone-grid { margin-top: 10px; }
 .tahcd-site-url { font-size: 12px; color: var(--pcd-text-2); word-break: break-all; }
 .tahcd-site-error { display: inline-block; margin-top: 4px; font-size: 12px; color: var(--pcd-red); max-width: 260px; }
 .tahcd-actions { white-space: nowrap; }
+
+.tahcd-fieldset {
+	border: 1px solid var(--pcd-border);
+	border-radius: var(--pcd-r);
+	padding: 10px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 0;
+}
+.tahcd-fieldset legend { font-weight: 600; padding: 0 4px; }

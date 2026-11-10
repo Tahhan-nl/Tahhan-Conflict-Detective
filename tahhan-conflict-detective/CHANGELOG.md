@@ -5,6 +5,37 @@ Full developer changelog: [CHANGELOG.md](../CHANGELOG.md) at the repository root
 
 ---
 
+## [2.8.0] — 2026-11-10
+
+Phase 4 continued: hub alerts, digests, webhooks and private unsubscribe.
+
+### Added
+- **Hub alerts** (`Agency::record()` → `Alerts::notify_hub()`): a monitored site that is critical or unreachable for 2 consecutive polls triggers one alert; recovery is announced after 2 good polls; API keys expiring within 14 days are reported. Hub alerts bypass the digest. If every site is unreachable in one run, the message notes that the hub's own connection may be down.
+- **Digest mode** — immediate (hourly check), daily or weekly. New items are queued in `tahcd_alert_state` (max 50 per section; overflow counted).
+- **Webhooks** — Slack/Mattermost, Discord, Microsoft Teams Workflows (Adaptive Card) and generic JSON. URL encrypted at rest, never sent back to the browser, last delivery status shown (`tahcd_alert_webhook_status`).
+- **Unsubscribe** — personal HMAC link in every email (`admin-post.php?action=tahcd_unsubscribe`), RFC 8058 `List-Unsubscribe` / `List-Unsubscribe-Post` headers. GET shows a confirmation; only POST (form or one-click) removes the address.
+- **Agency tab** — overview stat bar (critical / unreachable / warning / all clear / pending), sites sorted by severity, "critical / total" health column, API-key expiry warning per site.
+- REST status payload gains `key.expires` and `health.critical`; `Api_Keys::days_left()`; key-expiry notice on the monitored site's own plugin pages.
+- `Safe_Http` (SSRF-hardened outbound requests) and `Secret_Box` (libsodium at rest, per-purpose keys) extracted from `Agency` and shared with webhooks. Keys stored by 2.7.0 keep decrypting (same derivation for context `tahcd-remote-keys`).
+
+### Security
+- Anti-flood for hub alerts: per-site 6-hour cooldown for problem alerts, recovery only after 2 good polls, key-expiry warning rate-limited by time (a remote site cannot trigger it by changing `key.expires`; past dates are ignored), global cap of 6 hub deliveries per hour with skipped alerts summarised in the next message.
+- Mentions neutralised: zero-width space after `@` for Slack/Mattermost/Teams, `<`/`>`/`&` escaped for Slack, `allowed_mentions: {parse: []}` for Discord.
+- Text reported by a monitored site is labelled as such in alerts, and every `word.word` pattern in it is defanged.
+- `Safe_Http::request()` sends the exact URL it validated.
+- Webhook hint shows the host only for well-known services; for other endpoints the host is masked too.
+- Array input for `webhook_url`, `recipients` and the unsubscribe token is rejected instead of throwing a `TypeError`; invalid unsubscribe tokens return 404.
+
+### Fixed
+- **Privacy:** alert emails were sent as one message with all recipients in the `To:` header, so recipients (e.g. different clients) saw each other's addresses. Each recipient now gets an individual email.
+- The status endpoint's 60-second cache is flushed when the API key is rotated or revoked.
+- Bare domain names in log excerpts are defanged (mail clients auto-link them).
+- Upgrade from 2.7.0: stored site statuses without hub-alert state are treated as the baseline, so sites that were already down do not cause an alert burst.
+- Switching alerts off and on (or narrowing the severity) clears the digest queue, so old items are not sent later.
+- The webhook delivery status is stored separately, so a webhook sent during a poll can no longer overwrite the digest queue.
+
+---
+
 ## [2.7.0] — 2026-10-20
 
 Phase 4 — Agency Edition (4.1 Multi-site Dashboard, 4.2 Email Alerts, 4.4 API Key Management).

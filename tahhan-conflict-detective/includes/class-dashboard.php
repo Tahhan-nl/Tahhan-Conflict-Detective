@@ -331,6 +331,21 @@ final class Dashboard {
 			esc_html__( 'Conflict Detective', 'tahhan-conflict-detective' )
 		);
 
+		// Remind before this site's own API key stops working for the agency hub.
+		$days_left = Api_Keys::days_left();
+		if ( null !== $days_left && $days_left < Agency::KEY_WARN_DAYS && current_user_can( self::sensitive_cap() ) ) {
+			printf(
+				'<div class="notice notice-warning inline"><p>%s <a href="%s">%s</a></p></div>',
+				esc_html( sprintf(
+					/* translators: %d: number of days */
+					_n( 'The remote-monitoring API key of this site expires in %d day.', 'The remote-monitoring API key of this site expires in %d days.', $days_left, 'tahhan-conflict-detective' ),
+					$days_left
+				) ),
+				esc_url( add_query_arg( array( 'page' => self::PAGE_SLUG, 'tab' => 'agency' ), admin_url( 'admin.php' ) ) ),
+				esc_html__( 'Rotate the key', 'tahhan-conflict-detective' )
+			);
+		}
+
 		echo '<nav class="pcd-tabs" aria-label="' . esc_attr__( 'Sections', 'tahhan-conflict-detective' ) . '">';
 		foreach ( $tabs as $key => $def ) {
 			$active = $key === $tab;
@@ -1063,12 +1078,13 @@ final class Dashboard {
 	// Shared helpers
 	// -------------------------------------------------------------------------
 
-	private static function stat_card( string $value, string $label, string $icon_key, string $status ): void {
+	public static function stat_card( string $value, string $label, string $icon_key, string $status ): void {
 		$icons = array(
 			'plugin'  => 'dashicons-admin-plugins',
 			'history' => 'dashicons-backup',
 			'error'   => 'dashicons-warning',
 			'scan'    => 'dashicons-shield',
+			'site'    => 'dashicons-admin-site-alt3',
 		);
 		$icon_class = $icons[ $icon_key ] ?? 'dashicons-marker';
 		printf(

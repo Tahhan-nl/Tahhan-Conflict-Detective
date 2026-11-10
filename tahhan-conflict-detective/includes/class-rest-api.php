@@ -189,6 +189,10 @@ final class Rest_Api {
 				'critical'   => $health_critical,
 				'scanned_at' => $last_scan ? (string) $last_scan['scanned_at'] : '',
 			),
+			// Lets the hub warn before the key it uses stops working.
+			'key'            => array(
+				'expires' => (int) ( Api_Keys::get_info()['expires'] ?? 0 ),
+			),
 			'last_change'    => $last_change
 				? array(
 					'plugin' => (string) $last_change->plugin_name,
@@ -200,6 +204,11 @@ final class Rest_Api {
 
 		set_transient( self::CACHE_KEY, $data, self::CACHE_TTL );
 		return $data;
+	}
+
+	/** Drops the cached payload, e.g. after a key rotation changed its expiry. */
+	public static function flush_cache(): void {
+		delete_transient( self::CACHE_KEY );
 	}
 
 	public static function endpoint_url(): string {
